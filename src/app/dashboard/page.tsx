@@ -21,7 +21,7 @@ function readinessTone(pct: number): "danger" | "warning" | "success" {
 const TOTAL_OVERVIEWS = domains.length + scenarios.length;
 
 export default function DashboardPage() {
-  const { readiness, streak, mockExamHistory, attempts, loading } = useReadiness();
+  const { readiness, streak, mockExamHistory, attempts, loading, error } = useReadiness();
   const { client, status } = useProgress();
   const [viewedOverviews, setViewedOverviews] = useState<ViewedOverviews>({ domainKeys: [], scenarioKeys: [] });
 
@@ -58,7 +58,19 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {loading || !readiness ? (
+      {error && (
+        <div className="mt-8 rounded-lg border border-danger-soft bg-danger-soft p-5 text-sm text-danger">
+          <p className="font-medium">Couldn&apos;t load your progress: {error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 rounded-md border border-danger px-3 py-1.5 text-xs font-semibold hover:bg-danger/10"
+          >
+            Reload
+          </button>
+        </div>
+      )}
+
+      {!error && (loading || !readiness ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-28 animate-pulse rounded-lg bg-surface-muted" />
@@ -104,7 +116,7 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
-      )}
+      ))}
 
       <div className="mt-6">
         <ExamOverviewCard />
