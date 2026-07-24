@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cca_user
+      POSTGRES_PASSWORD: cca_dev_password
+      POSTGRES_DB: cca_foundations_prep
+    ports:
+      - "5432:5432"
+    volumes:
+      - cca_db_data:/var/lib/postgresql/data
+
+volumes:
+  cca_db_data:

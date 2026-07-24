@@ -1,0 +1,321 @@
+import type { QuestionSeed } from "../types";
+
+export const questions: QuestionSeed[] = [
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A team building an agent gives it access to four different capabilities: a custom get_account_balance tool the team wrote and executes on their own servers, Anthropic's built-in text editor tool, a hosted web-search capability that Anthropic's platform runs directly, and a couple of tools from a partner's MCP server. For which capability does the calling application never intercept or execute the underlying call itself, because Anthropic's own platform carries it out end-to-end?",
+    options: [
+      "get_account_balance, since it touches the team's private account database",
+      "The Anthropic-defined text editor tool, since Anthropic wrote its schema",
+      "The hosted web-search capability, since it is a server-side tool",
+      "The partner's MCP server tools, since they run outside the team's own infrastructure",
+    ],
+    correctIndexes: [2],
+    explanation:
+      "Server-side tools like hosted web search run entirely within Anthropic's own platform, so the calling application never intercepts or executes the call. get_account_balance is a user-defined tool executed by the app itself. The text editor tool is Anthropic-defined but still executes client-side, inside the application's environment. MCP tools execute on a separate MCP server that the application's client still dispatches to, which is a different arrangement from a server-side tool that bypasses the application entirely.",
+    eli10:
+      "Imagine four different helpers: one you built yourself, one Anthropic designed but you still run, one Anthropic runs completely on its own with no help from you, and one that lives on someone else's computer. Only the third one, the fully Anthropic-run helper, never needs your app to lift a finger.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "DEVELOPER_PRODUCTIVITY_TOOLS",
+    type: "SINGLE",
+    prompt:
+      "A developer is deciding whether to connect their coding agent to a newly published MCP server that exposes tools for modifying files in a cloud storage bucket. Before granting broad trust to whatever these tools claim to do, what should most directly inform how much the developer trusts the tool calls?",
+    options: [
+      "Whether the tool descriptions mention safety considerations",
+      "The reputation and origin of whoever operates that MCP server",
+      "Whether the tools are named descriptively",
+      "Whether the JSON schema includes required fields",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Because MCP tools execute on a separate server, trust in their behavior has to come from who operates that server, not from surface-level factors. A safety note in a description, good naming, or well-formed required fields are all good hygiene, but none of them constrain what code actually runs when the server receives a call.",
+    eli10:
+      "It's like deciding whether to hand your house key to someone: what matters is whether you actually trust that person, not whether they wrote a nice note about being careful with keys.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "Two engineers write descriptions for a create_calendar_event tool. Engineer A writes: 'Creates a calendar event.' Engineer B writes: 'Creates an event on the current user's primary calendar. Use for scheduling meetings with a specific start and end time; do not use for recurring series, which requires create_recurring_event. Expects start and end as ISO 8601 timestamps, for example 2026-03-01T14:00:00-05:00. Returns the created event_id and a confirmation link.' Which description will produce more reliable tool selection and correct inputs, and why?",
+    options: [
+      "Engineer A's, because shorter descriptions reduce token overhead and confusion",
+      "Engineer B's, because it states purpose, boundaries, input format with an example, and output contents",
+      "Both are equivalent, since the JSON schema types already convey everything the model needs",
+      "Engineer A's, because models perform better with minimal, open-ended instructions",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Engineer B's description covers what the tool does, when to use it, when not to (pointing elsewhere for recurring events), a concrete input format example, and what the output contains — the core ingredients of a strong tool description. Engineer A's leaves the model guessing at timestamp format and scope. Schema types alone don't convey semantic boundaries like timezone formatting or which tool handles recurrence, so brevity here actively costs accuracy rather than saving it.",
+    eli10:
+      "Telling a friend 'make a party' leaves out a lot; telling them 'make a party this Saturday at 3pm, not a repeating one, and text me the address after' gives them what they actually need to do it right.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "CUSTOMER_SUPPORT_AGENT",
+    type: "SINGLE",
+    prompt:
+      "A support agent's issue_refund tool currently accepts a free-text customer_name field and searches for a matching account before issuing the refund. Two customers named 'Pat Nguyen' exist in the system, and a refund was recently applied to the wrong one. What redesign most directly addresses this class of bug?",
+    options: [
+      "Add a confirmation dialog asking the customer to re-type their name",
+      "Require a find_customer lookup tool that returns a stable customer_id, and have issue_refund accept only that id",
+      "Make customer_name a required field with a minimum character length",
+      "Log every refund call for later manual auditing",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "This is the lookup-then-act pattern: resolving ambiguous free text to a stable identifier first means the action tool never has to guess which of two same-named accounts was meant. Re-typing a name doesn't resolve the ambiguity between two identical names, a minimum length requirement doesn't disambiguate anything, and auditing only catches the mistake after the money has already moved.",
+    eli10:
+      "If two kids in class are both named Sam, you shouldn't hand out a prize by shouting 'Sam!' — you should check which Sam's seat number it is first, then give the prize to that exact seat.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A fitness app has one log_workout tool with an activity_type field plus a large set of optional parameters: pace and distance for runs, sets, reps, and weight for strength training, and elevation and route for hikes, where each group only makes sense for certain activity_type values and several combinations are actually invalid together. What is the recommended fix?",
+    options: [
+      "Add validation error messages explaining which fields are invalid for each activity_type",
+      "Split the tool into separate tools per activity, such as log_run, log_strength_session, and log_hike, each with only its own relevant parameters",
+      "Convert all optional parameters into a single freeform notes string the model fills in",
+      "Keep one tool but mark every parameter as required to force the model to always provide full context",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "When a tool's parameters have constraints that depend on another field's value, splitting into narrower, purpose-specific tools removes the conditional logic entirely instead of patching around it with error messages. A freeform notes field would throw away structure that downstream code needs. Forcing every field to be required would push nonsensical values, like reps for a hike, into unrelated activity types.",
+    eli10:
+      "Instead of one messy form that changes its own rules depending on what you check at the top, it's easier to just have three separate simple forms: one for running, one for lifting, one for hiking.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A logistics tool returns a shipment's origin_warehouse_id, and separately returns an estimated_transit_days value computed at call time from current traffic conditions. A downstream rerouting tool needs to accept a reference to the shipment's warehouse. Which value should that downstream tool accept as input, and why?",
+    options: [
+      "estimated_transit_days, because it reflects the most current conditions",
+      "origin_warehouse_id, because it's a stable identifier that won't change meaning between calls",
+      "Both values combined into a single composite string",
+      "Neither; the downstream tool should recompute both values itself",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "origin_warehouse_id is a stable identifier that keeps the same meaning across calls, which is exactly what a downstream action tool should be built around. estimated_transit_days is a derived, time-sensitive figure that can go stale the moment conditions change, making it a poor thing to treat as a fixed reference. Combining the two or recomputing from scratch adds complexity without solving the underlying mismatch.",
+    eli10:
+      "A warehouse's address doesn't change, but 'how long the drive will take today' changes all the time. You want to hand someone the address, not today's guess about traffic.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "STRUCTURED_DATA_EXTRACTION",
+    type: "SINGLE",
+    prompt:
+      "A document-search tool used in an extraction pipeline returns an empty array both when a query legitimately matches nothing in the corpus and when the search backend fails to respond. An agent using this tool recently treated a backend outage as if there were simply no matching documents, and went on to write a report claiming no data existed. What is the most direct fix?",
+    options: [
+      "Make the tool retry more aggressively before giving up",
+      "Have the tool return distinguishable outputs, such as a genuine empty match marked with an ok status versus a separate error status when the backend call fails",
+      "Change the tool description to warn the model that this ambiguity can occur",
+      "Require the model to always double-check with a second search tool",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "The core defect is that a real empty result and an outright failure look identical in the output. Making the two cases structurally distinguishable removes the ambiguity at its source. More aggressive retrying doesn't fix the output shape, a warning in the description gives the model nothing concrete to check, and requiring a second tool call is a workaround rather than a fix for the underlying design flaw.",
+    eli10:
+      "If a search comes back blank, the tool needs to actually say 'I looked and found nothing' instead of leaving the same blank answer for both 'nothing there' and 'I couldn't even look.'",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "An internal API used by a support tool returns results in pages of 50. A developer wires the tool so that whenever the model asks for 'all open tickets,' the tool loops internally and concatenates every page before returning one giant array. With a queue of 3,000 open tickets, what problem does this design create?",
+    options: [
+      "It violates the MCP protocol, which forbids returning arrays",
+      "It floods the model's context with a huge result set instead of returning a manageable first page with a total count and continuation token",
+      "It has no downside, since the model receives complete information in one call",
+      "It will always exceed the API's page-size limit and fail outright",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Silently auto-fetching and concatenating every page is exactly the anti-pattern the pagination guidance warns against; the tool should instead return a first page along with a total_count (or estimate) and a cursor, letting the model decide whether to page further. There is no protocol rule against returning arrays, and the design won't necessarily fail outright — it will simply hand back an unwieldy result that wastes context and can crowd out other reasoning.",
+    eli10:
+      "If someone asks for 'all the mail,' dumping all 3,000 letters on their desk at once isn't as helpful as handing them the first stack of 50 and saying 'there are 2,950 more if you want them.'",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "DEVELOPER_PRODUCTIVITY_TOOLS",
+    type: "SINGLE",
+    prompt:
+      "As an internal platform accumulates over 200 narrow automation tools across many teams, a developer proposes collapsing them all behind one call_platform_tool(operation_name, params) tool to keep the active tool list manageable. What is the main problem with this approach compared to progressive tool availability?",
+    options: [
+      "It technically exceeds the maximum number of tools a model can be given",
+      "It hides the real tool surface behind a single generic entry point, which tends to produce worse tool selection than surfacing a small ranked shortlist and revealing specific tools on demand",
+      "It requires every team to rewrite their tool schemas from scratch",
+      "It prevents the tools from being used by more than one agent at a time",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Collapsing many distinct capabilities behind one aggregator tool obscures which concrete tool actually fits a task, and tends to produce worse tool selection overall. The better approach is a small discovery tool that returns a ranked shortlist of candidates, with the actual matching tool revealed on a later turn. There's no hard technical limit implied here, no requirement to rewrite every schema, and nothing about restricting use to a single agent.",
+    eli10:
+      "If you shrink a toolbox with 200 clearly labeled tools down into one mystery box where you have to guess the tool's name to get it out, it's actually harder to find the right one, not easier.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "STRUCTURED_DATA_EXTRACTION",
+    type: "SINGLE",
+    prompt:
+      "A receipt-parsing tool flags requires_review whenever its confidence score falls below a cutoff the engineering team picked because '0.7 felt about right.' After launch, receipts near that cutoff are inconsistently flagged: some clearly wrong ones pass through untagged while some clearly correct ones get needlessly queued for review. What does this indicate about the threshold?",
+    options: [
+      "Confidence scores should be removed from the tool output entirely",
+      "The threshold should have been calibrated against a labeled validation set instead of chosen by intuition",
+      "requires_review should always default to true regardless of confidence",
+      "The tool should stop returning a numeric confidence and only return a boolean",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Confidence thresholds need to be calibrated against real labeled data to reflect actual accuracy, and an intuition-based cutoff is exactly what produces the inconsistent behavior described. Removing confidence scores or flagging everything for review throws away the value of a graded signal entirely, and collapsing to a plain boolean removes the very information needed to calibrate a threshold correctly in the first place.",
+    eli10:
+      "If a teacher guesses 'a 70 out of 100 feels like a passing grade' without checking real test results, some kids who deserve to pass won't, and some who don't deserve it will. You need to check against real examples first.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A workspace-management tool is defined as delete_workspace(workspace_id, dry_run: boolean), where dry_run: true just prints what would happen. A reviewer worries this is unsafe as an agent-facing design. What is the core risk, and what's the recommended alternative?",
+    options: [
+      "The risk is that dry_run defaults to false; the fix is simply changing the default to true",
+      "The risk is that a boolean flag on a single tool can simply be set to false by the model with nothing structurally stopping it; the fix is a separate preview tool that issues a short-lived confirmation token, plus an execute tool that only runs given that exact token after a real human confirms",
+      "The risk is that workspace_id could be guessed; the fix is switching to a random UUID",
+      "The risk is performance overhead from running the check twice; the fix is caching the dry-run result",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "A bare dry_run boolean provides no structural barrier to real deletion — the same tool can simply be called again with dry_run: false. The recommended pattern splits preview and execution into two separate tools joined by a one-time confirmation token bound to the specific previewed action, forcing an actual human confirmation before anything irreversible happens. The other options address concerns, like default values, identifier guessing, or performance, that don't touch the actual structural gap.",
+    eli10:
+      "If the only thing stopping a big red delete button from firing is a little switch anyone can flip, that's not real safety. It's safer to first show someone exactly what will happen and get a one-time ticket, and only accept that exact ticket to actually do it.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A team building an MCP server for their internal wiki needs to expose three things: a static list of team-space names that rarely changes, a live 'search the wiki right now' capability, and a canned onboarding walkthrough that a new hire's assistant should run only when the new hire explicitly asks for it. How should these map onto MCP's three building blocks?",
+    options: [
+      "All three should be Tools, since Tools are the only building block MCP actually supports in practice",
+      "The team-space list as a Resource, the live search as a Tool, and the onboarding walkthrough as a Prompt",
+      "The team-space list as a Tool, the live search as a Resource, and the onboarding walkthrough as a Tool",
+      "All three should be Resources, since none of them modify any state",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "The static, rarely-changing list is passive reference material an agent might consult, which fits a Resource. The live search needs fresh computation at the moment of use, which fits a Tool. The explicitly user-invoked walkthrough is a reusable, user-selected template, which fits a Prompt. MCP genuinely supports all three block types, so treating everything as a Tool or everything as a Resource ignores that the search needs live computation and the walkthrough is meant to be deliberately chosen rather than just read.",
+    eli10:
+      "A phone book you flip through, a live weather check you run right now, and a recipe card you only pull out when you decide to bake — those are three different kinds of things, and MCP has a matching box for each one.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "DEVELOPER_PRODUCTIVITY_TOOLS",
+    type: "SINGLE",
+    prompt:
+      "An MCP server advertises a purge_cache tool with the annotation readOnlyHint: true. A host application is deciding whether to auto-approve calls to this tool without any user confirmation, reasoning that the annotation guarantees the tool is safe. What is the correct assessment?",
+    options: [
+      "Auto-approval is safe, since readOnlyHint is a protocol-enforced guarantee",
+      "Auto-approval is risky, since annotations are only hints a server chooses to set and could be wrong or malicious; real approval decisions should rest on server trust, user policy, and assessed risk instead",
+      "Auto-approval is safe as long as the tool's name doesn't contain the word 'delete'",
+      "Auto-approval is risky only if the tool comes from an unofficial, non-Anthropic MCP server",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Annotations like readOnlyHint are self-reported metadata that a server chooses to set, not something the protocol verifies or enforces, so a buggy or malicious server could mislabel a destructive action as read-only. Real approval decisions need to rest on actual server trust, user policy, and assessed operation risk. Tool naming gives no real guarantee, and the risk that an annotation might be wrong applies to any server, not only unofficial ones, since the annotation itself is never independently verified.",
+    eli10:
+      "Just because a box has a sticker that says 'nothing breakable inside' doesn't mean it's true — you still have to trust who packed the box, not just read the sticker.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "MULTI_AGENT_RESEARCH",
+    type: "MULTI",
+    prompt:
+      "A multi-agent research assistant has a pipeline that: (1) fetches a webpage and extracts its raw text, (2) summarizes the extracted text, and (3) decides whether to include that summary in a final report shared with the user. The team is deciding which steps to merge into single tool calls versus keep as separate decision points. Which two statements reflect good practice here?",
+    options: [
+      "Fetching the page and extracting its raw text are good candidates to merge into a single tool call, since they are mechanical and always performed together",
+      "All three steps should be merged into a single tool to minimize the number of tool calls the model has to make",
+      "Deciding whether to include the summary in the final report should remain a separate, distinct decision point rather than being folded silently into the summarization tool",
+      "Summarization should never be exposed as a tool at all, since only fetching counts as a real tool action",
+      "Because latency matters, every network-touching step should always be split into its own separate tool regardless of context",
+    ],
+    correctIndexes: [0, 2],
+    explanation:
+      "Fetching and extracting text is mechanical, always-paired, low-judgment work, which is exactly the kind of step that's good to compose into one tool. Deciding to include a summary in a user-facing report is an editorial judgment call, so it should stay a distinct step rather than being silently absorbed into an earlier mechanical action. Merging all three ignores that the inclusion decision needs its own checkpoint; summarization can legitimately be exposed as its own tool; and latency alone doesn't dictate splitting every network step regardless of whether the steps are mechanical and always paired.",
+    eli10:
+      "Grabbing a book off the shelf and opening to the right page can happen in one smooth motion, but deciding whether to actually read that page out loud to the class is its own choice that shouldn't happen automatically.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "MULTI",
+    prompt:
+      "A team is categorizing failure modes for their order-management tool: (1) the backend database connection times out, (2) the model passes an invalid three-letter country code, (3) the customer's account is genuinely not eligible for the requested action under company policy, and (4) the calling agent's credentials lack permission for this operation. Which two statements describe correct handling?",
+    options: [
+      "The database timeout (1) should be retried inside the tool with backoff rather than immediately surfaced to the model as a failure",
+      "The invalid country code (2) should trigger the same human-escalation path as the permission error (4)",
+      "The ineligibility case (3) should return a structured, non-retryable result with a clear explanation, since retrying won't change the underlying policy outcome",
+      "All four cases should be retried automatically, since retries are always safe for order-management tools",
+      "The permission error (4) should be silently retried by the tool until it eventually succeeds",
+    ],
+    correctIndexes: [0, 2],
+    explanation:
+      "A transient timeout belongs to tool-level retry with backoff rather than immediately failing in front of the model. A business-rule ineligibility is non-retryable and just needs a clear explanation, since nothing about retrying changes the policy outcome. The invalid country code is a validation error the model can self-correct, not something needing the same human-escalation path as a genuine permission problem. Blanket automatic retries ignore that non-transient failures won't be fixed by trying again, and a permission error needs an escalation path rather than silent endless retries, which could never succeed without a credential change anyway.",
+    eli10:
+      "If the phone line drops, try calling back. If you're simply not allowed into a room, calling back a hundred times won't open the door — someone needs to actually give you permission first.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "MULTI",
+    prompt:
+      "An MCP-connected client encounters four situations: (1) it calls a tool name the server doesn't recognize, (2) a real tool call reaches the server but hits a downstream 404 for a record that doesn't exist, (3) it sends arguments that fail the tool's declared schema before any tool logic runs, and (4) a real tool call reaches the server and hits a temporary 503 from a dependency. Which two statements correctly classify these?",
+    options: [
+      "Situations (1) and (3) are protocol-level errors, since the request never becomes valid enough to reach real tool logic",
+      "Situation (2) should also be reported as a protocol-level error, since the record genuinely doesn't exist",
+      "Situations (2) and (4) should be reported as tool-execution errors inside a normal tool result, since the request was valid and reached real backend logic that then hit an application-level or transient condition",
+      "All four situations are equivalent and the client should handle them identically",
+      "Situation (4) should be treated as a permanent failure with no possibility of a later retry",
+    ],
+    correctIndexes: [0, 2],
+    explanation:
+      "An unrecognized tool name and schema-invalid arguments never reach genuine tool logic, which makes both protocol-level errors. A downstream 404 and a transient 503 both occur only after a valid call reached real backend logic, so both belong inside a normal tool result as execution errors rather than protocol errors. Treating the 404 as a protocol error miscategorizes a legitimate execution-time outcome, the four cases clearly call for different handling rather than identical treatment, and a 503 is transient by nature rather than a permanently unretriable failure.",
+    eli10:
+      "If you dial a phone number that doesn't exist, that's a different kind of problem than dialing correctly but the person you called happens to be busy right now. One means try a different number; the other means maybe try again later.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "MULTI",
+    prompt:
+      "A developer has a server named 'analytics' configured at both project scope, in the repository's committed .mcp.json, and local scope, in their own per-project configuration, with different command paths and different environment variables in each. Which two statements correctly describe how Claude Code resolves this?",
+    options: [
+      "The local-scope definition wins entirely, since local scope has higher precedence than project scope",
+      "Claude Code merges the two definitions field by field, taking the command path from whichever scope defined it first",
+      "Because project scope is checked into version control and shared with the team, it always overrides local scope for consistency",
+      "If the developer instead only had a user-scope 'analytics' entry with no project or local entry present, that user-scope definition would be the one used",
+      "Since the two definitions share the same server name, Claude Code refuses to load either until the conflict is manually resolved",
+    ],
+    correctIndexes: [0, 3],
+    explanation:
+      "Local scope outranks project scope, so the local-scope definition for 'analytics' applies in full. With no project or local entry present, a user-scope entry is simply what gets used, since it's the only definition available. Scopes are never merged field by field — the highest-precedence definition wins entirely, so option two is wrong. Project scope does not override local scope despite being shared; precedence runs local over project over user, the reverse of what option three claims. Claude Code also doesn't require manual conflict resolution — the precedence rule resolves it automatically without blocking either definition from loading.",
+    eli10:
+      "If your own personal note and a shared team note both use the same label, your personal note is the one that counts, not a mix of both, and not the team one just because more people saw it.",
+    difficulty: "MEDIUM",
+  },
+];

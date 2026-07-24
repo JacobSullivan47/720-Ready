@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+/*
+  Color values below follow the dataviz skill's validated default palette
+  (categorical blue/orange + fixed status good/warning/critical), chosen so
+  that mastery bars, pass/fail indicators, and the score trend chart are
+  colorblind-safe (CVD deltaE >= 8, normal-vision floor >= 15) rather than
+  hand-picked. Every status color is always paired with a visible text/number
+  label in this app, never color-alone, per that skill's "relief rule".
+*/
+:root {
+  --background: #f7f7f5;
+  --surface: #ffffff;
+  --surface-muted: #f0f0ee;
+  --foreground: #1c1d1f;
+  --foreground-muted: #55585e;
+  --border: #e2e1dc;
+
+  --brand: #2a78d6;
+  --brand-strong: #1c5cab;
+  --brand-soft: #e3eefb;
+
+  --accent: #eb6834;
+  --accent-soft: #fce5da;
+
+  --success: #006300;
+  --success-soft: #e1f2e1;
+  --warning: #fab219;
+  --warning-soft: #fdf1da;
+  --danger: #d03b3b;
+  --danger-soft: #fbe7e5;
+
+  --focus-ring: #2a78d6;
+}
+
+[data-theme="dark"] {
+  --background: #14161a;
+  --surface: #1b1e24;
+  --surface-muted: #22262d;
+  --foreground: #edeef0;
+  --foreground-muted: #a3a8b0;
+  --border: #2e333b;
+
+  --brand: #3987e5;
+  --brand-strong: #86b6ef;
+  --brand-soft: #1c2c3d;
+
+  --accent: #d95926;
+  --accent-soft: #3a2416;
+
+  --success: #0ca30c;
+  --success-soft: #163326;
+  --warning: #fab219;
+  --warning-soft: #3a2f12;
+  --danger: #e35c5c;
+  --danger-soft: #3a1d1d;
+
+  --focus-ring: #86b6ef;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #14161a;
+    --surface: #1b1e24;
+    --surface-muted: #22262d;
+    --foreground: #edeef0;
+    --foreground-muted: #a3a8b0;
+    --border: #2e333b;
+
+    --brand: #3987e5;
+    --brand-strong: #86b6ef;
+    --brand-soft: #1c2c3d;
+
+    --accent: #d95926;
+    --accent-soft: #3a2416;
+
+    --success: #0ca30c;
+    --success-soft: #163326;
+    --warning: #fab219;
+    --warning-soft: #3a2f12;
+    --danger: #e35c5c;
+    --danger-soft: #3a1d1d;
+
+    --focus-ring: #86b6ef;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.card-flip-scene {
+  perspective: 1600px;
+}
+
+.card-flip-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.5s;
+}
+
+.card-flip-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.card-flip-face {
+  backface-visibility: hidden;
+}
+
+.card-flip-face-back {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-flip-inner {
+    transition: none;
+  }
+}

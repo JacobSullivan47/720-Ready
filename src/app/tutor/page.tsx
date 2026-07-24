@@ -1,0 +1,174 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import clsx from "clsx";
+
+interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+}
+
+export default function TutorPage() {
+  const { status } = useSession();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [limit, setLimit] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/tutor/messages")
+      .then((res) => res.json())
+      .then((data) => {
+        setMessages(data.messages.map((m: ChatMessage) => ({ id: m.id, role: m.role, content: m.content })));
+        setRemaining(data.remainingToday);
+        setLimit(data.limitPerDay);
+        setLoaded(true);
+      });
+  }, [status]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || sending) return;
+
+    setError(null);
+    setSending(true);
+    setInput("");
+    setMessages((prev) => [...prev, { id: `local-${Date.now()}`, role: "user", content: text }]);
+
+    const res = await fetch("/api/tutor/message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+    const data = await res.json();
+    setSending(false);
+
+    if (!res.ok) {
+      setError(data.error ?? "Something went wrong.");
+      return;
+    }
+
+    setMessages((prev) => [...prev, { id: `reply-${Date.now()}`, role: "assistant", content: data.reply }]);
+    setRemaining(data.remainingToday);
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+        <div className="h-64 animate-pulse rounded-lg bg-surface-muted" />
+      </div>
+    );
+  }
+
+  if (status !== "authenticated") {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center sm:px-6">
+        <h1 className="text-2xl font-semibold tracking-tight">AI Study Tutor</h1>
+        <p className="mt-3 text-foreground-muted">
+          Ask follow-up questions about anything you&apos;re stuck on. This feature requires a free
+          account so we can keep usage fair for everyone.
+        </p>
+        <Link
+          href="/register"
+          className="mt-6 inline-block rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-strong"
+        >
+          Create a free account
+        </Link>
+        <p className="mt-3 text-sm text-foreground-muted">
+          Already have one?{" "}
+          <Link href="/login" className="text-brand hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-2xl flex-col px-4 py-6 sm:px-6">
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-xl font-semibold tracking-tight">AI Study Tutor</h1>
+        {remaining != null && limit != null && (
+          <span className="text-xs text-foreground-muted">
+            {remaining} of {limit} messages left today
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-foreground-muted">
+        Explains concepts from this app&apos;s study material — it can&apos;t reveal or predict real
+        exam questions.
+      </p>
+
+      <div className="mt-4 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-surface p-4">
+        {!loaded ? (
+          <div className="h-full animate-pulse rounded-md bg-surface-muted" />
+        ) : messages.length === 0 ? (
+          <p className="py-10 text-center text-sm text-foreground-muted">
+            Ask something like &quot;What&apos;s the difference between compaction and context
+            editing?&quot;
+          </p>
+        ) : (
+          messages.map((m) => (
+            <div
+              key={m.id}
+              className={clsx("flex", m.role === "user" ? "justify-end" : "justify-start")}
+            >
+              <div
+                className={clsx(
+                  "max-w-[85%] whitespace-pre-wrap rounded-lg px-4 py-2.5 text-sm",
+                  m.role === "user" ? "bg-brand text-white" : "bg-surface-muted text-foreground",
+                )}
+              >
+                {m.content}
+              </div>
+            </div>
+          ))
+        )}
+        {sending && (
+          <div className="flex justify-start">
+            <div className="rounded-lg bg-surface-muted px-4 py-2.5 text-sm text-foreground-muted">
+              Thinking…
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {error && (
+        <p role="alert" className="mt-2 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
+          {error}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="mt-3 flex gap-2">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask a question…"
+          disabled={sending || remaining === 0}
+          className="flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-brand disabled:opacity-60"
+        />
+        <button
+          type="submit"
+          disabled={sending || !input.trim() || remaining === 0}
+          className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-50"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}
