@@ -49,7 +49,7 @@ export default async function ScenarioPage({ params }: { params: Promise<{ slug:
         }
       />
       <div className="mt-8">
-        <Link href="/study" className="text-sm text-brand hover:underline">
+        <Link href="/study/overview" className="text-sm text-brand hover:underline">
           ← Back to all domains &amp; scenarios
         </Link>
       </div>
