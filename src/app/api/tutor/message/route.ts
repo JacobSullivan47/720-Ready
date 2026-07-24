@@ -7,8 +7,12 @@ import {
   TUTOR_HISTORY_WINDOW,
   TUTOR_MAX_MESSAGES_PER_DAY,
 } from "@/lib/anthropic";
+import { buildLearnerContextBlock, resolveFocusContext } from "@/lib/tutor-context";
 
-const bodySchema = z.object({ message: z.string().min(1).max(2000) });
+const bodySchema = z.object({
+  message: z.string().min(1).max(2000),
+  focus: z.string().max(200).optional(),
+});
 
 export async function POST(request: Request) {
   const auth = await requireUserId();
@@ -52,9 +56,14 @@ export async function POST(request: Request) {
   }));
   history.push({ role: "user", content: parsed.data.message });
 
+  const [learnerContext, focusContext] = await Promise.all([
+    buildLearnerContextBlock(auth.userId),
+    resolveFocusContext(parsed.data.focus),
+  ]);
+
   let reply: string;
   try {
-    reply = await askTutor(history);
+    reply = await askTutor(history, { learnerContext, focusContext });
   } catch (err) {
     console.error("Tutor request failed", err);
     return NextResponse.json(

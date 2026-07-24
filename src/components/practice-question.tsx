@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import clsx from "clsx";
 import { useProgress } from "@/hooks/use-progress";
 import type { BankQuestion } from "@/lib/content-bank-client";
@@ -150,6 +151,14 @@ export function PracticeQuestionCard({
             <p className="text-sm font-semibold text-accent">Explain it like I&apos;m 10</p>
             <p className="mt-1 text-sm text-foreground">{question.eli10}</p>
           </div>
+          {!isCorrectOverall && (
+            <Link
+              href={`/tutor?focus=question:${question.id}`}
+              className="inline-block text-sm text-brand hover:underline"
+            >
+              Ask the tutor to explain this →
+            </Link>
+          )}
         </div>
       )}
     </div>

@@ -47,6 +47,12 @@ export default async function ScenarioPage({ params }: { params: Promise<{ slug:
             >
               Practice questions
             </Link>
+            <Link
+              href={`/tutor?focus=scenario:${scenario.key}`}
+              className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-surface-muted"
+            >
+              Ask the tutor
+            </Link>
           </>
         }
       />

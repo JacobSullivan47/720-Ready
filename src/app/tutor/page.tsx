@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import clsx from "clsx";
+import { domains } from "@/content/domains";
+import { scenarios } from "@/content/scenarios";
 
 interface ChatMessage {
   id: string;
@@ -11,8 +14,37 @@ interface ChatMessage {
   content: string;
 }
 
-export default function TutorPage() {
+const QUICK_START_PROMPTS = [
+  "Explain my weakest domain and why it matters for the exam.",
+  "What should I study next?",
+  "Quiz me with a question about agentic architecture.",
+];
+
+function focusLabel(focus: string | null): string | null {
+  if (!focus) return null;
+  const separatorIndex = focus.indexOf(":");
+  if (separatorIndex === -1) return null;
+  const kind = focus.slice(0, separatorIndex);
+  const key = focus.slice(separatorIndex + 1);
+
+  if (kind === "domain") return domains.find((d) => d.key === key)?.name ?? null;
+  if (kind === "scenario") return scenarios.find((s) => s.key === key)?.name ?? null;
+  if (kind === "question") return "a practice question you missed";
+  return null;
+}
+
+function focusStarterMessage(focus: string | null, label: string | null): string | null {
+  if (!focus || !label) return null;
+  if (focus.startsWith("question:")) return "I got this question wrong — can you explain why?";
+  return `Can you help me understand ${label}?`;
+}
+
+function TutorPageInner() {
   const { status } = useSession();
+  const searchParams = useSearchParams();
+  const focus = searchParams.get("focus");
+  const label = focusLabel(focus);
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -20,7 +52,10 @@ export default function TutorPage() {
   const [limit, setLimit] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [chipDismissed, setChipDismissed] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prefilledForFocus = useRef<string | null>(null);
+  const lastSentFocus = useRef<string | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -38,10 +73,19 @@ export default function TutorPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    if (!focus || !label) return;
+    if (prefilledForFocus.current === focus) return;
+    prefilledForFocus.current = focus;
+    setInput(focusStarterMessage(focus, label) ?? "");
+  }, [focus, label]);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const text = input.trim();
     if (!text || sending) return;
+
+    const focusToSend = focus && lastSentFocus.current !== focus ? focus : undefined;
 
     setError(null);
     setSending(true);
@@ -51,7 +95,7 @@ export default function TutorPage() {
     const res = await fetch("/api/tutor/message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text }),
+      body: JSON.stringify({ message: text, focus: focusToSend }),
     });
     const data = await res.json();
     setSending(false);
@@ -61,8 +105,13 @@ export default function TutorPage() {
       return;
     }
 
+    if (focusToSend) lastSentFocus.current = focusToSend;
     setMessages((prev) => [...prev, { id: `reply-${Date.now()}`, role: "assistant", content: data.reply }]);
     setRemaining(data.remainingToday);
+  }
+
+  function applyQuickStart(prompt: string) {
+    setInput(prompt);
   }
 
   if (status === "loading") {
@@ -97,6 +146,8 @@ export default function TutorPage() {
     );
   }
 
+  const showQuickStart = loaded && messages.length === 0 && (!focus || !label || chipDismissed);
+
   return (
     <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-2xl flex-col px-4 py-6 sm:px-6">
       <div className="flex items-baseline justify-between">
@@ -112,14 +163,45 @@ export default function TutorPage() {
         exam questions.
       </p>
 
+      {focus && label && !chipDismissed && (
+        <div className="mt-3 flex items-center justify-between gap-2 rounded-md bg-brand-soft px-3 py-2 text-sm text-brand-strong">
+          <span>
+            Discussing: <strong>{label}</strong>
+          </span>
+          <button
+            onClick={() => setChipDismissed(true)}
+            className="text-xs text-brand-strong hover:underline"
+            aria-label="Dismiss context"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <div className="mt-4 flex-1 space-y-3 overflow-y-auto rounded-lg border border-border bg-surface p-4">
         {!loaded ? (
           <div className="h-full animate-pulse rounded-md bg-surface-muted" />
         ) : messages.length === 0 ? (
-          <p className="py-10 text-center text-sm text-foreground-muted">
-            Ask something like &quot;What&apos;s the difference between compaction and context
-            editing?&quot;
-          </p>
+          <div className="py-6 text-center">
+            <p className="text-sm text-foreground-muted">
+              {showQuickStart
+                ? "Not sure where to start? Try one of these:"
+                : "Ask something like \"What's the difference between compaction and context editing?\""}
+            </p>
+            {showQuickStart && (
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {QUICK_START_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => applyQuickStart(prompt)}
+                    className="rounded-full border border-border bg-surface-muted px-3 py-1.5 text-xs font-medium hover:bg-border"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
           messages.map((m) => (
             <div
@@ -170,5 +252,13 @@ export default function TutorPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function TutorPage() {
+  return (
+    <Suspense>
+      <TutorPageInner />
+    </Suspense>
   );
 }

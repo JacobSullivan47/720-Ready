@@ -26,12 +26,17 @@ Do not fabricate specific Claude API parameter names, flags, or behaviors you're
 
 export async function askTutor(
   history: { role: "user" | "assistant"; content: string }[],
+  context?: { learnerContext?: string | null; focusContext?: string | null },
 ): Promise<string> {
   const anthropic = getAnthropicClient();
+  const systemSections = [TUTOR_SYSTEM_PROMPT];
+  if (context?.learnerContext) systemSections.push(context.learnerContext);
+  if (context?.focusContext) systemSections.push(context.focusContext);
+
   const response = await anthropic.messages.create({
     model: TUTOR_MODEL,
     max_tokens: TUTOR_MAX_TOKENS,
-    system: TUTOR_SYSTEM_PROMPT,
+    system: systemSections.join("\n\n"),
     output_config: { effort: "medium" },
     messages: history.map((m) => ({ role: m.role, content: m.content })),
   });

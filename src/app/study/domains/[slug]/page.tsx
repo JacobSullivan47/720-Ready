@@ -47,6 +47,12 @@ export default async function DomainPage({ params }: { params: Promise<{ slug: s
             >
               Practice questions
             </Link>
+            <Link
+              href={`/tutor?focus=domain:${domain.key}`}
+              className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-surface-muted"
+            >
+              Ask the tutor
+            </Link>
           </>
         }
       />

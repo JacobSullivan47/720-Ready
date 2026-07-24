@@ -128,6 +128,12 @@ export default function DashboardPage() {
                 >
                   Practice questions
                 </Link>
+                <Link
+                  href={`/tutor?focus=domain:${readiness.weakestDomain.domainKey}`}
+                  className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium hover:bg-surface-muted"
+                >
+                  Ask the tutor
+                </Link>
               </div>
             </div>
           )}
