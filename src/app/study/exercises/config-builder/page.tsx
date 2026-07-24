@@ -3,9 +3,16 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
-import { CONFIG_BUCKETS, CONFIG_BUILDER_SCENARIO, type ConfigBucketId } from "@/content/exercises";
+import {
+  CONFIG_BUCKETS,
+  CONFIG_BUILDER_ITEM_ID,
+  CONFIG_BUILDER_SCENARIO,
+  type ConfigBucketId,
+} from "@/content/exercises";
+import { useProgress } from "@/hooks/use-progress";
 
 export default function ConfigBuilderPage() {
+  const { client } = useProgress();
   const [assignments, setAssignments] = useState<Record<string, ConfigBucketId | "">>({});
   const [checked, setChecked] = useState(false);
 
@@ -15,6 +22,15 @@ export default function ConfigBuilderPage() {
       CONFIG_BUILDER_SCENARIO.items.filter((item) => assignments[item.id] === item.correctBucket).length,
     [assignments],
   );
+
+  async function checkAnswers() {
+    setChecked(true);
+    await client.recordExerciseAttempt({
+      exerciseType: "CONFIG_BUILDER",
+      itemId: CONFIG_BUILDER_ITEM_ID,
+      isCorrect: correctCount === CONFIG_BUILDER_SCENARIO.items.length,
+    });
+  }
 
   function reset() {
     setAssignments({});
@@ -87,7 +103,7 @@ export default function ConfigBuilderPage() {
       <div className="mt-6 flex gap-3">
         {!checked ? (
           <button
-            onClick={() => setChecked(true)}
+            onClick={checkAnswers}
             disabled={!allAssigned}
             className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-50"
           >

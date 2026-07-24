@@ -71,4 +71,20 @@ export const remoteProgressClient: ProgressClient = {
   async getStudyLogDates() {
     return jsonFetch("/api/progress/study-log");
   },
+
+  async getExerciseAttempts() {
+    return jsonFetch("/api/progress/exercises");
+  },
+
+  async recordExerciseAttempt(input) {
+    await jsonFetch("/api/progress/exercises", { method: "POST", body: JSON.stringify(input) });
+  },
+
+  async getViewedOverviews() {
+    return jsonFetch("/api/progress/overviews");
+  },
+
+  async markOverviewViewed(itemType, key) {
+    await jsonFetch("/api/progress/overviews", { method: "POST", body: JSON.stringify({ itemType, key }) });
+  },
 };

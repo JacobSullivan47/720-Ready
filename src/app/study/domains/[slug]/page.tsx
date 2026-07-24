@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { domains } from "@/content/domains";
 import { domainKeyFromSlug, domainSlug } from "@/lib/slugs";
 import { TopicOverview } from "@/components/topic-overview";
+import { MarkOverviewViewed } from "@/components/mark-overview-viewed";
 
 export function generateStaticParams() {
   return domains.map((d) => ({ slug: domainSlug(d.key) }));
@@ -28,6 +29,7 @@ export default async function DomainPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <MarkOverviewViewed itemType="DOMAIN" itemKey={domain.key} />
       <TopicOverview
         data={domain}
         eyebrow={`Domain · ${domain.weightPct}% of the exam`}

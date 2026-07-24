@@ -10,15 +10,18 @@ import {
   type BankQuestion,
 } from "./scoring";
 import { fetchContentBank } from "./content-bank-client";
+import { EXERCISE_ITEM_DOMAIN } from "@/content/exercises";
 import type {
   AttemptRecord,
+  ExerciseAttemptRecord,
   GradedMockExamQuestion,
   MockExamInProgress,
   MockExamResult,
   MockExamSummary,
   ProgressClient,
+  ViewedOverviews,
 } from "./progress-types";
-import type { ScenarioKey } from "@/content/types";
+import type { DomainKey, ScenarioKey } from "@/content/types";
 
 const NS = "720ready:guest:v1:";
 const KEYS = {
@@ -28,6 +31,8 @@ const KEYS = {
   mockExams: `${NS}mockExams`,
   activeExam: `${NS}activeExam`,
   studyLog: `${NS}studyLog`,
+  exerciseAttempts: `${NS}exerciseAttempts`,
+  viewedOverviews: `${NS}viewedOverviews`,
 };
 
 function readJson<T>(key: string, fallback: T): T {
@@ -232,6 +237,35 @@ export const localProgressClient: ProgressClient = {
 
   async getStudyLogDates() {
     return readJson<string[]>(KEYS.studyLog, []);
+  },
+
+  async getExerciseAttempts() {
+    return readJson<ExerciseAttemptRecord[]>(KEYS.exerciseAttempts, []);
+  },
+
+  async recordExerciseAttempt({ itemId, isCorrect }) {
+    const domainKey = EXERCISE_ITEM_DOMAIN[itemId];
+    if (!domainKey) throw new Error(`Unknown exercise item: ${itemId}`);
+    const list = readJson<ExerciseAttemptRecord[]>(KEYS.exerciseAttempts, []);
+    list.push({ itemId, domainKey, isCorrect, createdAt: new Date().toISOString() });
+    writeJson(KEYS.exerciseAttempts, list);
+    await localProgressClient.pingStudyLog();
+  },
+
+  async getViewedOverviews() {
+    return readJson<ViewedOverviews>(KEYS.viewedOverviews, { domainKeys: [], scenarioKeys: [] });
+  },
+
+  async markOverviewViewed(itemType, key) {
+    const viewed = readJson<ViewedOverviews>(KEYS.viewedOverviews, { domainKeys: [], scenarioKeys: [] });
+    if (itemType === "DOMAIN") {
+      const domainKey = key as DomainKey;
+      if (!viewed.domainKeys.includes(domainKey)) viewed.domainKeys.push(domainKey);
+    } else {
+      const scenarioKey = key as ScenarioKey;
+      if (!viewed.scenarioKeys.includes(scenarioKey)) viewed.scenarioKeys.push(scenarioKey);
+    }
+    writeJson(KEYS.viewedOverviews, viewed);
   },
 };
 

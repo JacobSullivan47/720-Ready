@@ -5,6 +5,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { SEQUENCING_EXERCISES } from "@/content/exercises";
 import { shuffle } from "@/lib/scoring";
+import { useProgress } from "@/hooks/use-progress";
 
 function shuffledDistinctFrom<T>(items: T[]): T[] {
   let result = shuffle(items);
@@ -17,6 +18,7 @@ function shuffledDistinctFrom<T>(items: T[]): T[] {
 }
 
 export default function SequencingPage() {
+  const { client } = useProgress();
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const exercise = SEQUENCING_EXERCISES[exerciseIndex];
 
@@ -52,6 +54,15 @@ export default function SequencingPage() {
 
   function reset() {
     loadExercise(exerciseIndex);
+  }
+
+  async function checkOrder() {
+    setChecked(true);
+    await client.recordExerciseAttempt({
+      exerciseType: "SEQUENCING",
+      itemId: `sequencing:${exercise.id}`,
+      isCorrect: correctCount === exercise.steps.length,
+    });
   }
 
   return (
@@ -141,7 +152,7 @@ export default function SequencingPage() {
       <div className="mt-6 flex gap-3">
         {!checked ? (
           <button
-            onClick={() => setChecked(true)}
+            onClick={checkOrder}
             disabled={!isComplete}
             className="rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-50"
           >

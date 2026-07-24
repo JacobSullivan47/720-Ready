@@ -50,6 +50,20 @@ export interface MockExamResult extends MockExamSummary {
   questions: GradedMockExamQuestion[];
 }
 
+export type ExerciseType = "CONFIG_BUILDER" | "ANTI_PATTERN_SPOTTER" | "SEQUENCING";
+
+export interface ExerciseAttemptRecord {
+  itemId: string;
+  domainKey: DomainKey;
+  isCorrect: boolean;
+  createdAt: string; // ISO
+}
+
+export interface ViewedOverviews {
+  domainKeys: DomainKey[];
+  scenarioKeys: ScenarioKey[];
+}
+
 export interface ProgressClient {
   isGuest: boolean;
 
@@ -71,4 +85,14 @@ export interface ProgressClient {
 
   pingStudyLog(): Promise<void>;
   getStudyLogDates(): Promise<string[]>;
+
+  getExerciseAttempts(): Promise<ExerciseAttemptRecord[]>;
+  recordExerciseAttempt(input: {
+    exerciseType: ExerciseType;
+    itemId: string;
+    isCorrect: boolean;
+  }): Promise<void>;
+
+  getViewedOverviews(): Promise<ViewedOverviews>;
+  markOverviewViewed(itemType: "DOMAIN" | "SCENARIO", key: string): Promise<void>;
 }

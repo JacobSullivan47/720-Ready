@@ -29,6 +29,8 @@ model User {
   studyLogs        StudyLog[]
   tutorConversations TutorConversation[]
   tutorMessages      TutorMessage[]
+  exerciseAttempts   ExerciseAttempt[]
+  overviewViews      OverviewView[]
 }
 
 model Account {
@@ -294,6 +296,58 @@ model StudyLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+}
+
+// ---------------------------------------------------------------------------
+// Interactive exercises + overview read-tracking
+// ---------------------------------------------------------------------------
+
+enum ExerciseType {
+  CONFIG_BUILDER
+  ANTI_PATTERN_SPOTTER
+  SEQUENCING
+}
+
+// One row per attempt at one exercise item (an anti-pattern scenario, a
+// sequencing puzzle, or the single config-builder exercise). itemId is a
+// stable string key (see EXERCISE_ITEM_DOMAIN in src/content/exercises.ts);
+// domainKey is resolved server-side from that same map, never trusted
+// directly from the client.
+model ExerciseAttempt {
+  id           String       @id @default(cuid())
+  userId       String
+  exerciseType ExerciseType
+  itemId       String
+  domainKey    DomainKey
+  isCorrect    Boolean
+  createdAt    DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, domainKey])
+  @@index([userId, itemId])
+}
+
+enum OverviewItemType {
+  DOMAIN
+  SCENARIO
+}
+
+// Tracks that a user has opened a domain/scenario overview page at least
+// once. Purely a "read" checklist, not a graded/mastery signal — overview
+// pages are reference material with no right/wrong to score.
+model OverviewView {
+  id          String           @id @default(cuid())
+  userId      String
+  itemType    OverviewItemType
+  domainKey   DomainKey?
+  scenarioKey ScenarioKey?
+  viewedAt    DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, domainKey])
+  @@unique([userId, scenarioKey])
 }
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 import { domains } from "@/content/domains";
+import { EXERCISE_ITEMS_BY_DOMAIN } from "@/content/exercises";
 import { cardRetentionScore, MASTERY_MIN_REPETITIONS, type SrsState } from "./srs";
-import type { AttemptRecord } from "./progress-types";
+import type { AttemptRecord, ExerciseAttemptRecord } from "./progress-types";
 import type { DomainKey } from "@/content/types";
 
 export interface DomainMastery {
@@ -9,12 +10,15 @@ export interface DomainMastery {
   weightPct: number;
   cardRetentionPct: number; // 0-100
   quizAccuracyPct: number; // 0-100 — % of attempted questions "mastered" (answered correctly at least MASTERY_MIN_REPETITIONS times)
+  exerciseMasteryPct: number; // 0-100 — % of this domain's exercise items "mastered" (correct at least MASTERY_MIN_REPETITIONS times)
   masteryPct: number; // 0-100, blended
   cardsReviewed: number;
   cardsTotal: number;
   attemptsCount: number;
   questionsMastered: number;
   questionsAttempted: number;
+  exercisesMastered: number;
+  exercisesTotal: number;
 }
 
 export interface ReadinessSummary {
@@ -24,25 +28,34 @@ export interface ReadinessSummary {
 }
 
 /**
- * Blends flashcard retention (SM-2 state) and question mastery into a single
- * 0-100 mastery score per domain (always a 50/50 average of the two — a
- * domain with 100% flashcard retention but zero question attempts caps out
- * at 50%, not 100%; full mastery requires engaging with both), then a
- * weight-adjusted overall readiness score. A domain with no activity at all
- * scores 0. Both inputs also require repeat success on the individual
- * item level (see MASTERY_MIN_REPETITIONS) — one correct answer or one good
- * flashcard rating isn't mastery on its own.
+ * Blends flashcard retention (SM-2 state), question mastery, and interactive
+ * exercise mastery into a single 0-100 mastery score per domain (always an
+ * even three-way average — a domain with 100% flashcard retention but zero
+ * activity in questions or exercises caps out at 33%, not 100%; full mastery
+ * requires engaging with all three), then a weight-adjusted overall readiness
+ * score. A domain with no activity at all scores 0. All three inputs also
+ * require repeat success on the individual item level (see
+ * MASTERY_MIN_REPETITIONS) — one correct answer, one good flashcard rating,
+ * or one correct exercise attempt isn't mastery on its own.
  */
 export function computeReadiness(
   cardsByDomain: Record<DomainKey, string[]>, // domainKey -> all card IDs in that domain
   cardStates: Record<string, SrsState>,
   attempts: AttemptRecord[],
+  exerciseAttempts: ExerciseAttemptRecord[] = [],
 ): ReadinessSummary {
   const attemptsByDomain = new Map<DomainKey, AttemptRecord[]>();
   for (const a of attempts) {
     const list = attemptsByDomain.get(a.domainKey) ?? [];
     list.push(a);
     attemptsByDomain.set(a.domainKey, list);
+  }
+
+  const exerciseAttemptsByDomain = new Map<DomainKey, ExerciseAttemptRecord[]>();
+  for (const a of exerciseAttempts) {
+    const list = exerciseAttemptsByDomain.get(a.domainKey) ?? [];
+    list.push(a);
+    exerciseAttemptsByDomain.set(a.domainKey, list);
   }
 
   const domainStats: DomainMastery[] = domains.map((d) => {
@@ -73,10 +86,30 @@ export function computeReadiness(
     ).length;
     const quizAccuracyPct = questionsAttempted > 0 ? (questionsMastered / questionsAttempted) * 100 : 0;
 
-    // Always blend both halves, even when one side has no data yet (0%).
-    // Doing nothing but flashcards (or nothing but questions) for a domain
-    // caps out at 50% — full mastery requires engaging with both.
-    const masteryPct = 0.5 * cardRetentionPct + 0.5 * quizAccuracyPct;
+    // Same repeat-success rule applied to interactive exercises: an exercise
+    // item counts as mastered only once answered correctly at least
+    // MASTERY_MIN_REPETITIONS times. Denominator is the domain's total
+    // available exercise items (not just attempted ones), since the exercise
+    // bank is small and fully enumerable per domain.
+    const exerciseItemIds = EXERCISE_ITEMS_BY_DOMAIN[d.key] ?? [];
+    const domainExerciseAttempts = exerciseAttemptsByDomain.get(d.key) ?? [];
+    const correctCountByExerciseItem = new Map<string, number>();
+    for (const a of domainExerciseAttempts) {
+      if (a.isCorrect) {
+        correctCountByExerciseItem.set(a.itemId, (correctCountByExerciseItem.get(a.itemId) ?? 0) + 1);
+      }
+    }
+    const exercisesMastered = exerciseItemIds.filter(
+      (itemId) => (correctCountByExerciseItem.get(itemId) ?? 0) >= MASTERY_MIN_REPETITIONS,
+    ).length;
+    const exercisesTotal = exerciseItemIds.length;
+    const exerciseMasteryPct = exercisesTotal > 0 ? (exercisesMastered / exercisesTotal) * 100 : 0;
+
+    // Always blend all three components, even when some have no data yet
+    // (0%). Doing nothing but one or two of flashcards/questions/exercises
+    // for a domain caps out below 100% — full mastery requires engaging
+    // with all three.
+    const masteryPct = (cardRetentionPct + quizAccuracyPct + exerciseMasteryPct) / 3;
 
     return {
       domainKey: d.key,
@@ -84,12 +117,15 @@ export function computeReadiness(
       weightPct: d.weightPct,
       cardRetentionPct: Math.round(cardRetentionPct),
       quizAccuracyPct: Math.round(quizAccuracyPct),
+      exerciseMasteryPct: Math.round(exerciseMasteryPct),
       masteryPct: Math.round(masteryPct),
       cardsReviewed: reviewed.length,
       cardsTotal: cardIds.length,
       attemptsCount: domainAttempts.length,
       questionsMastered,
       questionsAttempted,
+      exercisesMastered,
+      exercisesTotal,
     };
   });
 

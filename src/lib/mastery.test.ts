@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { computeCurrentStreak, computeReadiness } from "./mastery";
 import { domains } from "@/content/domains";
-import type { AttemptRecord } from "./progress-types";
+import { EXERCISE_ITEMS_BY_DOMAIN } from "@/content/exercises";
+import type { AttemptRecord, ExerciseAttemptRecord } from "./progress-types";
 
 const cardsByDomain = Object.fromEntries(
   domains.map((d) => [d.key, [`${d.key}-1`, `${d.key}-2`, `${d.key}-3`, `${d.key}-4`]]),
 ) as Record<string, string[]>;
+
+// AGENTIC_ARCHITECTURE has 4 exercise items in the real content bank.
+const agenticExerciseItems = EXERCISE_ITEMS_BY_DOMAIN.AGENTIC_ARCHITECTURE!;
+
+function masteredExerciseAttempts(itemIds: string[]): ExerciseAttemptRecord[] {
+  return itemIds.flatMap((itemId) => [
+    { itemId, domainKey: "AGENTIC_ARCHITECTURE" as const, isCorrect: true, createdAt: new Date().toISOString() },
+    { itemId, domainKey: "AGENTIC_ARCHITECTURE" as const, isCorrect: true, createdAt: new Date().toISOString() },
+  ]);
+}
 
 describe("computeReadiness", () => {
   it("gives every domain 0 mastery with no activity", () => {
@@ -17,8 +28,9 @@ describe("computeReadiness", () => {
   it("weights overall readiness by domain weight, not a plain average", () => {
     // Perfect mastery only in the highest-weighted domain (Agentic Architecture, 27%).
     // Each of 10 questions answered correctly TWICE (mastery requires
-    // MASTERY_MIN_REPETITIONS correct answers per question), AND all 4 of
-    // that domain's flashcards mastered too — full mastery requires both.
+    // MASTERY_MIN_REPETITIONS correct answers per question), all 4 of that
+    // domain's flashcards mastered, AND all of its exercise items mastered too
+    // — full mastery requires engaging with all three.
     const cardStates = Object.fromEntries(
       cardsByDomain.AGENTIC_ARCHITECTURE.map((id) => [
         id,
@@ -35,17 +47,19 @@ describe("computeReadiness", () => {
         mode: "PRACTICE" as const,
         createdAt: new Date(Date.now() + idx).toISOString(),
       }));
-    const result = computeReadiness(cardsByDomain, cardStates, attempts);
+    const exerciseAttempts = masteredExerciseAttempts(agenticExerciseItems);
+    const result = computeReadiness(cardsByDomain, cardStates, attempts, exerciseAttempts);
     const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
     expect(agentic.masteryPct).toBe(100);
     expect(agentic.questionsMastered).toBe(10);
     expect(agentic.questionsAttempted).toBe(10);
+    expect(agentic.exercisesMastered).toBe(agenticExerciseItems.length);
     // Overall should be well below 100 since 4 other domains are untouched.
     expect(result.overallReadinessPct).toBeLessThan(50);
     expect(result.overallReadinessPct).toBeGreaterThan(0);
   });
 
-  it("caps mastery at 50% when only flashcards (no questions) have been done", () => {
+  it("caps mastery at ~33% when only flashcards (no questions or exercises) have been done", () => {
     const cardStates = Object.fromEntries(
       cardsByDomain.AGENTIC_ARCHITECTURE.map((id) => [
         id,
@@ -56,10 +70,11 @@ describe("computeReadiness", () => {
     const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
     expect(agentic.cardRetentionPct).toBe(100);
     expect(agentic.quizAccuracyPct).toBe(0);
-    expect(agentic.masteryPct).toBe(50);
+    expect(agentic.exerciseMasteryPct).toBe(0);
+    expect(agentic.masteryPct).toBe(33);
   });
 
-  it("caps mastery at 50% when only questions (no flashcards) have been done", () => {
+  it("caps mastery at ~33% when only questions (no flashcards or exercises) have been done", () => {
     const attempts: AttemptRecord[] = Array.from({ length: 4 }, (_, i) => i)
       .flatMap((i) => [i, i])
       .map((i, idx) => ({
@@ -74,7 +89,48 @@ describe("computeReadiness", () => {
     const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
     expect(agentic.cardRetentionPct).toBe(0);
     expect(agentic.quizAccuracyPct).toBe(100);
-    expect(agentic.masteryPct).toBe(50);
+    expect(agentic.exerciseMasteryPct).toBe(0);
+    expect(agentic.masteryPct).toBe(33);
+  });
+
+  it("caps mastery at ~67% when only flashcards and questions (no exercises) have been done", () => {
+    const cardStates = Object.fromEntries(
+      cardsByDomain.AGENTIC_ARCHITECTURE.map((id) => [
+        id,
+        { easeFactor: 2.8, intervalDays: 30, repetitions: 5, lapses: 0 },
+      ]),
+    );
+    const attempts: AttemptRecord[] = Array.from({ length: 4 }, (_, i) => i)
+      .flatMap((i) => [i, i])
+      .map((i, idx) => ({
+        questionId: `q${i}`,
+        domainKey: "AGENTIC_ARCHITECTURE" as const,
+        selectedIndexes: [0],
+        isCorrect: true,
+        mode: "PRACTICE" as const,
+        createdAt: new Date(Date.now() + idx).toISOString(),
+      }));
+    const result = computeReadiness(cardsByDomain, cardStates, attempts, []);
+    const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
+    expect(agentic.cardRetentionPct).toBe(100);
+    expect(agentic.quizAccuracyPct).toBe(100);
+    expect(agentic.exerciseMasteryPct).toBe(0);
+    expect(agentic.masteryPct).toBe(67);
+  });
+
+  it("does NOT count an exercise item as mastered after only one correct attempt", () => {
+    const exerciseAttempts: ExerciseAttemptRecord[] = [
+      {
+        itemId: agenticExerciseItems[0],
+        domainKey: "AGENTIC_ARCHITECTURE",
+        isCorrect: true,
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    const result = computeReadiness(cardsByDomain, {}, [], exerciseAttempts);
+    const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
+    expect(agentic.exercisesMastered).toBe(0);
+    expect(agentic.exerciseMasteryPct).toBe(0);
   });
 
   it("does NOT count a question as mastered after only one correct answer", () => {

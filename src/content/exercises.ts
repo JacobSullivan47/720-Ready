@@ -300,3 +300,37 @@ export const SEQUENCING_EXERCISES: SequencingExercise[] = [
     ],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Exercise-item -> domain mapping (for mastery tracking)
+// ---------------------------------------------------------------------------
+//
+// Every gradeable exercise item gets a stable itemId and a domain
+// attribution, so exercise results can feed into the same per-domain
+// mastery calculation as flashcards and questions. Anti-pattern scenarios
+// and sequencing exercises are already domain-tagged in their own content;
+// the config builder is a single exercise about CLAUDE.md/rules/MCP scoping
+// with no natural per-item domain split, so it's attributed wholesale to
+// Claude Code Configuration & Workflows, the domain it actually covers.
+
+export const CONFIG_BUILDER_ITEM_ID = "config-builder:main";
+
+/** Maps every exercise item's stable ID to the domain it counts toward. */
+export const EXERCISE_ITEM_DOMAIN: Record<string, DomainKey> = {
+  ...Object.fromEntries(
+    ANTI_PATTERN_SCENARIOS.map((s) => [`apspotter:${s.id}`, s.domainKey] as const),
+  ),
+  ...Object.fromEntries(
+    SEQUENCING_EXERCISES.map((e) => [`sequencing:${e.id}`, e.domainKey] as const),
+  ),
+  [CONFIG_BUILDER_ITEM_ID]: "CLAUDE_CODE_WORKFLOWS",
+};
+
+/** Reverse of EXERCISE_ITEM_DOMAIN — every exercise itemId available per domain. */
+export const EXERCISE_ITEMS_BY_DOMAIN: Partial<Record<DomainKey, string[]>> = (() => {
+  const map: Partial<Record<DomainKey, string[]>> = {};
+  for (const [itemId, domainKey] of Object.entries(EXERCISE_ITEM_DOMAIN)) {
+    (map[domainKey] ??= []).push(itemId);
+  }
+  return map;
+})();

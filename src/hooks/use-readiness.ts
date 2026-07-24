@@ -21,11 +21,12 @@ export function useReadiness() {
     let cancelled = false;
 
     async function load() {
-      const [cardStates, fetchedAttempts, studyDates, history] = await Promise.all([
+      const [cardStates, fetchedAttempts, studyDates, history, exerciseAttempts] = await Promise.all([
         client.getAllCardStates(),
         client.getAttempts(),
         client.getStudyLogDates(),
         client.getMockExamHistory(),
+        client.getExerciseAttempts(),
       ]);
       if (cancelled) return;
 
@@ -34,7 +35,7 @@ export function useReadiness() {
         (cardsByDomain[card.domainKey] ??= []).push(card.id);
       }
 
-      setReadiness(computeReadiness(cardsByDomain, cardStates, fetchedAttempts));
+      setReadiness(computeReadiness(cardsByDomain, cardStates, fetchedAttempts, exerciseAttempts));
       setStreak(computeCurrentStreak(studyDates));
       setMockExamHistory(history);
       setAttempts(fetchedAttempts);

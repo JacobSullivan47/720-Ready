@@ -5,10 +5,12 @@ import Link from "next/link";
 import clsx from "clsx";
 import { ANTI_PATTERN_SCENARIOS } from "@/content/exercises";
 import { domains } from "@/content/domains";
+import { useProgress } from "@/hooks/use-progress";
 
 type Stage = "flaw" | "fix" | "done";
 
 export default function AntiPatternSpotterPage() {
+  const { client } = useProgress();
   const [index, setIndex] = useState(0);
   const [stage, setStage] = useState<Stage>("flaw");
   const [flawChoice, setFlawChoice] = useState<number | null>(null);
@@ -24,10 +26,18 @@ export default function AntiPatternSpotterPage() {
     if (i === scenario.correctFlawIndex) setScore((s) => s + 1);
   }
 
-  function chooseFix(i: number) {
+  async function chooseFix(i: number) {
     if (fixChoice != null) return;
     setFixChoice(i);
     if (i === scenario.correctFixIndex) setScore((s) => s + 1);
+
+    const gotFlawRight = flawChoice === scenario.correctFlawIndex;
+    const gotFixRight = i === scenario.correctFixIndex;
+    await client.recordExerciseAttempt({
+      exerciseType: "ANTI_PATTERN_SPOTTER",
+      itemId: `apspotter:${scenario.id}`,
+      isCorrect: gotFlawRight && gotFixRight,
+    });
   }
 
   function next() {

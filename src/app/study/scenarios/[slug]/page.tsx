@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { scenarios } from "@/content/scenarios";
 import { scenarioKeyFromSlug, scenarioSlug } from "@/lib/slugs";
 import { TopicOverview } from "@/components/topic-overview";
+import { MarkOverviewViewed } from "@/components/mark-overview-viewed";
 
 export function generateStaticParams() {
   return scenarios.map((s) => ({ slug: scenarioSlug(s.key) }));
@@ -28,6 +29,7 @@ export default async function ScenarioPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <MarkOverviewViewed itemType="SCENARIO" itemKey={scenario.key} />
       <TopicOverview
         data={scenario}
         eyebrow="Production scenario"

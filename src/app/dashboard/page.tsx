@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useReadiness } from "@/hooks/use-readiness";
 import { useProgress } from "@/hooks/use-progress";
@@ -7,6 +8,9 @@ import { ProgressBar } from "@/components/progress-bar";
 import { ExamOverviewCard } from "@/components/exam-overview-card";
 import { ScoreTrendChart } from "@/components/score-trend-chart";
 import { domainSlug } from "@/lib/slugs";
+import { domains } from "@/content/domains";
+import { scenarios } from "@/content/scenarios";
+import type { ViewedOverviews } from "@/lib/progress-types";
 
 function readinessTone(pct: number): "danger" | "warning" | "success" {
   if (pct < 40) return "danger";
@@ -14,11 +18,19 @@ function readinessTone(pct: number): "danger" | "warning" | "success" {
   return "success";
 }
 
+const TOTAL_OVERVIEWS = domains.length + scenarios.length;
+
 export default function DashboardPage() {
   const { readiness, streak, mockExamHistory, attempts, loading } = useReadiness();
-  const { status } = useProgress();
+  const { client, status } = useProgress();
+  const [viewedOverviews, setViewedOverviews] = useState<ViewedOverviews>({ domainKeys: [], scenarioKeys: [] });
+
+  useEffect(() => {
+    client.getViewedOverviews().then(setViewedOverviews).catch(() => {});
+  }, [client]);
 
   const missedCount = new Set(attempts.filter((a) => !a.isCorrect).map((a) => a.questionId)).size;
+  const overviewsReadCount = viewedOverviews.domainKeys.length + viewedOverviews.scenarioKeys.length;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -131,20 +143,42 @@ export default function DashboardPage() {
                     value={d.masteryPct}
                     tone={readinessTone(d.masteryPct)}
                   />
-                  <div className="mt-2 grid grid-cols-2 gap-3 text-xs text-foreground-muted">
+                  <div className="mt-2 grid grid-cols-1 gap-3 text-xs text-foreground-muted sm:grid-cols-3">
                     <div>
                       Flashcard retention: {d.cardRetentionPct}% ({d.cardsReviewed}/{d.cardsTotal} reviewed)
                     </div>
                     <div>
                       Questions mastered: {d.quizAccuracyPct}% ({d.questionsMastered}/{d.questionsAttempted} attempted)
                     </div>
+                    <div>
+                      Exercises mastered: {d.exerciseMasteryPct}% ({d.exercisesMastered}/{d.exercisesTotal})
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
             <p className="mt-2 text-xs text-foreground-muted">
-              A card or question only counts toward mastery once you&apos;ve gotten it right at least twice.
+              A card, question, or exercise only counts toward mastery once you&apos;ve gotten it right at least
+              twice, and full mastery requires engaging with flashcards, questions, and exercises alike.
             </p>
+          </div>
+
+          <div className="mt-8 rounded-lg border border-border bg-surface p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Concept overviews read</h2>
+                <p className="mt-1 text-sm text-foreground-muted">
+                  {overviewsReadCount} of {TOTAL_OVERVIEWS} domain &amp; scenario overviews opened. Reading isn&apos;t
+                  scored toward mastery, just tracked so you can see what&apos;s left.
+                </p>
+              </div>
+              <Link
+                href="/study/overview"
+                className="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-surface-muted"
+              >
+                Browse overviews
+              </Link>
+            </div>
           </div>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
