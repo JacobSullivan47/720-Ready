@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useContentBank } from "@/hooks/use-content-bank";
 import { FlashcardSession } from "@/components/flashcard-session";
@@ -44,7 +45,12 @@ function FlashcardsPageInner() {
   if (!selection) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Flashcards</h1>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Flashcards</h1>
+          <Link href="/bookmarks" className="text-sm font-medium text-brand hover:underline">
+            ★ View bookmarked cards
+          </Link>
+        </div>
         <p className="mt-2 text-foreground-muted">Choose a deck to study.</p>
 
         <button
