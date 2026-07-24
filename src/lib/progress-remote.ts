@@ -62,10 +62,10 @@ export const remoteProgressClient: ProgressClient = {
     return jsonFetch("/api/exam/start", { method: "POST" });
   },
 
-  async saveMockExamProgress(examId, answers, currentIndex) {
+  async saveMockExamProgress(examId, answers, currentIndex, remainingSec) {
     await jsonFetch(`/api/exam/${examId}/progress`, {
       method: "PATCH",
-      body: JSON.stringify({ answers, currentIndex }),
+      body: JSON.stringify({ answers, currentIndex, remainingSec }),
     });
   },
 
@@ -74,6 +74,10 @@ export const remoteProgressClient: ProgressClient = {
       method: "POST",
       body: JSON.stringify({ answers }),
     });
+  },
+
+  async deleteMockExam(examId) {
+    await jsonFetch(`/api/exam/${examId}`, { method: "DELETE" });
   },
 
   async pingStudyLog() {

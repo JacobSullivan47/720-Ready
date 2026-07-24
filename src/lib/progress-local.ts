@@ -143,6 +143,7 @@ export const localProgressClient: ProgressClient = {
       timeLimitSec: MOCK_EXAM_TIME_LIMIT_SEC,
       answers: {},
       currentIndex: 0,
+      remainingSec: MOCK_EXAM_TIME_LIMIT_SEC,
       questions: questions.map((q) => ({
         id: q.id,
         domainKey: q.domainKey,
@@ -160,12 +161,12 @@ export const localProgressClient: ProgressClient = {
     return getActiveGuestExam();
   },
 
-  async saveMockExamProgress(examId, answers, currentIndex) {
+  async saveMockExamProgress(examId, answers, currentIndex, remainingSec) {
     const active = readJson<ActiveExamStorage | null>(KEYS.activeExam, null);
     if (!active || active.exam.id !== examId) return;
     writeJson<ActiveExamStorage>(KEYS.activeExam, {
       ...active,
-      exam: { ...active.exam, answers, currentIndex },
+      exam: { ...active.exam, answers, currentIndex, remainingSec },
     });
   },
 
@@ -241,6 +242,16 @@ export const localProgressClient: ProgressClient = {
     await localProgressClient.pingStudyLog();
 
     return result;
+  },
+
+  async deleteMockExam(examId) {
+    const history = readJson<MockExamSummary[]>(KEYS.mockExams, []);
+    writeJson(
+      KEYS.mockExams,
+      history.filter((h) => h.id !== examId),
+    );
+    const active = readJson<ActiveExamStorage | null>(KEYS.activeExam, null);
+    if (active?.exam.id === examId) writeJson(KEYS.activeExam, null);
   },
 
   async pingStudyLog() {

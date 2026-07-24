@@ -54,6 +54,7 @@ export async function POST() {
       status: "IN_PROGRESS",
       scenarioKeys: assembled.scenarioKeys,
       timeLimitSec: MOCK_EXAM_TIME_LIMIT_SEC,
+      remainingSec: MOCK_EXAM_TIME_LIMIT_SEC,
       questions: {
         create: assembled.questions.map((q, order) => ({
           order,
@@ -75,6 +76,7 @@ export async function POST() {
     timeLimitSec: exam.timeLimitSec,
     answers: {},
     currentIndex: 0,
+    remainingSec: exam.remainingSec,
     questions: exam.questions.map((eq) => ({
       id: eq.question.id,
       domainKey: eq.question.domainKey,

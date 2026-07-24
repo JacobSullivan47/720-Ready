@@ -38,6 +38,7 @@ export interface MockExamInProgress extends MockExamSummary {
   timeLimitSec: number;
   answers: Record<string, number[]>;
   currentIndex: number;
+  remainingSec: number; // frozen while the tab is hidden, not derived from startedAt
 }
 
 export interface GradedMockExamQuestion extends MockExamQuestionRecord {
@@ -99,11 +100,13 @@ export interface ProgressClient {
     examId: string,
     answers: Record<string, number[]>,
     currentIndex: number,
+    remainingSec: number,
   ): Promise<void>;
   submitMockExam(
     examId: string,
     answers: Record<string, number[]>,
   ): Promise<MockExamResult>;
+  deleteMockExam(examId: string): Promise<void>;
 
   pingStudyLog(): Promise<void>;
   getStudyLogDates(): Promise<string[]>;

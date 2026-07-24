@@ -244,6 +244,7 @@ model MockExam {
   domainBreakdown Json? // { [DomainKey]: { correct, total } }
   answers       Json           @default("{}") // { [questionId]: number[] } — saved incrementally while in progress
   currentIndex  Int            @default(0) // last question the user was viewing, for resume
+  remainingSec  Int            @default(7200) // countdown, frozen while the tab is hidden — not derived from startedAt
 
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions MockExamQuestion[]

@@ -6,6 +6,7 @@ import { requireUserId } from "@/lib/api-auth";
 const bodySchema = z.object({
   answers: z.record(z.string(), z.array(z.number().int().min(0))),
   currentIndex: z.number().int().min(0),
+  remainingSec: z.number().int().min(0),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +16,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid input." }, { status: 400 });
-  const { answers, currentIndex } = parsed.data;
+  const { answers, currentIndex, remainingSec } = parsed.data;
 
   const exam = await prisma.mockExam.findUnique({ where: { id } });
   if (!exam || exam.userId !== auth.userId) {
@@ -27,7 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   await prisma.mockExam.update({
     where: { id },
-    data: { answers, currentIndex },
+    data: { answers, currentIndex, remainingSec },
   });
 
   return NextResponse.json({ ok: true });

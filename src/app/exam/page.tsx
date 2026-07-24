@@ -28,11 +28,6 @@ function scenarioName(key: string): string {
   return scenarios.find((s) => s.key === key)?.name ?? key;
 }
 
-function secondsRemaining(exam: MockExamInProgress): number {
-  const elapsed = Math.floor((Date.now() - new Date(exam.startedAt).getTime()) / 1000);
-  return exam.timeLimitSec - elapsed;
-}
-
 export default function ExamPage() {
   const { client } = useProgress();
   const [phase, setPhase] = useState<"loading" | "start" | "in-progress" | "results">("loading");
@@ -42,10 +37,16 @@ export default function ExamPage() {
   const [answers, setAnswers] = useState<Record<string, number[]>>({});
   const [current, setCurrent] = useState(0);
   const [remainingSec, setRemainingSec] = useState(0);
+  const [tabVisible, setTabVisible] = useState(true);
   const [result, setResult] = useState<MockExamResult | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [starting, setStarting] = useState(false);
   const submittedRef = useRef(false);
+  const remainingSecRef = useRef(0);
+
+  useEffect(() => {
+    remainingSecRef.current = remainingSec;
+  }, [remainingSec]);
 
   const submit = useCallback(
     async (examId: string, finalAnswers: Record<string, number[]>) => {
@@ -62,7 +63,7 @@ export default function ExamPage() {
     Promise.all([client.getMockExamHistory(), client.getActiveMockExam()]).then(([h, active]) => {
       setHistory(h);
       if (active) {
-        if (secondsRemaining(active) > 0) {
+        if (active.remainingSec > 0) {
           setActiveExam(active);
         } else {
           // Time already ran out while the user was away — close it out the
@@ -76,25 +77,42 @@ export default function ExamPage() {
     });
   }, [client, submit]);
 
+  // The timer only ticks while the tab is actually visible — switching away
+  // freezes it exactly where it was, instead of continuing to burn time in
+  // the background, and it picks back up (not catches up) when you return.
   useEffect(() => {
-    if (phase !== "in-progress" || !exam) return;
+    function handleVisibilityChange() {
+      const visible = document.visibilityState === "visible";
+      setTabVisible(visible);
+      if (!visible && exam) {
+        client.saveMockExamProgress(exam.id, answers, current, remainingSecRef.current).catch(() => {});
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [exam, answers, current, client]);
+
+  useEffect(() => {
+    if (phase !== "in-progress" || !exam || !tabVisible) return;
     if (remainingSec <= 0) {
       submit(exam.id, answers);
       return;
     }
     const timer = setInterval(() => setRemainingSec((s) => s - 1), 1000);
     return () => clearInterval(timer);
-  }, [phase, exam, remainingSec, submit, answers]);
+  }, [phase, exam, remainingSec, tabVisible, submit, answers]);
 
-  // Autosave answers/current question while in progress, so the exam can be
-  // resumed later. Debounced since selecting an answer can fire in quick
-  // succession (e.g. toggling a multi-select option a few times).
+  // Autosave answers/current question/remaining time while in progress, so
+  // the exam can be resumed later. Debounced since selecting an answer can
+  // fire in quick succession (e.g. toggling a multi-select option a few
+  // times) — remainingSec itself isn't a trigger here (it'd fire every
+  // second); it just rides along at whatever value the ref last saw.
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (phase !== "in-progress" || !exam) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      client.saveMockExamProgress(exam.id, answers, current).catch(() => {});
+      client.saveMockExamProgress(exam.id, answers, current, remainingSecRef.current).catch(() => {});
     }, 800);
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -122,10 +140,20 @@ export default function ExamPage() {
     setExam(activeExam);
     setAnswers(activeExam.answers);
     setCurrent(activeExam.currentIndex);
-    setRemainingSec(secondsRemaining(activeExam));
+    setRemainingSec(activeExam.remainingSec);
     setResult(null);
     setReviewing(false);
     setPhase("in-progress");
+  }
+
+  async function deleteExam(examId: string) {
+    const ok = window.confirm(
+      "Delete this mock exam? Its score and progress will be permanently removed — this can't be undone.",
+    );
+    if (!ok) return;
+    await client.deleteMockExam(examId);
+    setHistory((h) => h.filter((entry) => entry.id !== examId));
+    setActiveExam((a) => (a?.id === examId ? null : a));
   }
 
   function toggleAnswer(questionId: string, idx: number, multi: boolean) {
@@ -169,7 +197,7 @@ export default function ExamPage() {
             <p className="text-sm font-medium text-brand-strong">Exam in progress</p>
             <p className="mt-1 text-foreground">
               Question {activeExam.currentIndex + 1} of {activeExam.questions.length} ·{" "}
-              {formatTime(secondsRemaining(activeExam))} remaining
+              {formatTime(activeExam.remainingSec)} remaining
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -216,14 +244,23 @@ export default function ExamPage() {
                       {h.scenarioKeys.map(scenarioName).join(", ")}
                     </p>
                   </div>
-                  {h.scaledScore != null && (
-                    <div className="text-right">
-                      <p className="text-lg font-semibold">{h.scaledScore}</p>
-                      <p className={h.passed ? "text-success" : "text-danger"}>
-                        {h.passed ? "Passed" : "Not passing"}
-                      </p>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-4">
+                    {h.scaledScore != null && (
+                      <div className="text-right">
+                        <p className="text-lg font-semibold">{h.scaledScore}</p>
+                        <p className={h.passed ? "text-success" : "text-danger"}>
+                          {h.passed ? "Passed" : "Not passing"}
+                        </p>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => deleteExam(h.id)}
+                      aria-label="Delete this exam"
+                      className="rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground-muted hover:border-danger hover:text-danger"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

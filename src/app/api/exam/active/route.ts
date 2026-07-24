@@ -26,6 +26,7 @@ export async function GET() {
       timeLimitSec: exam.timeLimitSec,
       answers: exam.answers,
       currentIndex: exam.currentIndex,
+      remainingSec: exam.remainingSec,
       questions: exam.questions.map((eq) => ({
         id: eq.question.id,
         domainKey: eq.question.domainKey,
