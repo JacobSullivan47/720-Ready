@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useReadiness } from "@/hooks/use-readiness";
 import { useProgress } from "@/hooks/use-progress";
 import { ProgressBar } from "@/components/progress-bar";
+import { ExamOverviewCard } from "@/components/exam-overview-card";
 import { domainSlug } from "@/lib/slugs";
 
 function readinessTone(pct: number): "danger" | "warning" | "success" {
@@ -35,6 +36,10 @@ export default function DashboardPage() {
             Create an account to sync progress
           </Link>
         )}
+      </div>
+
+      <div className="mt-6">
+        <ExamOverviewCard />
       </div>
 
       {loading || !readiness ? (
