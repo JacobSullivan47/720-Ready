@@ -323,4 +323,191 @@ export const questions: QuestionSeed[] = [
       "Good ideas here are: writing instructions in clearly labeled sections (like a table of contents), and giving a quick reminder of the important stuff partway through a really long conversation. Bad ideas are: assuming the assistant remembers something you only said once at the very beginning without resending it, blaming a 'auto-delete' that isn't actually happening, or trying to write a rule for every single possible situation, which just makes things worse, not better.",
     difficulty: "HARD",
   },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    type: "SINGLE",
+    prompt:
+      "A developer inspects the exact JSON payload the Messages API sends for a turn where the assistant previously requested a tool call and the application already ran the tool and now has the result ready to send back. Which structural description of that payload is accurate?",
+    options: [
+      "The tool result must be sent as a new top-level parameter called 'tool_result', separate from both 'system' and 'messages'.",
+      "The assistant's prior tool call appears as a tool_use content block inside an assistant message, and the tool's output is returned as a tool_result content block inside the next user message, with the system prompt still passed separately as the top-level 'system' parameter.",
+      "The system prompt must be embedded as a message with role 'system' inside the messages array, positioned directly before the tool_result block.",
+      "Sending a tool_result block removes the need to resend the top-level 'system' parameter for that one turn, since the tool call already establishes sufficient context.",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "A tool_use block lives in the assistant message that requested the call, and the corresponding tool_result is returned inside the next user message — the top-level system parameter is unaffected by any of this and is still required on every request. There is no separate top-level 'tool_result' parameter (option A is fabricated), there is no 'system' role usable inside the messages array (option C), and nothing about sending a tool_result changes the requirement to resend the system prompt (option D).",
+    eli10:
+      "When an assistant asks to use a tool, that request is tucked inside its own turn, and the answer that comes back from the tool is tucked inside the next turn — like a note passed back and forth. The instructions you gave at the very start still have to be included every single time, no matter what notes are being passed.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    scenarioKey: "CUSTOMER_SUPPORT_AGENT",
+    type: "SINGLE",
+    prompt:
+      "A support assistant's system prompt includes a labeled 'Order State' section noting that a customer's order is currently 'Processing.' Mid-conversation, the warehouse marks the order as 'Shipped.' What is the best way to make sure the assistant's next reply reflects the new status?",
+    options: [
+      "Do nothing extra, since the model will infer the updated status from the flow of conversation on its own.",
+      "Update the labeled state section (or a clearly labeled state block) in what's sent with the next request so it reflects 'Shipped,' since state changes have to be explicitly represented in each call rather than assumed to carry over.",
+      "Insert a new message with role 'system' into the messages array announcing the change, since the top-level system parameter can't be modified between turns.",
+      "Wait until the customer explicitly asks about shipping before mentioning the update, since proactively changing the prompt could confuse the model.",
+      "Re-send the exact same system prompt as before, since state updates are only reflected once the entire conversation restarts.",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Because the API is stateless, a changed real-world fact like order status has to be represented in what's actually sent — updating a labeled state section (or block) is the natural way to do that for the next call. The model has no channel to 'infer' an update it was never given (option A), there's no 'system' role inside the messages array — the top-level system parameter can simply be changed between calls (option C), delaying the update serves no purpose and risks the assistant giving stale information (option D), and nothing requires restarting the conversation to reflect new state (option E).",
+    eli10:
+      "If a substitute teacher was told 'the test is Friday' and then the test gets moved to Monday, someone has to actually tell them the new date before their next class — they won't magically know, and you don't need to start the whole day over, you just update what you tell them.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    type: "SINGLE",
+    prompt:
+      "A team wants their extraction assistant to correctly flag a field as missing when a source document genuinely doesn't contain that information, rather than inventing a plausible-sounding value to fill the gap. Several rewrites of a prose instruction describing this distinction haven't reliably fixed the behavior. What is most likely to work better?",
+    options: [
+      "Provide a couple of concrete worked examples: one document where the field is present and correctly extracted, and one where the field is genuinely absent and correctly flagged as missing, rather than fabricated.",
+      "Repeat the same prose instruction three times in a row within the system prompt for extra emphasis.",
+      "Remove the instruction from the system prompt entirely, since additional wording rarely changes behavior on edge cases like this.",
+      "Lower the max_tokens value so there is less room in the response for the model to write out a fabricated value.",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "Concrete worked examples are often more effective than prose at teaching a subtle distinction like 'missing vs. present,' since they show the exact desired behavior in both cases rather than describing it abstractly. Repeating the same prose wording isn't the same technique as providing examples and isn't described as an effective fix (option B), removing the instruction entirely would only make the problem worse (option C), and shortening the allowed output length doesn't address a fabrication tendency and could just as easily truncate a legitimate value (option D).",
+    eli10:
+      "If someone keeps mixing up two similar situations no matter how you explain the difference in words, showing them one clear example of each situation side by side usually clicks better than saying the same sentence over and over, giving up on the instruction, or just telling them to write less.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    type: "SINGLE",
+    prompt:
+      "A classification task sorts each incoming ticket into exactly one of five fixed categories. The team previously tried to reduce inconsistent free-text answers by supplying a partial, unfinished assistant message at the end of the request so the reply would start with an opening JSON brace — and on current-generation models this now returns a validation error. What is a better modern approach for this specific classification task?",
+    options: [
+      "Define the output schema with a field constrained to an enum of the five valid category values, so the response can only ever be one of those five options.",
+      "Instruct the model in the system prompt to 'always answer in exactly one word' and hope the wording stays consistent across tickets.",
+      "Retry the same partial trailing assistant message but shorten it, since shorter prefill strings are still accepted on current models.",
+      "Post-process every response afterward with a regular expression that strips out any text that isn't one of the five category names.",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "An enum-constrained field is one of the documented modern replacements for prefill specifically for classification tasks — it structurally restricts the output to the valid set rather than hoping for compliance. Prose wording alone is a weaker guarantee than schema enforcement (option B), prefill is deprecated regardless of how short the partial string is — there's no length-based exception (option C), and a regex cleanup step doesn't stop the model from choosing an invalid category in the first place, it only reacts to the problem after the fact (option D).",
+    eli10:
+      "If you want someone to only ever answer with one of five specific words, the clean way is to hand them a form with exactly five checkboxes and nothing else, so there's no other option available. That beats hoping they remember to keep it short, trying an old trick that no longer works, or cleaning up their answer after the fact.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    type: "SINGLE",
+    prompt:
+      "A developer wants one specific conversational turn where the assistant must reply with plain text only and must not call any tool, even though several tools remain defined for the conversation as a whole. Which tool_choice setting fits this requirement?",
+    options: [
+      "auto, since the model is generally trusted to decide when a tool call isn't needed",
+      "any, since it lets the model pick whichever tool is least disruptive",
+      "none, since it disables tool use entirely for that turn, guaranteeing a plain-text-only reply",
+      "A named/specific tool setting, since naming one tool ensures the others are ignored",
+    ],
+    correctIndexes: [2],
+    explanation:
+      "none is the setting that disables tool use for a turn, which is the only option that guarantees a plain-text reply with no tool call possible. auto still leaves the door open for the model to call a tool if it judges one is needed, any explicitly mandates that some tool call happen, and a named/specific tool setting would force exactly that tool's call rather than preventing tool use altogether.",
+    eli10:
+      "If you want to be completely sure someone doesn't press any buttons this round and just talks, you'd tell them 'no buttons this time' — that's different from 'use your judgment,' 'you must press something,' or 'press this one specific button.'",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    scenarioKey: "MULTI_AGENT_RESEARCH",
+    type: "SINGLE",
+    prompt:
+      "In a multi-agent research pipeline, a lead agent hands each new sub-agent it spawns a progressively longer transcript of every prior sub-agent's findings, reasoning that 'more context can only help.' No new tools are added at any point, yet after several rounds both token cost and latency climb noticeably. What best explains the climb?",
+    options: [
+      "Token cost and latency scale with what's actually sent on each call, including the size of the conversation/context, so handing forward an ever-larger transcript increases cost and latency even with a completely fixed tool set.",
+      "Latency is determined only by the number of tools defined for a call, so a growing transcript with no new tools shouldn't affect it at all.",
+      "This must indicate a bug, since token cost is fixed per conversation regardless of how much message content is included.",
+      "The API automatically caps total context size, so a climb like this can't be explained by growing input length in a correctly configured system.",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "Cost and latency grow with the size of a conversation or context passed on each call, independent of whether the tool set changed — a steadily lengthening transcript is exactly the kind of growth that produces this effect. Latency isn't solely a function of tool count (option B is an invented restriction), token cost is not fixed regardless of content length (option C), and there's no described automatic context cap that would prevent this outcome (option D is fabricated).",
+    eli10:
+      "If you keep handing someone a thicker and thicker stack of notes to read before they can answer, it naturally takes longer and costs more effort each time — even if you never gave them any new tools to use. The stack itself is what's growing.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    scenarioKey: "CLAUDE_CODE_CI_CD",
+    type: "SINGLE",
+    prompt:
+      "An agent wired into a CI/CD pipeline receives a single message: 'deploy the update.' It's unclear which of two pending branches should ship, which environment (staging or production) is meant, and what the rollback plan is — and a production deploy is difficult to reverse once traffic has shifted. The team generally prefers one focused clarifying question over a long list. Is that general preference still the best approach here?",
+    options: [
+      "Yes — always ask exactly one question at a time regardless of stakes, since asking more than one question is never appropriate.",
+      "No — for a costly, hard-to-reverse action like a production deploy, asking several clarifying questions up front before doing anything is the safer default, even though a single focused question is usually preferred for lower-stakes requests.",
+      "No — the agent should deploy to production using its best guess on all three unclear points, since asking questions slows down a CI/CD pipeline.",
+      "Yes, and the one question to ask should be about the rollback plan only, since the branch and environment can both be safely assumed.",
+      "No — the agent should silently deploy to staging only, since staging deploys never need clarification regardless of the request's wording.",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Irreversible, costly, or regulated actions are the specific exception where asking several clarifying questions up front, rather than one at a time, is the safer default — a production deploy with an unclear branch, environment, and rollback plan fits that profile exactly. Rigidly capping every situation at one question ignores that exception (option A), guessing on all three unclear points before an effectively irreversible action is exactly the risk the guidance warns against (option C), picking only one of three equally unclear points to ask about leaves the other two just as risky (option D), and silently redirecting to staging substitutes an unrequested assumption for actually resolving the ambiguity (option E).",
+    eli10:
+      "Normally it's best to ask one clear question at a time so you don't overwhelm someone. But if you're about to do something big and hard to undo — like actually launching a rocket instead of a toy one — it's worth double-checking a few key things first, even if that means more than one question this time.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    type: "SINGLE",
+    prompt:
+      "A document-processing service always needs a structured extraction result whenever it calls the model for a given document — a plain-text reply would break the downstream pipeline — and exactly one extraction tool is defined for these calls. Which statement about tool_choice for this call is accurate?",
+    options: [
+      "auto is the right choice, since the model should be free to decide whether structured extraction is really needed for this particular document.",
+      "Either any or naming the one extraction tool directly would force a tool call here, and since there's only a single tool defined, both settings produce the same guaranteed outcome for this call.",
+      "none is sufficient, since forcing a tool call is unnecessary as long as the prompt clearly asks for JSON-formatted output in prose.",
+      "any should be avoided here in favor of auto, because any cannot be used when only one tool is defined for a conversation.",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "any mandates some tool call while leaving the choice of tool open, and naming the single available tool directly forces that same exact call — with only one tool defined, both settings converge on the identical guaranteed result. auto would leave tool use optional, which risks a plain-text reply that breaks the pipeline (option A), none disables tool use altogether and prose-only JSON requests are a weaker guarantee than enforced tool use (option C), and there's no restriction preventing any from being used with just one tool defined (option D is fabricated).",
+    eli10:
+      "If there's only one snack in the cupboard, telling someone 'grab a snack, your choice' and telling them 'grab the granola bar' end up meaning the same thing, since there's nothing else to pick. That's different from saying 'grab a snack only if you feel like it,' which leaves open the chance of no snack at all.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    type: "MULTI",
+    prompt:
+      "A team is documenting guidance on when their assistant should ask a clarifying question versus proceed on its own judgment. Select the two statements that accurately describe that guidance.",
+    options: [
+      "Asking a clarifying question is warranted when the user's message has multiple plausible interpretations that would lead to substantially different actions.",
+      "It's best to proceed on a reasonable assumption without asking when the action is low-risk, context strongly implies the intended meaning, and the user could easily correct a wrong guess.",
+      "A single ambiguous phrase always justifies asking three or four questions at once, so that nothing is ever missed.",
+      "If the user's stated requirements genuinely conflict with each other, the assistant should silently pick whichever interpretation seems most common and proceed without mentioning the conflict.",
+      "Missing information that's actually necessary to complete a request is never a valid reason to ask a clarifying question, since the assistant should always proceed on a best guess instead.",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "Substantially different plausible interpretations is a documented trigger for asking, and proceeding without asking is the right call when the risk is low, context implies intent, and mistakes are easy to correct — these two statements describe complementary halves of the same guidance. Defaulting to a long list of three or four questions for any ambiguity overstates the guidance, which actually favors one focused question outside of high-stakes cases (option C); silently resolving a genuine conflict between stated requirements instead of naming the tension is the opposite of the recommended handling (option D); and missing necessary information is explicitly one of the valid reasons to ask, not a reason to skip asking (option E).",
+    eli10:
+      "Good rules of thumb: ask a question when a request could really mean two very different things, but don't bother asking when the answer is obvious, low-stakes, and easy to fix later if you guessed wrong. Bad ideas: always firing off a big list of questions for any tiny unclear bit, quietly picking a side when two requests actually clash instead of just saying so, or refusing to ever ask even when truly important information is missing.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    type: "MULTI",
+    prompt:
+      "A developer is reviewing how the four tool_choice settings — auto, any, a named/specific tool, and none — actually behave. Select the two accurate statements.",
+    options: [
+      "auto is the default setting and leaves both whether to call a tool at all, and which tool to call, up to the model.",
+      "any guarantees that some tool call happens this turn but still leaves the choice of which available tool to use up to the model.",
+      "A named/specific tool setting still allows the model to reply with plain text instead, if it determines no tool is truly necessary for the user's message.",
+      "auto and any are functionally identical in every situation, since both settings were designed to eventually result in a tool call.",
+      "Setting tool_choice to none disables tool use for that turn and also removes the tool schemas from that request's payload entirely, since they're considered unnecessary once tool use is disabled.",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "auto is the default and leaves both decisions — whether to call a tool, and which one — open to the model, while any narrows that to 'a tool call is mandatory' but still leaves the choice of tool open; these are two accurate, complementary descriptions. A named/specific tool setting removes the plain-text option entirely rather than still permitting it (option C is false), treating auto and any as identical is exactly the common confusion the two settings are meant to be distinguished from, since auto makes tool use optional while any makes it mandatory (option D is false), and none disabling tool use for a turn says nothing about the tool schemas being stripped from the payload — that's an unsupported extra claim (option E is false).",
+    eli10:
+      "Two true facts: 'use your judgment, tools optional' is the default setting, and a different setting means 'you must use some tool, but you still get to pick which one.' It's wrong to think those two settings are the same thing, wrong to think naming one exact tool still lets someone just talk instead, and wrong to assume turning tools off for a turn also erases the tool descriptions from what gets sent.",
+    difficulty: "HARD",
+  },
 ];

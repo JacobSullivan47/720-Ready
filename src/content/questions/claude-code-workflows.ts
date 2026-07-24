@@ -340,4 +340,189 @@ export const questions: QuestionSeed[] = [
       "Plan mode is like sketching a blueprint and getting it approved before building anything — that part's true, and it suits big, tricky building projects. But sketching a blueprint isn't the same as thinking harder, you can pick up a pencil again mid-project, and an approved blueprint doesn't guarantee the finished building needs zero touch-ups.",
     difficulty: "MEDIUM",
   },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A developer needs to bump one dependency's version string inside package.json, a change confined to a single file with no architectural implications and a clearly defined target line. Which workflow best fits this?",
+    options: [
+      "Plan mode, since any dependency bump could theoretically introduce risk somewhere",
+      "Direct execution, since this is a small, localized, low-risk change with a clearly defined target",
+      "Delegating the entire task to a subagent via Task",
+      "Forking the session first, so the version bump can be tried on a separate transcript",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "A small, localized, low-risk change with an obvious target is exactly what direct execution suits — there's no need to explore read-only or seek approval first. Plan mode is reserved for work spanning many files, architectural tradeoffs, or genuine risk, none of which apply to a one-line version bump. Delegating such a trivial, well-defined edit to a subagent adds overhead for no benefit. Forking addresses branching a conversation or comparing alternatives, not the risk level of a single tiny edit.",
+    eli10:
+      "If you just need to change one number on a form, you don't call a meeting first or hand it off to someone else — you just write the new number. Save the careful planning for the big, complicated stuff.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "One engineer asks for a new API endpoint by saying only 'follow our usual style,' while another asks for the same endpoint by saying 'match the pattern in src/routes/users.ts and register it in src/routes/index.ts the way the other routes are registered.' Which request is more likely to produce a correctly styled result, and why?",
+    options: [
+      "The vague request, because 'usual style' implicitly covers every edge case without needing detail",
+      "The specific request, because pointing to concrete files gives a verifiable pattern to follow instead of relying on an ambiguous general instruction",
+      "Both are equally effective, since the assistant will infer the same conventions regardless of what's said",
+      "Neither matters, since referenced files are never actually read before writing new code",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Referencing concrete files gives an unambiguous, checkable example to match, which is more effective than a vague instruction like 'usual style' that could mean many different things depending on interpretation. The two requests are not equally effective — specificity measurably reduces ambiguity. And referenced files are exactly the kind of context that does get read to inform the new code, not ignored.",
+    eli10:
+      "Saying 'draw it like my other drawing on this page' is a lot clearer than just saying 'draw it in my style' with nothing to point at. Showing the actual example helps way more than a vague description.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    scenarioKey: "MULTI_AGENT_RESEARCH",
+    type: "SINGLE",
+    prompt:
+      "A team wants to understand why their nightly build has gradually slowed down over several months. The cause could be CI configuration drift, dependency changes, test suite growth, or infrastructure changes, and there's no single obvious file or function to start from. Which approach best fits this kind of broad, open-ended investigation?",
+    options: [
+      "A single Grep for the word 'slow' across the entire repository",
+      "Delegating the broad investigation to a subagent via the Task mechanism, since it spans many unrelated areas with no single clear starting point",
+      "A targeted Edit to the CI configuration file, assuming that alone is the cause",
+      "Read-then-Write the entire CI pipeline definition from scratch without further investigation",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "An investigation this broad — spanning CI config, dependencies, tests, and infrastructure with no clear single starting point — is exactly what delegating to a subagent via Task is meant for. Grepping for a generic word like 'slow' won't surface a structural, multi-part cause. Editing the CI config on an unverified assumption skips the investigation entirely. Rewriting the whole pipeline definition from scratch is disproportionate and doesn't diagnose anything.",
+    eli10:
+      "If you don't know why your whole morning routine keeps taking longer — maybe it's breakfast, maybe it's traffic, maybe it's something else entirely — you'd want a helper to look into all of it broadly, not just check one guess or search for one random word.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A developer paused a saved session three months ago while investigating a performance issue. Since then, another engineer substantially rewrote the module in question, so the old transcript's specific file contents and code snippets likely no longer match reality. What is the better approach now?",
+    options: [
+      "Resume the old session and continue exactly where it left off without mentioning anything about the rewrite",
+      "Start a fresh session with a concise summary of the goal, since the old transcript's specifics are likely stale enough to mislead more than help",
+      "Use the continue-most-recent flag, trusting it to automatically detect and account for the rewrite",
+      "Fork the old session, since forking automatically refreshes its understanding of the current file contents",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "When a codebase has changed enough that an old transcript's specifics are likely stale or misleading, starting fresh with a concise summary of the goal is the safer path. Resuming without acknowledging the rewrite risks the assistant reasoning from outdated file contents it still 'remembers.' The continue-most-recent flag has no awareness of code changes — it just picks a conversation. Forking only branches the conversation transcript; it does not re-read files or refresh any understanding of current content.",
+    eli10:
+      "If your notes about a room are three months old and someone repainted and rearranged all the furniture since, trusting those old notes could lead you the wrong way. It's better to walk in fresh with just your goal in mind than to follow a description of a room that no longer exists.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A team wants to properly compare two alternative implementations of a caching strategy side by side, making sure neither attempt's file changes interfere with the other and that each line of reasoning stays separate. Which combination correctly achieves this?",
+    options: [
+      "Forking the session alone, since a forked session isolates both conversation history and file changes automatically",
+      "Forking the session to branch the conversation, paired with a separate git branch or worktree so each implementation's file changes stay isolated on disk",
+      "Resuming the same session twice in sequence, since resuming preserves all necessary isolation",
+      "Copy-pasting a summary of the original conversation into two brand-new sessions instead of forking",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Properly comparing two implementations requires both: forking the session to keep the reasoning branches separate, and a distinct git branch or worktree so the actual file changes on disk don't collide. Forking alone only isolates conversation history, not files. Resuming the same session twice doesn't create two separate reasoning branches at all. Copy-pasting a summary loses the tool-call history that forking preserves, and still does nothing about file isolation.",
+    eli10:
+      "To fairly test two different cake recipes, you'd want two separate notebooks for your notes AND two separate bowls for the batter. Just having two notebooks but mixing both recipes in the same bowl would ruin the comparison.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    scenarioKey: "CLAUDE_CODE_CI_CD",
+    type: "SINGLE",
+    prompt:
+      "After patching a flaky function, a developer wants to confirm the existing test suite still passes before considering the fix done. Which built-in tool is the natural fit for this verification step?",
+    options: [
+      "Edit, since it can also validate that a change behaves correctly",
+      "Bash, to run the test suite and inspect the results directly",
+      "Glob, to locate all test files by their file extension",
+      "Task, to delegate the running of a single test command to a subagent",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Running a test suite is a shell operation, which is exactly what Bash is for — it executes the tests and surfaces pass/fail results. Edit only changes file contents; it doesn't execute or validate anything. Glob can find test files by pattern but can't run them. Delegating a single, well-defined command like 'run the tests' to a subagent is unnecessary overhead when Bash can do it directly.",
+    eli10:
+      "To check if your fixed bike actually works, you ride it — you don't just look at where the bike shop is located, and you don't need to send a friend to ride it for you when you can just hop on yourself.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A configuration file needs to be restructured from a flat list of key-value pairs into a nested, grouped format, a change that touches nearly every line and alters the file's overall shape rather than one isolated spot. Which built-in approach fits best?",
+    options: [
+      "A single targeted Edit matching one unique flat key-value block",
+      "Read the file to understand its current content, then Write a complete replacement in the new nested structure",
+      "Glob for the configuration file's name to restructure its contents directly",
+      "Delegate the single-file restructuring to a subagent via Task, since it counts as broad exploration",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "When a change touches nearly the entire file and reshapes its structure, Read-then-Write is the better fit — a targeted Edit is meant for a small, uniquely identifiable change, not a near-total rewrite. Glob only locates files by name or path; it can't alter content. Task-based delegation is meant for broad, open-ended exploration across many files or unknowns, not a single, well-understood file rewrite.",
+    eli10:
+      "If you're reorganizing your entire sock drawer into new sections instead of just swapping one sock, you empty it out and rearrange everything at once — you don't just nudge a single sock, and you don't need to search the house for the drawer's name tag first.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A team scopes a rule file about REST error-handling conventions to the glob pattern src/api/v1/**/*.ts, intending it to guide all of their HTTP handlers. Months later they add a new src/api/v2/ directory with the same kind of handlers, and notice the rule never seems to apply there. What happened?",
+    options: [
+      "Rule files can only ever be scoped to one directory for the entire lifetime of a project",
+      "The glob pattern was scoped too narrowly, so it silently fails to apply to the new v2 handlers even though the same convention should govern them",
+      "CLAUDE.md and rule files stop functioning once any new top-level directory is added to a project",
+      "Rule files only apply to files that already existed at the moment the rule file was written",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "This is the too-narrow side of glob scoping: a pattern locked to src/api/v1/**/*.ts simply won't match anything under src/api/v2/, so the rule silently fails to apply where it's actually still relevant — no error is raised, it just doesn't apply. Rule file scope can be adjusted at any time, not fixed forever. Adding a new directory doesn't break CLAUDE.md or rule files generally. And rule files apply based on path matching at the time of use, not a frozen snapshot of files that existed when the rule was authored.",
+    eli10:
+      "If a sign only says 'quiet please' on Hallway A's door, putting up a brand-new Hallway B won't make people there follow that rule too — the sign simply doesn't cover a hallway it was never posted on.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    scenarioKey: "DEVELOPER_PRODUCTIVITY_TOOLS",
+    type: "MULTI",
+    prompt:
+      "Which TWO statements accurately describe when to reach for particular built-in tools in Claude Code?",
+    options: [
+      "Bash is the appropriate tool for running a test suite or other shell commands, not for searching file contents",
+      "A full-file Read-then-Write is a reasonable fit when a change touches nearly the entire file's structure, rather than one isolated line",
+      "Task-based subagent delegation is best reserved for the smallest, most trivial single-line changes",
+      "Edit is the preferred tool whenever a change spans dozens of unrelated files at once",
+      "Grep should be used instead of Bash whenever the goal is to actually execute a test suite",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "Bash is correctly the tool for executing shell commands like a test suite, and Read-then-Write correctly fits a near-total file rewrite rather than an isolated change. Task-based delegation is reserved for broad, open-ended work, not trivial single-line edits — that's backwards from the actual guidance. Edit suits a small, targeted, uniquely identifiable change, not dozens of unrelated files simultaneously. And Grep only searches file contents; it cannot execute anything, so it can't substitute for Bash when running tests.",
+    eli10:
+      "Using a wrench to run a race doesn't work, and using a stopwatch to tighten a bolt doesn't either — each tool fits a specific job. Running tests needs the tool that actually runs things, and rewriting almost a whole page needs a fresh page, not a single crossed-out word.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "MULTI",
+    prompt:
+      "Which TWO statements correctly describe how to handle resuming work after significant time has passed and the codebase may have changed?",
+    options: [
+      "If most of a saved session's context is still useful, resuming and explicitly telling the assistant exactly which files or functions have changed is a reasonable approach",
+      "If the old transcript is likely stale or misleading, starting a fresh session with a concise summary of the goal is often safer than resuming",
+      "A saved session automatically re-scans the codebase for changes the moment it's resumed",
+      "Once a session is forked, its understanding of the codebase is guaranteed to be current, regardless of how much time has passed",
+      "Assistant-maintained memory automatically rewrites itself to match any codebase changes without being told",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "Both are legitimate, complementary strategies depending on how stale the old context is: resume-and-correct when most of it still holds, or start fresh with a summary when it doesn't. There is no automatic re-scanning of the codebase when a session resumes — stale assumptions can persist unless corrected. Forking only branches the conversation transcript; it doesn't refresh or verify anything about current file contents. And assistant memory doesn't self-update to track code changes on its own — it still reflects whatever was previously noted until told otherwise.",
+    eli10:
+      "Coming back to a project after a long break, you either say 'hey, here's exactly what changed while I was gone' if most of what you remember still holds up, or you start over with just the goal in mind if too much has changed. Nothing automatically re-checks the room for you or magically updates your old notes by itself.",
+    difficulty: "HARD",
+  },
 ];

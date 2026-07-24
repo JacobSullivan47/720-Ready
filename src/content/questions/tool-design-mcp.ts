@@ -318,4 +318,191 @@ export const questions: QuestionSeed[] = [
       "If your own personal note and a shared team note both use the same label, your personal note is the one that counts, not a mix of both, and not the team one just because more people saw it.",
     difficulty: "MEDIUM",
   },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A ticket-routing tool accepts a priority parameter typed as a free-text string. In practice, callers have sent 'high', 'High', 'URGENT', 'sev1', and 'asap', and the downstream routing logic has to guess at each variant's meaning, sometimes incorrectly. What is the most direct fix?",
+    options: [
+      "Add a longer description explaining the intended values without changing the parameter's type",
+      "Convert priority to an enum with a small fixed set of allowed values, such as 'low', 'medium', 'high', 'critical'",
+      "Rename the parameter to priority_level for clarity",
+      "Keep priority as free text but validate that the string is non-empty",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "For a stable, closed set of values like priority tiers, an enum constrains input to a small known list, which is exactly what removes the guessing problem at its source. A longer description doesn't stop callers from sending fresh spelling variants, a rename doesn't change what values are legal, and requiring non-empty text still lets any of the same inconsistent variants through.",
+    eli10:
+      "Instead of hoping everyone spells 'urgent' the same way, give them a short list of buttons to pick from, like low, medium, high, critical, so there's no way to say it a different way.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A reporting tool exposes a single parameter, filter_expression: string, where callers are expected to write things like \"status=open AND assigned_to=alice AND created_after=2026-01-01\". The model frequently gets the syntax slightly wrong, producing malformed expressions that fail to parse. Which redesign best follows recommended parameter design?",
+    options: [
+      "Add a detailed grammar reference for filter_expression inside the tool description",
+      "Replace filter_expression with distinct typed parameters that mirror the real domain model, such as status (enum), assignee_id (string), and created_after (date)",
+      "Keep filter_expression but return a clearer parsing-error message whenever the syntax is wrong",
+      "Ask the model to first call a separate tool that validates filter_expression syntax before the real call",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Replacing one generic, hand-parsed string with parameters shaped like the actual domain concepts, a status enum, an assignee id, a date, removes the syntax-guessing problem entirely, since the model no longer has to construct a fragile mini-language. A grammar reference in the description still relies on the model reliably generating free-form syntax; better error messages only react after a malformed call already happened; and a separate validation tool adds an extra round trip to work around a problem that typed parameters avoid from the start.",
+    eli10:
+      "Instead of asking someone to write 'status=open AND assigned=alice' as one tricky sentence that's easy to get wrong, just give them separate boxes to fill in, one for status and one for who it's assigned to. Much harder to mess up.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A scheduling tool defines a parameter named start_time_iso8601_utc_string, but the tool's description and schema say nothing further about the expected format. What is the problem with relying on the parameter name alone to communicate this?",
+    options: [
+      "There is no real problem, since a descriptive parameter name fully replaces the need for stating format in the description",
+      "Naming conventions are not a substitute for stating the format explicitly in the description, since the model may not reliably infer format expectations from an identifier alone",
+      "Parameter names longer than roughly 20 characters silently degrade model performance",
+      "JSON Schema rejects parameter names that contain multiple underscores",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Packing format expectations only into a parameter's name is a known pitfall; the model is far more reliably steered by an explicit statement and example in the tool description than by inferring meaning from an identifier. There's no length-based performance cliff, and JSON Schema places no such restriction on underscores in names, so the tool will register and run fine, it will simply be more error-prone in practice than if the format were stated plainly.",
+    eli10:
+      "Naming a box 'Fragile_Glass_DoNotDrop' doesn't actually tell the mover how to handle it if nobody explains what those words mean. You have to say the instructions out loud, not just hope the label's wording does all the work.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "CUSTOMER_SUPPORT_AGENT",
+    type: "SINGLE",
+    prompt:
+      "A support-ticket lookup tool returns its result as one sentence: 'Ticket #4471 for customer Dana Cole is currently marked resolved.' A separate reopen_ticket tool needs a ticket_id to act, and engineers notice the model sometimes transposes digits when copying the number out of the sentence into the next call. What is the most direct fix?",
+    options: [
+      "Ask the model to always re-read the sentence twice before calling reopen_ticket",
+      "Have the lookup tool return structured fields, such as ticket_id, customer_name, and status, so ticket_id can be passed forward directly instead of being retyped out of prose",
+      "Shorten the sentence so it's easier to copy accurately",
+      "Add a checksum digit to ticket numbers so typos can be caught after the fact",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Returning structured, named fields lets a downstream tool reference the identifier directly instead of relying on the model to re-transcribe it out of prose, which is the actual source of the transposition errors. Re-reading or shortening the sentence doesn't remove the transcription step at all, and a checksum only detects a problem after the fact rather than preventing the miscopy from happening in the first place.",
+    eli10:
+      "Telling someone a phone number out loud versus handing them a card with the number printed on it, the printed card is much harder to mess up copying. Give the next tool the actual card, not a sentence to transcribe.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "An agent calls a charge_card tool to bill a customer. The HTTP request times out with no response, but logs later show the charge was likely submitted to the payment processor before the timeout occurred. The agent's retry logic is about to call charge_card again with the same amount. What is the correct handling?",
+    options: [
+      "Retry immediately, since timeouts are always transient infrastructure errors",
+      "Treat the outcome as uncertain rather than retrying blindly, since a retry could duplicate a charge that may have already gone through",
+      "Skip charging entirely and mark the invoice as paid, since the timeout implies the charge succeeded",
+      "Treat it as a permanent validation error and ask the model to change the input",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "A write whose completion status is genuinely unknown after a timeout must be surfaced as uncertain rather than automatically retried, because a blind retry risks a duplicate charge, a real financial harm the ordinary transient-timeout playbook doesn't account for. Assuming success outright is just as unfounded as assuming failure, since neither is actually known. And this isn't a validation error at all; the input was fine, and the failure occurred purely at the infrastructure level.",
+    eli10:
+      "If you're not sure whether your text actually sent before your phone froze, sending it again might mean the person gets it twice. Better to check first than to assume and repeat something that may have already happened.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "DEVELOPER_PRODUCTIVITY_TOOLS",
+    type: "SINGLE",
+    prompt:
+      "A team is building a single internal agent that calls a bespoke deployment script specific to their own pipeline, one that no other team or agent will ever need. A developer proposes wrapping this script as a full MCP server anyway, reasoning that 'MCP is the standard so everything should use it.' What is the most reasonable assessment?",
+    options: [
+      "This is a good use of MCP, since MCP servers always simplify authentication and error handling for any tool they expose",
+      "A plain custom tool is likely the better fit here, since MCP's main advantage is reusability across multiple clients or agents, which doesn't apply to a single, one-off, application-specific workflow",
+      "MCP must be used, since production tools are only ever exposed through MCP servers",
+      "Neither approach works; the script must instead be rewritten as an Anthropic-defined client-side tool",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "MCP earns its overhead when an integration needs to be reused across multiple clients or agents; a single-agent, deeply specific workflow like this one doesn't benefit from that reusability and is usually simpler and faster to build as a plain custom tool. MCP by itself doesn't automatically solve authentication or error handling, so it isn't an automatic simplification. There's no rule confining production tools exclusively to MCP, and Anthropic-defined client-side tools are a separate, unrelated category, like bash or the text editor tool, not a substitute for wrapping a custom internal script.",
+    eli10:
+      "If only one person will ever use a particular tool, it doesn't need a fancy shared toolbox with a shared catalog and lock. Just keep it as a simple tool for that one job.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A team adopts an MCP server to expose their internal ticketing system to several agents. After launch, they're surprised to hit rate-limit errors from the underlying ticketing API and see inconsistent behavior when two agents call the same tool at the same time. What does this reveal about a common misconception?",
+    options: [
+      "That MCP servers are incompatible with concurrent access and must be restricted to a single caller at a time",
+      "That adopting MCP by itself does not automatically provide rate limiting, caching, or concurrency handling; those still need to be engineered into the server or the backend it wraps",
+      "That the team should have used a server-side tool instead, since only server-side tools handle rate limits",
+      "That MCP tools cannot call APIs that enforce rate limits",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "MCP standardizes how tools are exposed and discovered, but it doesn't inherently provide rate limiting, caching, retries, or authorization; those concerns still need to be engineered into the server or the system it wraps. MCP servers aren't restricted to single-caller use, so concurrent access isn't the actual problem. Server-side tools are a different execution model entirely with no special built-in rate-limit handling that MCP tools lack. And MCP tools can absolutely call rate-limited APIs; the rate limit is simply a real constraint the implementation still has to handle.",
+    eli10:
+      "Giving a bunch of kids one shared water fountain doesn't automatically stop them from all pushing the button at once, someone still has to set up a line. MCP is the shape of the fountain, not the line-forming rule.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "SINGLE",
+    prompt:
+      "A developer wants to connect Claude Code to an MCP server that requires their personal API key. They don't want the key checked into the shared repository or visible to the rest of the team, but they still want the server available while working in this particular project. Which MCP configuration scope best fits this need?",
+    options: [
+      "Project scope, since it's specific to this repository",
+      "User scope, since it applies to every project the developer works on",
+      "Local scope, since it's per-user and per-project and isn't checked into the shared repository",
+      "There is no way to keep a credential out of the shared repository while still using it in this project",
+    ],
+    correctIndexes: [2],
+    explanation:
+      "Local scope is scoped to both the individual developer and the specific project without being committed to the shared repository, which is exactly the fit for a personal credential the developer doesn't want teammates to see. Project scope lives in the committed .mcp.json and is shared with the whole team, the opposite of what's needed here. User scope would apply the same server to every project rather than just this one. And Claude Code does support exactly this need through local scope, so there is a way to do it.",
+    eli10:
+      "If you have a secret key you only want to use for one specific project and don't want to leave lying around for the whole team to see, you keep it in your own personal drawer for that project, not in the shared team folder.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    type: "MULTI",
+    prompt:
+      "A code reviewer is auditing a newly written send_notification tool. The tool's description reads only 'Sends a notification.' Its parameters are message: string, recipient: string, and options: string, where options is meant to hold things like urgency and delivery channel packed together as free text. Which two statements correctly identify problems with this design?",
+    options: [
+      "The description fails to state when to use the tool, when not to, or what the output contains, leaving the model to guess",
+      "Packing urgency and delivery channel into one free-text options string discards structure that could instead be separate, well-typed parameters like an urgency enum and a channel enum",
+      "The tool is fine as written, since message and recipient are both correctly typed as strings",
+      "recipient should also stay free text, since notification recipients vary too much to ever type strictly",
+      "The real fix is simply renaming options to config_options for clarity",
+      "Splitting options into typed parameters would violate a rule limiting tools to at most two parameters",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "The bare one-line description gives no guidance on when to use it, when to avoid it, expected input specifics, or output shape, exactly the gap good tool descriptions are meant to close. Bundling urgency and channel into a single free-text field throws away structure that could be enforced with small enums instead, inviting inconsistent values. The tool is not fine as written given those two gaps; recipient could very reasonably be tightened to a stable identifier depending on the domain rather than assumed to require free text; a rename alone adds no missing structure; and no such limit on parameter count exists.",
+    eli10:
+      "A tool that just says 'sends a notification' and lets you shove 'urgent, by text' into one blank box is like a form with no instructions and only one giant blank line instead of separate labeled boxes for each piece of information.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "TOOL_DESIGN_MCP",
+    scenarioKey: "CODE_GENERATION_CLAUDE_CODE",
+    type: "MULTI",
+    prompt:
+      "A developer connects five different MCP servers to their coding assistant, and three of them each expose a similarly named create_task tool with overlapping but slightly different behavior. The assistant frequently picks the wrong one. Which two responses are the recommended way to address this?",
+    options: [
+      "Sharpen each create_task tool's description so it clearly states its specific purpose and how it differs from the similarly named tools on other servers",
+      "Introduce progressive availability, such as a lightweight discovery step that surfaces a short ranked list of matching tools before the specific one becomes callable",
+      "Disconnect four of the five MCP servers, since only one server per capability can be connected at a time",
+      "Merge all three create_task tools behind one aggregator tool that takes a server_name parameter, since fewer top-level tools always means better selection",
+      "Rename all three tools to the exact same name so the assistant treats them as interchangeable",
+      "Nothing can be done; tool name collisions across independent MCP servers are always unresolvable",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "Clear, differentiated descriptions and a progressive-availability pattern, where a small discovery step narrows the field before specific tools become callable, are the established remedies for tools competing for the model's attention. There's no hard server-count limit forcing a developer to disconnect servers. Collapsing distinct tools behind one aggregator with a server_name parameter is the anti-pattern the guidance warns against rather than the fix, since it hides rather than clarifies the real tool surface. Making the names identical would make the three tools even harder to tell apart, not easier, and the situation is very much resolvable through description quality and progressive availability rather than a dead end.",
+    eli10:
+      "If three stores in a mall all had a sign that just said 'Shop,' you'd get confused about which one to walk into. Better signs describing what's actually different about each store, plus asking a helpful directory first, work a lot better than smashing all three stores into one confusing megastore.",
+    difficulty: "HARD",
+  },
 ];

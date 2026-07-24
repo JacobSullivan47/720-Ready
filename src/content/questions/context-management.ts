@@ -336,4 +336,189 @@ export const questions: QuestionSeed[] = [
       "It works best to keep the must-be-exact stuff in your own clearly labeled notes, and let the app's automatic 'shorten the old chat' feature handle the everyday chit-chat — not the other way around, and not by throwing away one approach entirely.",
     difficulty: "HARD",
   },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    scenarioKey: "DEVELOPER_PRODUCTIVITY_TOOLS",
+    type: "SINGLE",
+    prompt:
+      "A command-line coding assistant mostly gets questions like 'what does this command do' and 'what did I just run,' and users almost never refer back to something from dozens of commands earlier. Which context-management strategy is the best fit for this pattern, and why?",
+    options: [
+      "Progressive summarization, since the priority is long-term narrative continuity across the whole session",
+      "A sliding window that keeps only the most recent exchanges, since follow-up questions mostly depend on recent messages rather than distant ones",
+      "A structured state object updated on every single command the user runs",
+      "Context editing that clears every tool result the instant it is produced",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Sliding windows are a good match precisely when most follow-ups only depend on the last few exchanges, which is the case here — it's simple and cheap and doesn't need to preserve anything from far earlier. Progressive summarization (A) is built for long-term narrative continuity, which this use case doesn't need; a structured state object (C) is meant for tracking specific current values, not general conversational flow; and clearing every tool result instantly (D) would remove information the user might still ask about within the next couple of messages.",
+    eli10:
+      "If someone only ever asks about what just happened a moment ago, you don't need a whole notebook of everything from before — just remembering the last few things works great and is way less effort.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    type: "SINGLE",
+    prompt:
+      "A team says they've implemented 'progressive summarization,' but their version actually rewrites the entire transcript — including the last two exchanges — into a single compressed summary after every turn. Users often notice the assistant misses details they stated only moments earlier. What's the problem, and what should change?",
+    options: [
+      "Nothing is wrong — summarizing the full transcript, including the most recent turns, every time is exactly what progressive summarization means",
+      "The team should keep recent turns verbatim and only fold older, earlier blocks into the structured summary, since recent turns are what the user is most likely relying on precisely",
+      "The team should drop summarization altogether and switch to a sliding window over the last three messages",
+      "The team should summarize only the very first message of the conversation and never touch anything after that",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Progressive summarization is meant to replace older blocks with a structured summary while leaving recent turns verbatim — compressing the most recent exchanges defeats the purpose and is exactly why fresh details are getting lost. Option A describes the team's broken implementation, not the correct pattern; a sliding window (C) solves a different problem and would drop long-term narrative continuity entirely; and only ever summarizing the first message (D) doesn't address the recurring buildup of older turns over a long session.",
+    eli10:
+      "If you rewrite even the last thing someone just said into a short blurry note, you lose the exact detail they just gave you. The fix is to only shrink the OLD stuff and leave the newest few things written out in full.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    type: "SINGLE",
+    prompt:
+      "An IDE-integrated assistant needs to always know the developer's current formatting preferences — tabs vs. spaces, maximum line length, and preferred language — which occasionally change mid-session. What is the most reliable way to track this?",
+    options: [
+      "Re-read the entire conversation transcript on every request and infer the current preferences from whatever was said most recently",
+      "Maintain a small explicit structured preferences object that is included in every request and updated only when the developer actually changes a preference",
+      "Summarize the last five messages into a narrative paragraph and infer preferences from that paragraph",
+      "Apply a sliding window and assume whichever preferences appear in the most recent ten messages are still current",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "An explicit structured object that's included every request and updated precisely when a preference changes is the reliable way to track 'what's currently true,' since it doesn't depend on inference or on the preference having been mentioned recently. Re-inferring from the full transcript (A) or a recent narrative summary (C) risks misreading old versus new statements, and assuming the answer lives somewhere in the last ten messages (D) fails the moment a preference was set earlier and never repeated.",
+    eli10:
+      "Instead of scrolling back through the whole conversation to guess someone's current settings, just keep one clear little card that says exactly what they want right now, and update that card only when they actually change their mind.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    scenarioKey: "CLAUDE_CODE_CI_CD",
+    type: "SINGLE",
+    prompt:
+      "After a CI pipeline run finishes, a tool call returns a massive payload: full build logs, environment variable dumps, and a timestamped log line for every step. The application keeps only the overall build status and the names of any failing tests in context going forward. What does this practice illustrate?",
+    options: [
+      "Progressive summarization of the conversation history",
+      "Tool result compression — extracting only the fields relevant to the ongoing task and discarding the rest of the payload",
+      "A sliding window applied to CI runs",
+      "System prompt versioning across pipeline runs",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Pulling out just the build status and failing test names from a huge CI payload, and dropping full logs and environment dumps, is tool result compression — keeping what's relevant to the task and discarding the verbose rest. It isn't progressive summarization since no conversational history is being condensed (A); it isn't a sliding window since nothing is being dropped by message recency (C); and it has nothing to do with system prompt versions (D).",
+    eli10:
+      "If a build check hands back a giant wall of logs, you don't keep the whole wall — you just note whether it passed and which tests failed, and toss the rest.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    type: "MULTI",
+    prompt:
+      "Which two of the following correctly match a kind of information to the context-management strategy best suited for it?",
+    options: [
+      "Recent conversational flow that follow-ups rarely look further back than a few exchanges -> a sliding window",
+      "Exact recurring numeric facts that must stay precise -> folding them into a progressive narrative summary",
+      "Current, occasionally-changing user preferences -> an explicit structured state object updated on change",
+      "A persistent reference bible of world facts or safety-critical information -> a sliding window over the last few messages",
+      "Long-term narrative continuity across a very long session -> deleting all older turns with no replacement",
+    ],
+    correctIndexes: [0, 2],
+    explanation:
+      "A sliding window is well suited to conversational flow that only depends on recent exchanges, and an explicit structured state object is the right fit for current preferences that can change over time — those are options A and C. Exact numeric facts are precisely what gets blurred by narrative summarization (B), a persistent reference bible needs its own retained section rather than being subject to recency-based dropping (D), and long-term continuity calls for progressive summarization, not outright deletion with nothing kept (E).",
+    eli10:
+      "Matching the right tool to the right job matters: quick recent chit-chat fits a 'just remember the last few things' approach, and preferences that can change fit a labeled card that gets updated — but exact numbers shouldn't be squeezed into a vague summary, and a book of core facts shouldn't just get forgotten as messages scroll by.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    type: "SINGLE",
+    prompt:
+      "A team is deciding whether to build one comprehensive fact store upfront that tries to anticipate every fact a long-running assistant might ever need, versus fetching specific facts on demand only when a question actually requires them. Which approach is recommended as scaling better?",
+    options: [
+      "Building one comprehensive fact store upfront that anticipates every possible future need",
+      "Fetching facts on demand, retrieving only what's actually needed as questions arise",
+      "Folding all anticipated facts into a single narrative summary maintained from the start",
+      "Applying a sliding window that keeps only the ten most recently discussed facts",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "On-demand retrieval — pulling in exactly the facts a given question requires — scales better than trying to build one exhaustive store covering every conceivable future need, which tends to grow unwieldy and still risks missing something unanticipated. Pre-building a comprehensive store (A) doesn't scale as well; a narrative summary (C) isn't suited to exact facts at all; and a sliding window over facts (D) risks dropping a fact that's needed again after ten other facts have been discussed.",
+    eli10:
+      "It works better to look up exactly what you need, exactly when you need it, than to try to write down every possible fact you might ever need ahead of time — that second approach gets huge and still misses things.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    scenarioKey: "STRUCTURED_DATA_EXTRACTION",
+    type: "SINGLE",
+    prompt:
+      "An assistant extracts totals and line items from dozens of uploaded invoices over a long session, and is later asked to recall the exact total from an invoice processed much earlier. Which design best preserves that accuracy?",
+    options: [
+      "A running narrative summary of which invoices were discussed and roughly what they contained",
+      "A small structured fact table mapping invoice number to exact total, referenced directly instead of relying on any compressed summary",
+      "A sliding window that keeps only the three most recently processed invoices in context",
+      "Context editing rules that clear invoice details once a new invoice is uploaded",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "A structured fact table is exactly the mechanism for recurring exact figures — looking up 'invoice number -> total' directly avoids the precision loss that comes from compressing it into prose. A narrative summary (A) is interpretive and lossy for exact numbers; a sliding window (C) would drop the very invoice being asked about once three newer ones arrive; and clearing details via context editing (D) would delete the data needed to answer the question at all.",
+    eli10:
+      "If you need to remember exact totals from lots of receipts, it's better to keep a little table of 'receipt number -> total' than to write a fuzzy paragraph about the receipts, forget older receipts once new ones show up, or throw away each receipt's numbers as soon as the next one arrives.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    type: "SINGLE",
+    prompt:
+      "During a multi-hour coding session, a developer asks the assistant to revisit and adjust a change that was made to a file roughly two hours and many turns earlier. The session uses progressive summarization. Which underlying design correctly supports the assistant still being able to help with this?",
+    options: [
+      "The entire session, including the last exchange, gets rewritten into one short paragraph every turn",
+      "The older portion of the session — including that two-hour-old edit — was folded into a structured summary of decisions and changed files, while recent turns were kept verbatim",
+      "Only the last ten messages are kept and everything before that is discarded outright",
+      "All context older than thirty minutes is deleted with nothing kept in its place",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "This is exactly what progressive summarization is for: older material gets condensed into a structured summary — such as a running list of decisions and changed files — while recent turns stay verbatim, so a two-hour-old edit is still represented, just compactly. Rewriting even the most recent exchange into a short paragraph every turn (A) would blur recent precision; discarding everything before the last ten messages (C) is a sliding window and would lose the two-hour-old edit entirely; and deleting everything older than thirty minutes with no replacement (D) would erase it outright rather than compress it.",
+    eli10:
+      "For a long coding session, it helps to keep a short structured list of 'what changed and why' for the older parts, while still writing out the newest parts in full — that way even something from two hours ago is still remembered, just in a shorter form.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    type: "SINGLE",
+    prompt:
+      "A collaborative fiction app lets a user and the assistant co-write a novel across many months. What matters most to the user is the overall consistency of plot and character arcs, not recalling the exact phrasing of any single sentence from chapters ago. Which strategy is the best primary fit?",
+    options: [
+      "A sliding window, since only the most recently written chapter should ever matter",
+      "Progressive summarization, replacing older chapters with a structured summary of characters, decisions, and open plot threads while keeping recent chapters verbatim",
+      "Tool result compression, since no tools are involved in a writing session",
+      "Context editing that deletes older chapters outright with nothing kept in their place",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Long-term narrative continuity across a long-running session is exactly what progressive summarization is designed for — condensing older chapters into a structured summary while keeping the most recent chapters verbatim preserves the arc without keeping everything at full length. A sliding window (A) would lose the overall arc since it only cares about recency; tool result compression (C) doesn't apply since there's no tool payload involved; and deleting older chapters outright (D) would lose the continuity the user actually cares about.",
+    eli10:
+      "For a long story written over many months, it helps to keep a short 'story so far' style recap of the older chapters — with the important characters and plot points spelled out — while still keeping the newest chapters written out in full.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "CONTEXT_MANAGEMENT",
+    type: "MULTI",
+    prompt:
+      "A due-diligence assistant reviewing many long documents over one extended session needs three things at once: a general sense of what's been covered so far, the ability to pull exact wording from any document when asked, and reliable recall of a handful of recurring numeric figures. Which two design choices best satisfy all of this together?",
+    options: [
+      "Maintain a running narrative summary for general continuity, and retrieve directly from the original source documents whenever an exact quote is needed",
+      "Maintain a small structured fact table for the recurring numeric figures, rather than trusting them to survive inside the narrative summary",
+      "Fold the recurring numeric figures into the same narrative summary so there is only one artifact to maintain",
+      "Rely on the narrative summary alone for exact quotes as well as general continuity, since it is the single most complete record",
+      "Apply a sliding window to the document set, discarding any document older than the last three reviewed",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "The recommended composition is a narrative summary for interpretive continuity, direct source retrieval for exact claims, and a dedicated structured fact table for recurring numbers — options A and B capture exactly that division of labor. Folding the figures into the summary (C) or relying on the summary for exact quotes too (D) reintroduces the precision loss summarization is prone to, and windowing out older documents (E) would remove documents the user might still need to reference.",
+    eli10:
+      "For a big review job, it helps to keep one big-picture recap for the general story, go back to the original pages whenever you need an exact quote, and keep a separate small list just for the important numbers — squishing everything into one fuzzy recap, or throwing away older documents, loses exactly the stuff you still need.",
+    difficulty: "HARD",
+  },
 ];

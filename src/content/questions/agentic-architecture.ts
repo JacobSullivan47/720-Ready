@@ -321,4 +321,189 @@ export const questions: QuestionSeed[] = [
       "Baking the same recipe every week is best done the same way every time, but solving a mystery means following each new clue wherever it leads — you wouldn't want to swap those two approaches around.",
     difficulty: "MEDIUM",
   },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    type: "SINGLE",
+    prompt:
+      "A content-moderation team wants an agent to sort each flagged post into one of a few fixed categories and hand it to a category-specific reviewer. In practice, new categories of harmful content emerge weekly, existing categories blur together, and reviewers keep disagreeing about which bucket a given post belongs in. What does this suggest about using routing here?",
+    options: [
+      "Routing is still the right choice, since any classification task is automatically a good fit for routing regardless of how stable the categories are",
+      "Routing is a poor fit here, since it works best when categories are distinct and stable, and these categories are fuzzy and constantly evolving",
+      "The fix is to keep adding more categories until every post fits perfectly, since routing always improves the more categories it has",
+      "The problem is unrelated to routing and only means the reviewers need more training",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Routing works best when categories are distinct and stable; this scenario is the classic poor-fit case, since the categories are fuzzy, overlapping, and constantly changing. Option A ignores that real limitation. Option C is a naive fix — adding more categories doesn't stabilize categories that are inherently blurry and evolving. Option D reframes a pattern mismatch as a training problem, which doesn't address why the categories themselves keep causing disagreement.",
+    eli10:
+      "Sorting toys into 'car toys' and 'doll toys' works great when every toy is clearly one or the other. But if new odd toys keep showing up that are kind of both, that kind of sorting stops working well — that's the real problem here, not that the sorter needs more practice.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    type: "SINGLE",
+    prompt:
+      "A team builds a coordinator that, for every incoming password-reset request, spends time deciding whether it needs to delegate to a 'verify identity' subagent, a 'generate reset token' subagent, and a 'send reset email' subagent — even though these exact three steps run, in this exact order, for every single request with no variation. What's the best critique of this design?",
+    options: [
+      "This is a reasonable use of orchestrator-workers, since any task with more than one step benefits from a coordinator deciding what's needed",
+      "This is overkill: the steps never actually vary, so a simple fixed chain would accomplish the same result more simply and cheaply than a coordinator re-deciding subtasks every time",
+      "The design is broken because orchestrator-workers requires at least five subtasks to function correctly",
+      "The design is correct only if the three subagents are run at the same time instead of one after another",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Orchestrator-workers earns its overhead when subtasks aren't knowable in advance; here they're always the same three steps in the same order, so a coordinator re-deciding this every time is overkill compared to a plain fixed chain. Option A over-generalizes — step count alone doesn't justify a coordinator, predictability does. Option C invents a numeric requirement that doesn't exist. Option D is a non sequitur and would actually break the workflow, since generating a token needs identity verified first and sending the email needs the token, so these steps depend on each other rather than being safe to run concurrently.",
+    eli10:
+      "If you always tie your shoes the exact same way every morning, you don't need a planning meeting to decide which steps to do — running a whole decision process for the same three steps every time is more effort than it needs to be.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    scenarioKey: "CUSTOMER_SUPPORT_AGENT",
+    type: "SINGLE",
+    prompt:
+      "During a long support conversation, a customer tells the coordinating agent, 'Please don't close this ticket until I confirm the refund posted to my card.' Later, the coordinator delegates the actual refund step to a subagent, passing along only 'process a refund for order #48213.' The subagent processes the refund and immediately marks the ticket closed. What is the most likely root cause?",
+    options: [
+      "The subagent ignored an instruction it had definitely received, since all subagents automatically inherit the full prior conversation",
+      "The coordinator failed to include the customer's stated constraint in the subagent's prompt, and the subagent has no automatic access to earlier turns it wasn't explicitly given",
+      "The refund tool itself is broken, since closing a ticket is a side effect no tool should ever be able to trigger",
+      "This is expected behavior, since subagents should always close a ticket immediately after taking any action",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "A subagent starts with a fresh context and only sees what's explicitly included in its prompt; since the coordinator passed only the order number, the subagent never learned about the 'don't close yet' constraint. Option A is factually wrong — subagents do not automatically inherit prior conversation turns from the coordinator. Option C blames a tool malfunction where none is demonstrated. Option D fabricates a default behavior that isn't accurate for how subagents should be designed.",
+    eli10:
+      "If you whisper a rule to one friend but then ask a different friend to do a task without repeating the rule, the second friend can't follow a rule they never heard. The subagent here never heard the 'don't close yet' part.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    type: "SINGLE",
+    prompt:
+      "A coordinator building a repository dependency report needs to first determine which package-manifest format a project uses (npm, pip, or cargo) before it can know how to correctly parse that project's version constraints. An engineer suggests starting the 'detect manifest format' step and the 'parse version constraints' step as two subagents running at the same time to save time. What's wrong with this suggestion?",
+    options: [
+      "Nothing is wrong; running independent-looking subagents concurrently always saves time regardless of what each one needs as input",
+      "The second step needs the first step's output as input, so running them concurrently risks the parsing subagent starting before it knows which format to parse against — these steps should run sequentially, not in parallel",
+      "The problem is that a dependency report should never use subagents in any capacity",
+      "The problem is that both steps must be handled by prompt chaining rather than by any kind of subagent",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Parallelizing only makes sense for genuinely independent work; here the parsing step's correctness depends on already knowing the manifest format, so it must wait for that result instead of running alongside it. Option A ignores exactly this dependency. Option C overcorrects — subagents can still be useful for other, genuinely independent slices of the report. Option D confuses two separate concerns; the actual fix is sequencing these two steps, not necessarily abandoning subagents for a chain.",
+    eli10:
+      "You can't frost a cake before you know if it's chocolate or vanilla — you have to find out which cake it is first, then frost it. Doing both 'at the same time' just means frosting a cake you haven't identified yet.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    scenarioKey: "CLAUDE_CODE_CI_CD",
+    type: "SINGLE",
+    prompt:
+      "A CI pipeline powered by an agent always performs the same four actions for every pull request, in the same order: run the linter, run the unit tests, run the type checker, and post one combined status comment. No pull request ever needs these steps reordered or skipped. Which pattern does this pipeline match?",
+    options: [
+      "Dynamic decomposition, since CI pipelines must adapt their steps to each new pull request's contents",
+      "Prompt chaining, since the sequence of steps is fixed and identical for every pull request",
+      "Orchestrator-workers, since a coordinator must decide which of the four checks apply to each pull request",
+      "Parallel subagents, since the four checks are a large uniform task that must be split across independent workers",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "The steps never vary in content or order, which is the defining trait of prompt chaining. Option A is wrong because nothing here adapts based on findings — the same four steps run every time. Option C is wrong because there's no case-by-case decision about which checks apply; all four always run, so no coordinator judgment is needed. Option D mismatches the pattern being described, which is the pipeline's fixed, always-identical sequence rather than a partition of one task into independently varying slices.",
+    eli10:
+      "If you always brush your teeth, then wash your face, then comb your hair, in that exact order every night, that's a fixed routine you follow the same way each time, not something you rethink every night.",
+    difficulty: "EASY",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    scenarioKey: "STRUCTURED_DATA_EXTRACTION",
+    type: "SINGLE",
+    prompt:
+      "A finance team needs to extract five known fields (vendor name, invoice number, date, subtotal, and tax) from 200 incoming invoice PDFs. Each invoice is self-contained, and processing one has no bearing on how any other invoice should be read. Which approach best fits this job?",
+    options: [
+      "Routing, since each invoice should be classified into a category before any fields are extracted",
+      "Parallel subagents, partitioning the 200 invoices into independent slices processed concurrently and then combining the extracted fields",
+      "Dynamic decomposition, since the fields to extract from each invoice can't be known until the agent inspects it",
+      "A single subagent handling all 200 invoices in one long sequential pass, since sharing one context is required for consistent field extraction",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "Two hundred self-contained, uniform invoices with no cross-dependencies is the textbook case for parallel fan-out: split the work, run it concurrently, and synthesize the extracted fields. Option A invents an unneeded classification step with no indication invoices fall into meaningfully different categories. Option C is wrong because the fields to extract are already fixed and known in advance — nothing here is discovered case by case. Option D is unnecessarily slow, and it's false that a shared context is required for consistent extraction across independent documents.",
+    eli10:
+      "If you have 200 separate homework worksheets that don't depend on each other, it's faster to split them among several friends who each grade a stack at the same time than to have one person slowly go through all 200 alone.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    type: "SINGLE",
+    prompt:
+      "A developer asks an agent to figure out why a newly cloned, unfamiliar repository fails to build. The agent starts by running the build to see the actual error, and only after reading that error decides whether to check a missing dependency, a misconfigured environment variable, or a version mismatch — each next action determined by what the previous one revealed. A reviewer suggests writing a fixed five-step checklist instead so the process is 'more predictable.' What's the strongest response to that suggestion?",
+    options: [
+      "The checklist is a good idea, since prompt chaining is always safer than any exploratory approach",
+      "A fixed checklist is a poor fit here, since the real cause is unknown up front and a pre-written sequence risks missing the actual problem that only emerges from earlier findings",
+      "Neither approach works, since build failures can only ever be diagnosed by a human",
+      "The checklist is necessary, since dynamic decomposition cannot use any tools to actually run the build",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "This is a dynamic-decomposition situation — each finding determines the next step — so a rigid pre-written checklist risks overlooking the actual cause that only a real investigation would surface. Option A wrongly claims chaining is universally safer, when it's actually a mismatch for problems whose path isn't known in advance. Option C overstates things, since agents routinely diagnose this kind of issue. Option D is a fabricated limitation — dynamic decomposition regularly involves running tools like a build command.",
+    eli10:
+      "If you don't know what's broken yet, following someone's fixed five-step guess-list might skip right past the actual reason your bike won't start — you need to look at what's actually wrong first, then decide what to check next.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    type: "SINGLE",
+    prompt:
+      "A coordinator asks a synthesis subagent to combine three research subagents' outputs into a final report that must cite every claim. Each research subagent, however, only wrote a short prose paragraph like 'adoption appears to be growing,' with no indication of which specific source, page, or record backs that statement. What is the most accurate assessment of this handoff design?",
+    options: [
+      "This is fine, since prose summaries are always sufficient input for any downstream synthesis task",
+      "The handoff is inadequate for this use case: since citations are required downstream, the research subagents needed to pass a structured index of claims to sources, not just prose summaries with no provenance",
+      "The problem is unrelated to the handoff and is really a limitation of the synthesis subagent's writing ability",
+      "The fix is to have the synthesis subagent guess plausible sources for each claim so the report still contains citations",
+    ],
+    correctIndexes: [1],
+    explanation:
+      "When citations or provenance are required downstream, a bare prose summary isn't enough — the handoff needed a structured claims-to-sources index instead. Option A is wrong precisely because the citation requirement here makes prose-only input insufficient. Option C misdiagnoses the issue as a writing-quality problem rather than a missing-data problem; no amount of better prose can invent source information that was never passed along. Option D is actively harmful, since fabricating plausible-sounding sources is worse than including no citation at all.",
+    eli10:
+      "If your teacher needs to know exactly which book each fact in your report came from, just writing 'I read that this is true' isn't enough — you need to write down the actual book and page for each fact, not make one up to fill the blank.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    type: "MULTI",
+    prompt:
+      "A team is reviewing how their multi-agent research assistant behaves after its first pass over source material turns up a gap — for instance, a claim with no clear timeframe, or a contested figure backed by only one source. Which TWO of the following describe correct practice for handling this situation?",
+    options: [
+      "The system should be able to trigger a follow-up round of investigation specifically targeting the identified gap, rather than treating research as strictly one-pass",
+      "A gap like a missing timeframe or a single-sourced contested figure should be flagged as such (for example, marked contested or insufficiently supported) rather than presented in the final report as settled fact",
+      "Once a first pass is complete, the report should be finalized immediately regardless of any gaps found, since revisiting sources after the first pass is never worthwhile",
+      "Every subagent should be given every tool in the system so that whichever one happens to notice the gap can also resolve it",
+      "Gaps should be resolved by having the synthesis step silently pick whichever version of a contested figure sounds more authoritative",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "Good practice is triggering a targeted follow-up round when gaps are found, and explicitly labeling uncertain or contested findings rather than smoothing them into settled fact. The third option describes exactly the strictly-one-pass anti-pattern the notes warn against. The fourth option repeats the tool-sprawl anti-pattern — the fix for a missed gap is a follow-up investigation step, not blanket tool access for every subagent. The fifth option silently resolves a contested claim instead of flagging the uncertainty, misrepresenting confidence to the reader.",
+    eli10:
+      "If you're writing a report and notice one fact is shaky, the right move is to go check it again or say 'this one is unsure' — not to just guess which version sounds more confident, and not to hand every helper every tool hoping someone fixes it by accident.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "AGENTIC_ARCHITECTURE",
+    type: "MULTI",
+    prompt:
+      "A coordinator is designing a fan-out job: plan which partitions are needed, run subagents on those partitions, then combine their results into one output. Which TWO statements correctly describe how this kind of job should be structured for genuinely independent, I/O-heavy partitions?",
+    options: [
+      "The job should follow a serial-planning, then parallel-execution, then serial-synthesis shape: decide the partitions first, run them concurrently, then combine results afterward",
+      "If one later partition's work genuinely depends on an earlier partition's output, that dependent step should run after the earlier one finishes, not concurrently with it",
+      "Running every partition concurrently regardless of dependencies always produces a correct result faster, since concurrency never affects correctness",
+      "The synthesis step should happen before the parallel execution step, so that results are ready to combine as soon as partitions start",
+      "Partition sizing doesn't matter for overall elapsed time, since only the total number of partitions affects when the job finishes",
+    ],
+    correctIndexes: [0, 1],
+    explanation:
+      "The correct shape for this kind of job is plan once, fan out concurrently across independent partitions, then synthesize afterward — and any partition with a genuine dependency on another's output must wait for it rather than run alongside it. The third option is false: running dependent steps concurrently can produce wrong or incomplete results, not just a faster correct one. The fourth option is impossible as described, since synthesis needs the partition results as input and can't precede execution. The fifth option is false — elapsed time is bounded by the slowest partition, so uneven partition sizes matter a great deal, not just the raw count.",
+    eli10:
+      "First you decide who's doing what, then everyone works on their own separate piece at the same time, and only at the end do you put all the pieces together — you can't combine pieces before they're made, and if one piece truly needs another piece finished first, that one has to wait its turn.",
+    difficulty: "HARD",
+  },
 ];
