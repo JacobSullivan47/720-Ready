@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import clsx from "clsx";
 import { useProgress } from "@/hooks/use-progress";
 import { AskTutorButton } from "@/components/ask-tutor-button";
+import { shuffle } from "@/lib/scoring";
 import type { BankQuestion } from "@/lib/content-bank-client";
 
 function arraysEqualAsSets(a: number[], b: number[]): boolean {
@@ -26,6 +27,17 @@ export function PracticeQuestionCard({
   const [selected, setSelected] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [bookmarked, setBookmarked] = useState(initiallyBookmarked);
+
+  // Stored option order otherwise leaks the answer (the correct one is
+  // overwhelmingly the same position in the content bank) — shuffle the
+  // display order per viewing, independent of the original/correct indices
+  // used everywhere else (grading, recordAttempt, etc.).
+  // Reshuffle only when the question itself changes, not on every render.
+  const displayOrder = useMemo(
+    () => shuffle(question.options.map((_, i) => i)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [question.id],
+  );
 
   const isMulti = question.type === "MULTI";
 
@@ -88,7 +100,8 @@ export function PracticeQuestionCard({
       <p className="mt-4 text-lg font-medium">{question.prompt}</p>
 
       <div className="mt-4 space-y-2" role="group" aria-label="Answer options">
-        {question.options.map((option, idx) => {
+        {displayOrder.map((idx) => {
+          const option = question.options[idx];
           const isSelected = selected.includes(idx);
           const isCorrectOption = question.correctIndexes.includes(idx);
           let stateClass = "border-border hover:bg-surface-muted";

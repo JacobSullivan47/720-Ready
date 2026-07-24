@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { useProgress } from "@/hooks/use-progress";
 import { domains } from "@/content/domains";
 import { scenarios } from "@/content/scenarios";
-import { PASSING_SCALED_SCORE, TOTAL_MOCK_QUESTIONS } from "@/lib/scoring";
+import { PASSING_SCALED_SCORE, shuffle, TOTAL_MOCK_QUESTIONS } from "@/lib/scoring";
 import { ProgressBar } from "@/components/progress-bar";
 import { ShareScoreCard } from "@/components/share-score-card";
 import type {
@@ -169,6 +169,18 @@ export default function ExamPage() {
 
   const answeredCount = exam ? exam.questions.filter((q) => (answers[q.id]?.length ?? 0) > 0).length : 0;
 
+  // Stored option order otherwise leaks the answer — shuffle display order
+  // per question, computed once per attempt (not per render) so revisiting a
+  // question via Previous/the palette doesn't visibly reshuffle it mid-exam.
+  // Grading always uses the original indices below, unaffected by this.
+  const displayOrders = useMemo(() => {
+    if (!exam) return {} as Record<string, number[]>;
+    return Object.fromEntries(
+      exam.questions.map((q) => [q.id, shuffle(q.options.map((_, i) => i))]),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exam?.id]);
+
   if (phase === "loading") {
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
@@ -325,7 +337,8 @@ export default function ExamPage() {
           </p>
           <p className="mt-2 text-lg font-medium">{q.prompt}</p>
           <div className="mt-4 space-y-2">
-            {q.options.map((option, idx) => {
+            {(displayOrders[q.id] ?? q.options.map((_, i) => i)).map((idx) => {
+              const option = q.options[idx];
               const isSelected = selected.includes(idx);
               return (
                 <button
