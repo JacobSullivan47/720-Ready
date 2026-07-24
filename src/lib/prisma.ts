@@ -5,8 +5,22 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+// Passing `{ connectionString }` reproducibly breaks with "SASL:
+// SCRAM-SERVER-FIRST-MESSAGE: client password must be a string" once queried
+// through the full generated PrismaClient (though a bare PrismaPg adapter or
+// plain `pg.Pool` with the same connection string both connect fine) —
+// observed with @prisma/client 7.9.0 + @prisma/adapter-pg 7.9.0 + pg 8.22.0.
+// Passing the parsed fields individually avoids whatever lazy connection-
+// string parsing path triggers it.
 function createClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  const url = new URL(process.env.DATABASE_URL!);
+  const adapter = new PrismaPg({
+    host: url.hostname,
+    port: url.port ? Number(url.port) : 5432,
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: url.pathname.replace(/^\//, ""),
+  });
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
