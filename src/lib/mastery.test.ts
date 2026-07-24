@@ -133,6 +133,19 @@ describe("computeReadiness", () => {
     expect(agentic.exerciseMasteryPct).toBe(0);
   });
 
+  it("counts a flashcard as mastered only once its retention score crosses the 75% cutoff", () => {
+    const cardStates = {
+      // repetitions=5, ease=2.8 -> retention score 1.0, comfortably above cutoff.
+      "AGENTIC_ARCHITECTURE-1": { easeFactor: 2.8, intervalDays: 30, repetitions: 5, lapses: 0 },
+      // repetitions=2 (the minimum to score at all), low ease -> retention score well below cutoff.
+      "AGENTIC_ARCHITECTURE-2": { easeFactor: 1.3, intervalDays: 1, repetitions: 2, lapses: 0 },
+    };
+    const result = computeReadiness(cardsByDomain, cardStates, []);
+    const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
+    expect(agentic.cardsReviewed).toBe(2);
+    expect(agentic.cardsMastered).toBe(1);
+  });
+
   it("does NOT count a question as mastered after only one correct answer", () => {
     const attempts: AttemptRecord[] = [
       {

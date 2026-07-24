@@ -4,6 +4,9 @@ import { cardRetentionScore, MASTERY_MIN_REPETITIONS, type SrsState } from "./sr
 import type { AttemptRecord, ExerciseAttemptRecord } from "./progress-types";
 import type { DomainKey } from "@/content/types";
 
+/** A flashcard counts as individually "mastered" once its retention score crosses this line. */
+export const CARD_MASTERY_RETENTION_CUTOFF = 0.75;
+
 export interface DomainMastery {
   domainKey: DomainKey;
   name: string;
@@ -13,6 +16,7 @@ export interface DomainMastery {
   exerciseMasteryPct: number; // 0-100 — % of this domain's exercise items "mastered" (correct at least MASTERY_MIN_REPETITIONS times)
   masteryPct: number; // 0-100, blended
   cardsReviewed: number;
+  cardsMastered: number; // reviewed cards at/above CARD_MASTERY_RETENTION_CUTOFF
   cardsTotal: number;
   attemptsCount: number;
   questionsMastered: number;
@@ -66,6 +70,7 @@ export function computeReadiness(
       retentionScores.length > 0
         ? (retentionScores.reduce((a, b) => a + b, 0) / retentionScores.length) * 100
         : 0;
+    const cardsMastered = retentionScores.filter((score) => score >= CARD_MASTERY_RETENTION_CUTOFF).length;
 
     const domainAttempts = attemptsByDomain.get(d.key) ?? [];
 
@@ -120,6 +125,7 @@ export function computeReadiness(
       exerciseMasteryPct: Math.round(exerciseMasteryPct),
       masteryPct: Math.round(masteryPct),
       cardsReviewed: reviewed.length,
+      cardsMastered,
       cardsTotal: cardIds.length,
       attemptsCount: domainAttempts.length,
       questionsMastered,

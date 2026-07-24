@@ -32,6 +32,11 @@ export default function DashboardPage() {
   const missedCount = new Set(attempts.filter((a) => !a.isCorrect).map((a) => a.questionId)).size;
   const overviewsReadCount = viewedOverviews.domainKeys.length + viewedOverviews.scenarioKeys.length;
 
+  const cardsMasteredTotal = readiness?.domains.reduce((sum, d) => sum + d.cardsMastered, 0) ?? 0;
+  const questionsMasteredTotal = readiness?.domains.reduce((sum, d) => sum + d.questionsMastered, 0) ?? 0;
+  const exercisesMasteredTotal = readiness?.domains.reduce((sum, d) => sum + d.exercisesMastered, 0) ?? 0;
+  const itemsMasteredTotal = cardsMasteredTotal + questionsMasteredTotal + exercisesMasteredTotal;
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -54,13 +59,13 @@ export default function DashboardPage() {
       </div>
 
       {loading || !readiness ? (
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          {[0, 1, 2].map((i) => (
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-28 animate-pulse rounded-lg bg-surface-muted" />
           ))}
         </div>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-border bg-surface p-5">
             <p className="text-sm text-foreground-muted">Overall readiness</p>
             <p className="mt-1 text-3xl font-semibold">{readiness.overallReadinessPct}%</p>
@@ -88,6 +93,15 @@ export default function DashboardPage() {
             ) : (
               <p className="mt-3 text-sm text-foreground-muted">Take a full mock exam to see a score here.</p>
             )}
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-5">
+            <p className="text-sm text-foreground-muted">Items mastered</p>
+            <p className="mt-1 text-3xl font-semibold">{itemsMasteredTotal}</p>
+            <p className="mt-3 text-sm text-foreground-muted">
+              {cardsMasteredTotal} flashcard{cardsMasteredTotal === 1 ? "" : "s"} · {questionsMasteredTotal} question
+              {questionsMasteredTotal === 1 ? "" : "s"} · {exercisesMasteredTotal} exercise
+              {exercisesMasteredTotal === 1 ? "" : "s"}
+            </p>
           </div>
         </div>
       )}
@@ -151,7 +165,8 @@ export default function DashboardPage() {
                   />
                   <div className="mt-2 grid grid-cols-1 gap-3 text-xs text-foreground-muted sm:grid-cols-3">
                     <div>
-                      Flashcard retention: {d.cardRetentionPct}% ({d.cardsReviewed}/{d.cardsTotal} reviewed)
+                      Flashcard retention: {d.cardRetentionPct}% ({d.cardsMastered}/{d.cardsTotal} mastered,{" "}
+                      {d.cardsReviewed} reviewed)
                     </div>
                     <div>
                       Questions mastered: {d.quizAccuracyPct}% ({d.questionsMastered}/{d.questionsAttempted} attempted)
@@ -164,8 +179,9 @@ export default function DashboardPage() {
               ))}
             </div>
             <p className="mt-2 text-xs text-foreground-muted">
-              A card, question, or exercise only counts toward mastery once you&apos;ve gotten it right at least
-              twice, and full mastery requires engaging with flashcards, questions, and exercises alike.
+              A question or exercise only counts toward mastery once you&apos;ve gotten it right at least twice; a
+              flashcard counts once its spaced-repetition retention score crosses 75%. Full domain mastery requires
+              engaging with flashcards, questions, and exercises alike.
             </p>
           </div>
 
