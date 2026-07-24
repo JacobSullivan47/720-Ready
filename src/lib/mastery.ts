@@ -1,5 +1,5 @@
 import { domains } from "@/content/domains";
-import { cardRetentionScore, type SrsState } from "./srs";
+import { cardRetentionScore, MASTERY_MIN_REPETITIONS, type SrsState } from "./srs";
 import type { AttemptRecord } from "./progress-types";
 import type { DomainKey } from "@/content/types";
 
@@ -8,11 +8,13 @@ export interface DomainMastery {
   name: string;
   weightPct: number;
   cardRetentionPct: number; // 0-100
-  quizAccuracyPct: number; // 0-100
+  quizAccuracyPct: number; // 0-100 — % of attempted questions "mastered" (answered correctly at least MASTERY_MIN_REPETITIONS times)
   masteryPct: number; // 0-100, blended
   cardsReviewed: number;
   cardsTotal: number;
   attemptsCount: number;
+  questionsMastered: number;
+  questionsAttempted: number;
 }
 
 export interface ReadinessSummary {
@@ -22,10 +24,12 @@ export interface ReadinessSummary {
 }
 
 /**
- * Blends flashcard retention (SM-2 state) and quiz accuracy into a single
+ * Blends flashcard retention (SM-2 state) and question mastery into a single
  * 0-100 mastery score per domain, then a weight-adjusted overall readiness
  * score. A domain with no activity at all scores 0, not an average of
  * nothing, so "what to study next" reliably surfaces untouched domains.
+ * Both inputs require repeat success (see MASTERY_MIN_REPETITIONS) — one
+ * correct answer or one good flashcard rating isn't mastery on its own.
  */
 export function computeReadiness(
   cardsByDomain: Record<DomainKey, string[]>, // domainKey -> all card IDs in that domain
@@ -49,13 +53,26 @@ export function computeReadiness(
         : 0;
 
     const domainAttempts = attemptsByDomain.get(d.key) ?? [];
-    const quizAccuracyPct =
-      domainAttempts.length > 0
-        ? (domainAttempts.filter((a) => a.isCorrect).length / domainAttempts.length) * 100
-        : 0;
+
+    // A question only counts as "mastered" once it's been answered correctly
+    // at least MASTERY_MIN_REPETITIONS times — a single lucky guess doesn't
+    // count, matching how flashcard retention already requires repeat success.
+    const correctCountByQuestion = new Map<string, number>();
+    const attemptedQuestionIds = new Set<string>();
+    for (const a of domainAttempts) {
+      attemptedQuestionIds.add(a.questionId);
+      if (a.isCorrect) {
+        correctCountByQuestion.set(a.questionId, (correctCountByQuestion.get(a.questionId) ?? 0) + 1);
+      }
+    }
+    const questionsAttempted = attemptedQuestionIds.size;
+    const questionsMastered = [...correctCountByQuestion.values()].filter(
+      (count) => count >= MASTERY_MIN_REPETITIONS,
+    ).length;
+    const quizAccuracyPct = questionsAttempted > 0 ? (questionsMastered / questionsAttempted) * 100 : 0;
 
     const hasCardData = reviewed.length > 0;
-    const hasQuizData = domainAttempts.length > 0;
+    const hasQuizData = questionsAttempted > 0;
     let masteryPct: number;
     if (hasCardData && hasQuizData) {
       masteryPct = 0.5 * cardRetentionPct + 0.5 * quizAccuracyPct;
@@ -77,6 +94,8 @@ export function computeReadiness(
       cardsReviewed: reviewed.length,
       cardsTotal: cardIds.length,
       attemptsCount: domainAttempts.length,
+      questionsMastered,
+      questionsAttempted,
     };
   });
 

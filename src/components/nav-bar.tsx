@@ -12,7 +12,6 @@ const NAV_LINKS = [
   { href: "/study", label: "Study" },
   { href: "/practice", label: "Practice" },
   { href: "/exam", label: "Mock Exam" },
-  { href: "/progress", label: "Progress" },
   { href: "/glossary", label: "Glossary" },
   { href: "/tutor", label: "AI Tutor" },
 ];

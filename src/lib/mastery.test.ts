@@ -16,20 +16,79 @@ describe("computeReadiness", () => {
 
   it("weights overall readiness by domain weight, not a plain average", () => {
     // Perfect mastery only in the highest-weighted domain (Agentic Architecture, 27%).
-    const attempts: AttemptRecord[] = Array.from({ length: 10 }, (_, i) => ({
-      questionId: `q${i}`,
-      domainKey: "AGENTIC_ARCHITECTURE",
-      selectedIndexes: [0],
-      isCorrect: true,
-      mode: "PRACTICE",
-      createdAt: new Date().toISOString(),
-    }));
+    // Each of 10 questions answered correctly TWICE, since mastery requires
+    // MASTERY_MIN_REPETITIONS correct answers per question, not just one.
+    const attempts: AttemptRecord[] = Array.from({ length: 10 }, (_, i) => i)
+      .flatMap((i) => [i, i])
+      .map((i, idx) => ({
+        questionId: `q${i}`,
+        domainKey: "AGENTIC_ARCHITECTURE" as const,
+        selectedIndexes: [0],
+        isCorrect: true,
+        mode: "PRACTICE" as const,
+        createdAt: new Date(Date.now() + idx).toISOString(),
+      }));
     const result = computeReadiness(cardsByDomain, {}, attempts);
     const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
     expect(agentic.masteryPct).toBe(100);
+    expect(agentic.questionsMastered).toBe(10);
+    expect(agentic.questionsAttempted).toBe(10);
     // Overall should be well below 100 since 4 other domains are untouched.
     expect(result.overallReadinessPct).toBeLessThan(50);
     expect(result.overallReadinessPct).toBeGreaterThan(0);
+  });
+
+  it("does NOT count a question as mastered after only one correct answer", () => {
+    const attempts: AttemptRecord[] = [
+      {
+        questionId: "q1",
+        domainKey: "AGENTIC_ARCHITECTURE",
+        selectedIndexes: [0],
+        isCorrect: true,
+        mode: "PRACTICE",
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    const result = computeReadiness(cardsByDomain, {}, attempts);
+    const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
+    expect(agentic.questionsMastered).toBe(0);
+    expect(agentic.questionsAttempted).toBe(1);
+    expect(agentic.quizAccuracyPct).toBe(0);
+    expect(agentic.masteryPct).toBe(0);
+  });
+
+  it("counts a question as mastered once answered correctly twice, even with a wrong attempt in between", () => {
+    const attempts: AttemptRecord[] = [
+      {
+        questionId: "q1",
+        domainKey: "AGENTIC_ARCHITECTURE",
+        selectedIndexes: [0],
+        isCorrect: true,
+        mode: "PRACTICE",
+        createdAt: new Date(2026, 0, 1).toISOString(),
+      },
+      {
+        questionId: "q1",
+        domainKey: "AGENTIC_ARCHITECTURE",
+        selectedIndexes: [1],
+        isCorrect: false,
+        mode: "PRACTICE",
+        createdAt: new Date(2026, 0, 2).toISOString(),
+      },
+      {
+        questionId: "q1",
+        domainKey: "AGENTIC_ARCHITECTURE",
+        selectedIndexes: [0],
+        isCorrect: true,
+        mode: "PRACTICE",
+        createdAt: new Date(2026, 0, 3).toISOString(),
+      },
+    ];
+    const result = computeReadiness(cardsByDomain, {}, attempts);
+    const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
+    expect(agentic.questionsMastered).toBe(1);
+    expect(agentic.questionsAttempted).toBe(1);
+    expect(agentic.quizAccuracyPct).toBe(100);
   });
 
   it("identifies the weakest domain, tie-breaking toward higher weight", () => {

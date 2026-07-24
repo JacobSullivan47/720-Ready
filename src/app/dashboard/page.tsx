@@ -5,6 +5,7 @@ import { useReadiness } from "@/hooks/use-readiness";
 import { useProgress } from "@/hooks/use-progress";
 import { ProgressBar } from "@/components/progress-bar";
 import { ExamOverviewCard } from "@/components/exam-overview-card";
+import { ScoreTrendChart } from "@/components/score-trend-chart";
 import { domainSlug } from "@/lib/slugs";
 
 function readinessTone(pct: number): "danger" | "warning" | "success" {
@@ -14,8 +15,10 @@ function readinessTone(pct: number): "danger" | "warning" | "success" {
 }
 
 export default function DashboardPage() {
-  const { readiness, streak, mockExamHistory, loading } = useReadiness();
+  const { readiness, streak, mockExamHistory, attempts, loading } = useReadiness();
   const { status } = useProgress();
+
+  const missedCount = new Set(attempts.filter((a) => !a.isCorrect).map((a) => a.questionId)).size;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -38,10 +41,6 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="mt-6">
-        <ExamOverviewCard />
-      </div>
-
       {loading || !readiness ? (
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {[0, 1, 2].map((i) => (
@@ -49,36 +48,46 @@ export default function DashboardPage() {
           ))}
         </div>
       ) : (
-        <>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-lg border border-border bg-surface p-5">
-              <p className="text-sm text-foreground-muted">Overall readiness</p>
-              <p className="mt-1 text-3xl font-semibold">{readiness.overallReadinessPct}%</p>
-              <div className="mt-3">
-                <ProgressBar value={readiness.overallReadinessPct} tone={readinessTone(readiness.overallReadinessPct)} />
-              </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-lg border border-border bg-surface p-5">
+            <p className="text-sm text-foreground-muted">Overall readiness</p>
+            <p className="mt-1 text-3xl font-semibold">{readiness.overallReadinessPct}%</p>
+            <div className="mt-3">
+              <ProgressBar value={readiness.overallReadinessPct} tone={readinessTone(readiness.overallReadinessPct)} />
             </div>
-            <div className="rounded-lg border border-border bg-surface p-5">
-              <p className="text-sm text-foreground-muted">Study streak</p>
-              <p className="mt-1 text-3xl font-semibold">
-                {streak} <span className="text-base font-normal text-foreground-muted">day{streak === 1 ? "" : "s"}</span>
-              </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-5">
+            <p className="text-sm text-foreground-muted">Study streak</p>
+            <p className="mt-1 text-3xl font-semibold">
+              {streak} <span className="text-base font-normal text-foreground-muted">day{streak === 1 ? "" : "s"}</span>
+            </p>
+            <p className="mt-3 text-sm text-foreground-muted">
+              {streak > 0 ? "Keep it going — study anything today to extend it." : "Study today to start a streak."}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-5">
+            <p className="text-sm text-foreground-muted">Mock exams taken</p>
+            <p className="mt-1 text-3xl font-semibold">{mockExamHistory.length}</p>
+            {mockExamHistory[0]?.scaledScore != null ? (
               <p className="mt-3 text-sm text-foreground-muted">
-                {streak > 0 ? "Keep it going — study anything today to extend it." : "Study today to start a streak."}
+                Last score: <span className="font-medium text-foreground">{mockExamHistory[0].scaledScore}</span> /
+                1000 {mockExamHistory[0].passed ? "(passing)" : "(below passing)"}
               </p>
-            </div>
-            <div className="rounded-lg border border-border bg-surface p-5">
-              <p className="text-sm text-foreground-muted">Mock exams taken</p>
-              <p className="mt-1 text-3xl font-semibold">{mockExamHistory.length}</p>
-              {mockExamHistory[0]?.scaledScore != null ? (
-                <p className="mt-3 text-sm text-foreground-muted">
-                  Last score: <span className="font-medium text-foreground">{mockExamHistory[0].scaledScore}</span> /
-                  1000 {mockExamHistory[0].passed ? "(passing)" : "(below passing)"}
-                </p>
-              ) : (
-                <p className="mt-3 text-sm text-foreground-muted">Take a full mock exam to see a score here.</p>
-              )}
-            </div>
+            ) : (
+              <p className="mt-3 text-sm text-foreground-muted">Take a full mock exam to see a score here.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6">
+        <ExamOverviewCard />
+      </div>
+
+      {!loading && readiness && (
+        <>
+          <div className="mt-8">
+            <ScoreTrendChart history={mockExamHistory} />
           </div>
 
           {readiness.weakestDomain && (
@@ -113,17 +122,29 @@ export default function DashboardPage() {
 
           <div className="mt-8">
             <h2 className="text-lg font-semibold">Mastery by domain</h2>
-            <div className="mt-4 space-y-5 rounded-lg border border-border bg-surface p-5">
+            <div className="mt-4 space-y-6 rounded-lg border border-border bg-surface p-5">
               {readiness.domains.map((d) => (
-                <ProgressBar
-                  key={d.domainKey}
-                  label={`${d.name} (${d.weightPct}% of exam)`}
-                  sublabel={`${d.masteryPct}%`}
-                  value={d.masteryPct}
-                  tone={readinessTone(d.masteryPct)}
-                />
+                <div key={d.domainKey}>
+                  <ProgressBar
+                    label={`${d.name} (${d.weightPct}% of exam)`}
+                    sublabel={`${d.masteryPct}%`}
+                    value={d.masteryPct}
+                    tone={readinessTone(d.masteryPct)}
+                  />
+                  <div className="mt-2 grid grid-cols-2 gap-3 text-xs text-foreground-muted">
+                    <div>
+                      Flashcard retention: {d.cardRetentionPct}% ({d.cardsReviewed}/{d.cardsTotal} reviewed)
+                    </div>
+                    <div>
+                      Questions mastered: {d.quizAccuracyPct}% ({d.questionsMastered}/{d.questionsAttempted} attempted)
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
+            <p className="mt-2 text-xs text-foreground-muted">
+              A card or question only counts toward mastery once you&apos;ve gotten it right at least twice.
+            </p>
           </div>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -143,6 +164,26 @@ export default function DashboardPage() {
               <h3 className="font-medium">Browse study material</h3>
               <p className="mt-1 text-sm text-foreground-muted">
                 Domain and scenario overviews, flashcard decks, and interactive exercises.
+              </p>
+            </Link>
+            <Link
+              href="/missed-questions"
+              className="rounded-lg border border-border bg-surface p-5 transition-colors hover:bg-surface-muted"
+            >
+              <h3 className="font-medium">Missed questions</h3>
+              <p className="mt-1 text-sm text-foreground-muted">
+                {missedCount > 0
+                  ? `${missedCount} question${missedCount === 1 ? "" : "s"} you've gotten wrong at least once.`
+                  : "Nothing here yet — questions you miss will collect for review."}
+              </p>
+            </Link>
+            <Link
+              href="/bookmarks"
+              className="rounded-lg border border-border bg-surface p-5 transition-colors hover:bg-surface-muted"
+            >
+              <h3 className="font-medium">Bookmarks</h3>
+              <p className="mt-1 text-sm text-foreground-muted">
+                Flashcards and questions you&apos;ve starred to revisit later.
               </p>
             </Link>
           </div>

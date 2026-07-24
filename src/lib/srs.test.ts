@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   INITIAL_SRS_STATE,
+  MASTERY_MIN_REPETITIONS,
   RATING_KNEW_IT,
   RATING_STILL_LEARNING,
   cardRetentionScore,
@@ -99,6 +100,16 @@ describe("sortByDue", () => {
 describe("cardRetentionScore", () => {
   it("is 0 for a never-reviewed card", () => {
     expect(cardRetentionScore(INITIAL_SRS_STATE)).toBe(0);
+  });
+
+  it("is exactly 0 after only one successful rep — mastery needs at least MASTERY_MIN_REPETITIONS", () => {
+    const onceOnly = { easeFactor: 2.8, intervalDays: 1, repetitions: 1, lapses: 0 };
+    expect(cardRetentionScore(onceOnly)).toBe(0);
+  });
+
+  it("scores above 0 once repetitions reach MASTERY_MIN_REPETITIONS", () => {
+    const twice = { easeFactor: 2.5, intervalDays: 6, repetitions: MASTERY_MIN_REPETITIONS, lapses: 0 };
+    expect(cardRetentionScore(twice)).toBeGreaterThan(0);
   });
 
   it("increases with more repetitions and higher ease", () => {

@@ -88,15 +88,21 @@ export function sortByDue<T extends { dueAt: Date }>(cards: T[], now: Date = new
     .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime());
 }
 
+/** A card (or question) only counts toward mastery once it's been gotten
+ * right at least this many times — one lucky "Knew it" isn't mastery. */
+export const MASTERY_MIN_REPETITIONS = 2;
+
 /**
  * Retention score in [0, 1] for a single card, used for mastery %.
- * Cards with more successful repetitions and a higher ease factor score
- * higher; a recent lapse pulls the score back down.
+ * Requires at least MASTERY_MIN_REPETITIONS consecutive successful reviews
+ * (SM-2 `repetitions`) before contributing any score at all; beyond that,
+ * more repetitions and a higher ease factor score higher, and a recent
+ * lapse pulls the score back down.
  */
 export function cardRetentionScore(state: SrsState): number {
-  if (state.repetitions === 0) return 0;
+  if (state.repetitions < MASTERY_MIN_REPETITIONS) return 0;
   const easeComponent = Math.min(1, (state.easeFactor - MIN_EASE_FACTOR) / (2.8 - MIN_EASE_FACTOR));
-  const repComponent = Math.min(1, state.repetitions / 5);
+  const repComponent = Math.min(1, (state.repetitions - (MASTERY_MIN_REPETITIONS - 1)) / 4);
   const lapsePenalty = Math.min(0.5, state.lapses * 0.1);
   return Math.max(0, Math.min(1, 0.5 * easeComponent + 0.5 * repComponent - lapsePenalty));
 }
