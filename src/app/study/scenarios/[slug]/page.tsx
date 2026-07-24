@@ -5,6 +5,7 @@ import { scenarios } from "@/content/scenarios";
 import { scenarioKeyFromSlug, scenarioSlug } from "@/lib/slugs";
 import { TopicOverview } from "@/components/topic-overview";
 import { MarkOverviewViewed } from "@/components/mark-overview-viewed";
+import { AskTutorButton } from "@/components/ask-tutor-button";
 
 export function generateStaticParams() {
   return scenarios.map((s) => ({ slug: scenarioSlug(s.key) }));
@@ -47,12 +48,10 @@ export default async function ScenarioPage({ params }: { params: Promise<{ slug:
             >
               Practice questions
             </Link>
-            <Link
-              href={`/tutor?focus=scenario:${scenario.key}`}
+            <AskTutorButton
+              focus={`scenario:${scenario.key}`}
               className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-surface-muted"
-            >
-              Ask the tutor
-            </Link>
+            />
           </>
         }
       />

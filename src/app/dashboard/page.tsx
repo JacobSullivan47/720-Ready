@@ -7,6 +7,7 @@ import { useProgress } from "@/hooks/use-progress";
 import { ProgressBar } from "@/components/progress-bar";
 import { ExamOverviewCard } from "@/components/exam-overview-card";
 import { ScoreTrendChart } from "@/components/score-trend-chart";
+import { AskTutorButton } from "@/components/ask-tutor-button";
 import { domainSlug } from "@/lib/slugs";
 import { domains } from "@/content/domains";
 import { scenarios } from "@/content/scenarios";
@@ -154,12 +155,10 @@ export default function DashboardPage() {
                 >
                   Practice questions
                 </Link>
-                <Link
-                  href={`/tutor?focus=domain:${readiness.weakestDomain.domainKey}`}
+                <AskTutorButton
+                  focus={`domain:${readiness.weakestDomain.domainKey}`}
                   className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium hover:bg-surface-muted"
-                >
-                  Ask the tutor
-                </Link>
+                />
               </div>
             </div>
           )}

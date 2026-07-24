@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import clsx from "clsx";
 import { useProgress } from "@/hooks/use-progress";
+import { AskTutorButton } from "@/components/ask-tutor-button";
 import type { BankQuestion } from "@/lib/content-bank-client";
 
 function arraysEqualAsSets(a: number[], b: number[]): boolean {
@@ -152,12 +152,12 @@ export function PracticeQuestionCard({
             <p className="mt-1 text-sm text-foreground">{question.eli10}</p>
           </div>
           {!isCorrectOverall && (
-            <Link
-              href={`/tutor?focus=question:${question.id}`}
+            <AskTutorButton
+              focus={`question:${question.id}`}
               className="inline-block text-sm text-brand hover:underline"
             >
               Ask the tutor to explain this →
-            </Link>
+            </AskTutorButton>
           )}
         </div>
       )}

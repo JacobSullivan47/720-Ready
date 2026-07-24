@@ -5,6 +5,7 @@ import { domains } from "@/content/domains";
 import { domainKeyFromSlug, domainSlug } from "@/lib/slugs";
 import { TopicOverview } from "@/components/topic-overview";
 import { MarkOverviewViewed } from "@/components/mark-overview-viewed";
+import { AskTutorButton } from "@/components/ask-tutor-button";
 
 export function generateStaticParams() {
   return domains.map((d) => ({ slug: domainSlug(d.key) }));
@@ -47,12 +48,10 @@ export default async function DomainPage({ params }: { params: Promise<{ slug: s
             >
               Practice questions
             </Link>
-            <Link
-              href={`/tutor?focus=domain:${domain.key}`}
+            <AskTutorButton
+              focus={`domain:${domain.key}`}
               className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-surface-muted"
-            >
-              Ask the tutor
-            </Link>
+            />
           </>
         }
       />
