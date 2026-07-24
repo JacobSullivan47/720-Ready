@@ -1,17 +1,27 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useContentBank } from "@/hooks/use-content-bank";
+import { useProgress } from "@/hooks/use-progress";
 import { PracticeQuestionCard } from "@/components/practice-question";
 import { domains } from "@/content/domains";
 import { scenarios } from "@/content/scenarios";
 import { shuffle } from "@/lib/scoring";
 import type { BankQuestion } from "@/lib/content-bank-client";
 import type { DomainKey, Difficulty, ScenarioKey } from "@/content/types";
+import type { ActivePracticeSession } from "@/lib/progress-types";
+
+interface Session {
+  id: string;
+  questions: BankQuestion[];
+  index: number;
+  correct: number;
+}
 
 function PracticePageInner() {
   const { bank, loading } = useContentBank();
+  const { client } = useProgress();
   const searchParams = useSearchParams();
 
   const [domainFilter, setDomainFilter] = useState<DomainKey | "ALL">(
@@ -21,9 +31,13 @@ function PracticePageInner() {
     (searchParams.get("scenario") as ScenarioKey) || "ALL",
   );
   const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | "ALL">("ALL");
-  const [session, setSession] = useState<{ questions: BankQuestion[]; index: number; correct: number } | null>(
-    null,
-  );
+  const [session, setSession] = useState<Session | null>(null);
+  const [activeSession, setActiveSession] = useState<ActivePracticeSession | null>(null);
+
+  useEffect(() => {
+    if (!bank) return;
+    client.getActivePracticeSession().then(setActiveSession);
+  }, [bank, client]);
 
   const filtered = useMemo(() => {
     if (!bank) return [];
@@ -34,6 +48,47 @@ function PracticePageInner() {
       return true;
     });
   }, [bank, domainFilter, scenarioFilter, difficultyFilter]);
+
+  async function startNewSession() {
+    const questions = shuffle(filtered);
+    const { id } = await client.startPracticeSession(
+      questions.map((q) => q.id),
+      { domainKey: domainFilter === "ALL" ? undefined : domainFilter,
+        scenarioKey: scenarioFilter === "ALL" ? undefined : scenarioFilter,
+        difficulty: difficultyFilter === "ALL" ? undefined : difficultyFilter },
+    );
+    setActiveSession(null);
+    setSession({ id, questions, index: 0, correct: 0 });
+  }
+
+  function resumeSession() {
+    if (!activeSession || !bank) return;
+    const byId = new Map(bank.questions.map((q) => [q.id, q]));
+    const questions = activeSession.questionIds
+      .map((id) => byId.get(id))
+      .filter((q): q is BankQuestion => !!q);
+    if (questions.length === 0) {
+      setActiveSession(null);
+      return;
+    }
+    setSession({
+      id: activeSession.id,
+      questions,
+      index: Math.min(activeSession.currentIndex, questions.length - 1),
+      correct: activeSession.correctCount,
+    });
+    setActiveSession(null);
+  }
+
+  async function startOver() {
+    if (activeSession) await client.completePracticeSession(activeSession.id);
+    setActiveSession(null);
+  }
+
+  async function endSession() {
+    if (session) await client.completePracticeSession(session.id);
+    setSession(null);
+  }
 
   if (loading || !bank) {
     return (
@@ -60,26 +115,48 @@ function PracticePageInner() {
           key={current.id}
           question={current}
           onAnswered={(isCorrect) => {
-            if (isCorrect) setSession((s) => (s ? { ...s, correct: s.correct + 1 } : s));
+            setSession((s) => {
+              if (!s) return s;
+              const next = { ...s, correct: isCorrect ? s.correct + 1 : s.correct };
+              client
+                .updatePracticeSessionProgress(next.id, {
+                  currentIndex: next.index,
+                  correctCount: next.correct,
+                })
+                .catch(() => {});
+              return next;
+            });
           }}
         />
         <div className="mt-5 flex justify-between">
           <button
-            onClick={() => setSession(null)}
+            onClick={endSession}
             className="text-sm text-foreground-muted hover:text-foreground hover:underline"
           >
             End session
           </button>
           {!isLast ? (
             <button
-              onClick={() => setSession((s) => (s ? { ...s, index: s.index + 1 } : s))}
+              onClick={() =>
+                setSession((s) => {
+                  if (!s) return s;
+                  const next = { ...s, index: s.index + 1 };
+                  client
+                    .updatePracticeSessionProgress(next.id, {
+                      currentIndex: next.index,
+                      correctCount: next.correct,
+                    })
+                    .catch(() => {});
+                  return next;
+                })
+              }
               className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-strong"
             >
               Next question →
             </button>
           ) : (
             <button
-              onClick={() => setSession(null)}
+              onClick={endSession}
               className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-strong"
             >
               Finish session
@@ -96,6 +173,30 @@ function PracticePageInner() {
       <p className="mt-2 text-foreground-muted">
         Untimed, instant feedback. Filter by domain, scenario, or difficulty, then start a session.
       </p>
+
+      {activeSession && (
+        <div className="mt-6 rounded-lg border border-brand-soft bg-brand-soft p-5">
+          <p className="text-sm font-medium text-brand-strong">Practice session in progress</p>
+          <p className="mt-1 text-foreground">
+            Question {activeSession.currentIndex + 1} of {activeSession.questionIds.length} ·{" "}
+            {activeSession.correctCount} correct so far.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={resumeSession}
+              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-strong"
+            >
+              Resume session
+            </button>
+            <button
+              onClick={startOver}
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium hover:bg-surface-muted"
+            >
+              Start over
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <label className="text-sm">
@@ -149,7 +250,7 @@ function PracticePageInner() {
           {filtered.length === 1 ? "" : "s"} match these filters.
         </p>
         <button
-          onClick={() => setSession({ questions: shuffle(filtered), index: 0, correct: 0 })}
+          onClick={startNewSession}
           disabled={filtered.length === 0}
           className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-50"
         >

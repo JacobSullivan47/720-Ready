@@ -12,6 +12,7 @@ import {
 import { fetchContentBank } from "./content-bank-client";
 import { EXERCISE_ITEM_DOMAIN } from "@/content/exercises";
 import type {
+  ActivePracticeSession,
   AttemptRecord,
   ExerciseAttemptRecord,
   GradedMockExamQuestion,
@@ -33,6 +34,7 @@ const KEYS = {
   studyLog: `${NS}studyLog`,
   exerciseAttempts: `${NS}exerciseAttempts`,
   viewedOverviews: `${NS}viewedOverviews`,
+  activePracticeSession: `${NS}activePracticeSession`,
 };
 
 function readJson<T>(key: string, fallback: T): T {
@@ -139,6 +141,8 @@ export const localProgressClient: ProgressClient = {
       passed: null,
       domainBreakdown: null,
       timeLimitSec: MOCK_EXAM_TIME_LIMIT_SEC,
+      answers: {},
+      currentIndex: 0,
       questions: questions.map((q) => ({
         id: q.id,
         domainKey: q.domainKey,
@@ -150,6 +154,19 @@ export const localProgressClient: ProgressClient = {
     };
     writeJson<ActiveExamStorage>(KEYS.activeExam, { exam, fullQuestions: questions });
     return exam;
+  },
+
+  async getActiveMockExam() {
+    return getActiveGuestExam();
+  },
+
+  async saveMockExamProgress(examId, answers, currentIndex) {
+    const active = readJson<ActiveExamStorage | null>(KEYS.activeExam, null);
+    if (!active || active.exam.id !== examId) return;
+    writeJson<ActiveExamStorage>(KEYS.activeExam, {
+      ...active,
+      exam: { ...active.exam, answers, currentIndex },
+    });
   },
 
   async submitMockExam(examId, answers) {
@@ -266,6 +283,28 @@ export const localProgressClient: ProgressClient = {
       if (!viewed.scenarioKeys.includes(scenarioKey)) viewed.scenarioKeys.push(scenarioKey);
     }
     writeJson(KEYS.viewedOverviews, viewed);
+  },
+
+  async getActivePracticeSession() {
+    return readJson<ActivePracticeSession | null>(KEYS.activePracticeSession, null);
+  },
+
+  async startPracticeSession(questionIds, filters) {
+    const id = `guest-practice-${Date.now()}`;
+    const session: ActivePracticeSession = { id, questionIds, currentIndex: 0, correctCount: 0, filters };
+    writeJson(KEYS.activePracticeSession, session);
+    return { id };
+  },
+
+  async updatePracticeSessionProgress(id, input) {
+    const session = readJson<ActivePracticeSession | null>(KEYS.activePracticeSession, null);
+    if (!session || session.id !== id) return;
+    writeJson<ActivePracticeSession>(KEYS.activePracticeSession, { ...session, ...input });
+  },
+
+  async completePracticeSession(id) {
+    const session = readJson<ActivePracticeSession | null>(KEYS.activePracticeSession, null);
+    if (session?.id === id) writeJson(KEYS.activePracticeSession, null);
   },
 };
 

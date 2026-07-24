@@ -1,7 +1,7 @@
 "use client";
 
 import type { SrsState } from "./srs";
-import type { ProgressClient } from "./progress-types";
+import type { ActivePracticeSession, MockExamInProgress, ProgressClient } from "./progress-types";
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -53,8 +53,20 @@ export const remoteProgressClient: ProgressClient = {
     return jsonFetch("/api/exam/history");
   },
 
+  async getActiveMockExam() {
+    const data = await jsonFetch<{ exam: MockExamInProgress | null }>("/api/exam/active");
+    return data.exam;
+  },
+
   async startMockExam() {
     return jsonFetch("/api/exam/start", { method: "POST" });
+  },
+
+  async saveMockExamProgress(examId, answers, currentIndex) {
+    await jsonFetch(`/api/exam/${examId}/progress`, {
+      method: "PATCH",
+      body: JSON.stringify({ answers, currentIndex }),
+    });
   },
 
   async submitMockExam(examId, answers) {
@@ -86,5 +98,31 @@ export const remoteProgressClient: ProgressClient = {
 
   async markOverviewViewed(itemType, key) {
     await jsonFetch("/api/progress/overviews", { method: "POST", body: JSON.stringify({ itemType, key }) });
+  },
+
+  async getActivePracticeSession() {
+    const data = await jsonFetch<{ session: ActivePracticeSession | null }>("/api/progress/practice-session");
+    return data.session;
+  },
+
+  async startPracticeSession(questionIds, filters) {
+    return jsonFetch("/api/progress/practice-session", {
+      method: "POST",
+      body: JSON.stringify({ questionIds, filters }),
+    });
+  },
+
+  async updatePracticeSessionProgress(id, input) {
+    await jsonFetch(`/api/progress/practice-session/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    });
+  },
+
+  async completePracticeSession(id) {
+    await jsonFetch(`/api/progress/practice-session/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ completed: true }),
+    });
   },
 };

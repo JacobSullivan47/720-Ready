@@ -41,6 +41,13 @@ export async function POST() {
     );
   }
 
+  // Starting a fresh exam supersedes any other exam still in progress —
+  // there's only ever one active exam per user.
+  await prisma.mockExam.updateMany({
+    where: { userId: auth.userId, status: "IN_PROGRESS" },
+    data: { status: "ABANDONED" },
+  });
+
   const exam = await prisma.mockExam.create({
     data: {
       userId: auth.userId,
@@ -66,6 +73,8 @@ export async function POST() {
     passed: null,
     domainBreakdown: null,
     timeLimitSec: exam.timeLimitSec,
+    answers: {},
+    currentIndex: 0,
     questions: exam.questions.map((eq) => ({
       id: eq.question.id,
       domainKey: eq.question.domainKey,

@@ -28,10 +28,16 @@ function scenarioName(key: string): string {
   return scenarios.find((s) => s.key === key)?.name ?? key;
 }
 
+function secondsRemaining(exam: MockExamInProgress): number {
+  const elapsed = Math.floor((Date.now() - new Date(exam.startedAt).getTime()) / 1000);
+  return exam.timeLimitSec - elapsed;
+}
+
 export default function ExamPage() {
   const { client } = useProgress();
   const [phase, setPhase] = useState<"loading" | "start" | "in-progress" | "results">("loading");
   const [history, setHistory] = useState<MockExamSummary[]>([]);
+  const [activeExam, setActiveExam] = useState<MockExamInProgress | null>(null);
   const [exam, setExam] = useState<MockExamInProgress | null>(null);
   const [answers, setAnswers] = useState<Record<string, number[]>>({});
   const [current, setCurrent] = useState(0);
@@ -40,13 +46,6 @@ export default function ExamPage() {
   const [reviewing, setReviewing] = useState(false);
   const [starting, setStarting] = useState(false);
   const submittedRef = useRef(false);
-
-  useEffect(() => {
-    client.getMockExamHistory().then((h) => {
-      setHistory(h);
-      setPhase("start");
-    });
-  }, [client]);
 
   const submit = useCallback(
     async (examId: string, finalAnswers: Record<string, number[]>) => {
@@ -60,6 +59,24 @@ export default function ExamPage() {
   );
 
   useEffect(() => {
+    Promise.all([client.getMockExamHistory(), client.getActiveMockExam()]).then(([h, active]) => {
+      setHistory(h);
+      if (active) {
+        if (secondsRemaining(active) > 0) {
+          setActiveExam(active);
+        } else {
+          // Time already ran out while the user was away — close it out the
+          // same way the in-tab timeout would have, instead of offering a
+          // stale resume.
+          submit(active.id, active.answers);
+          return;
+        }
+      }
+      setPhase("start");
+    });
+  }, [client, submit]);
+
+  useEffect(() => {
     if (phase !== "in-progress" || !exam) return;
     if (remainingSec <= 0) {
       submit(exam.id, answers);
@@ -69,10 +86,26 @@ export default function ExamPage() {
     return () => clearInterval(timer);
   }, [phase, exam, remainingSec, submit, answers]);
 
+  // Autosave answers/current question while in progress, so the exam can be
+  // resumed later. Debounced since selecting an answer can fire in quick
+  // succession (e.g. toggling a multi-select option a few times).
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (phase !== "in-progress" || !exam) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      client.saveMockExamProgress(exam.id, answers, current).catch(() => {});
+    }, 800);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [phase, exam, answers, current, client]);
+
   async function startExam() {
     setStarting(true);
     const newExam = await client.startMockExam();
     submittedRef.current = false;
+    setActiveExam(null);
     setExam(newExam);
     setAnswers({});
     setCurrent(0);
@@ -81,6 +114,18 @@ export default function ExamPage() {
     setReviewing(false);
     setPhase("in-progress");
     setStarting(false);
+  }
+
+  function resumeExam() {
+    if (!activeExam) return;
+    submittedRef.current = false;
+    setExam(activeExam);
+    setAnswers(activeExam.answers);
+    setCurrent(activeExam.currentIndex);
+    setRemainingSec(secondsRemaining(activeExam));
+    setResult(null);
+    setReviewing(false);
+    setPhase("in-progress");
   }
 
   function toggleAnswer(questionId: string, idx: number, multi: boolean) {
@@ -119,13 +164,40 @@ export default function ExamPage() {
           scoring formula isn&apos;t publicly disclosed.
         </p>
 
-        <button
-          onClick={startExam}
-          disabled={starting}
-          className="mt-6 rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-60"
-        >
-          {starting ? "Assembling exam…" : "Start mock exam"}
-        </button>
+        {activeExam && (
+          <div className="mt-6 rounded-lg border border-brand-soft bg-brand-soft p-5">
+            <p className="text-sm font-medium text-brand-strong">Exam in progress</p>
+            <p className="mt-1 text-foreground">
+              Question {activeExam.currentIndex + 1} of {activeExam.questions.length} ·{" "}
+              {formatTime(secondsRemaining(activeExam))} remaining
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={resumeExam}
+                className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-strong"
+              >
+                Resume exam
+              </button>
+              <button
+                onClick={startExam}
+                disabled={starting}
+                className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium hover:bg-surface-muted disabled:opacity-60"
+              >
+                Start a new exam instead
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!activeExam && (
+          <button
+            onClick={startExam}
+            disabled={starting}
+            className="mt-6 rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-60"
+          >
+            {starting ? "Assembling exam…" : "Start mock exam"}
+          </button>
+        )}
 
         {history.length > 0 && (
           <div className="mt-10">

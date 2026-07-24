@@ -1,5 +1,5 @@
 import type { SrsState } from "./srs";
-import type { DomainKey, QuestionType, ScenarioKey } from "@/content/types";
+import type { DomainKey, Difficulty, QuestionType, ScenarioKey } from "@/content/types";
 
 export type BookmarkItemType = "FLASHCARD" | "QUESTION";
 export type AttemptMode = "PRACTICE" | "MOCK";
@@ -36,6 +36,8 @@ export interface MockExamQuestionRecord {
 export interface MockExamInProgress extends MockExamSummary {
   questions: MockExamQuestionRecord[];
   timeLimitSec: number;
+  answers: Record<string, number[]>;
+  currentIndex: number;
 }
 
 export interface GradedMockExamQuestion extends MockExamQuestionRecord {
@@ -64,6 +66,20 @@ export interface ViewedOverviews {
   scenarioKeys: ScenarioKey[];
 }
 
+export interface PracticeSessionFilters {
+  domainKey?: DomainKey;
+  scenarioKey?: ScenarioKey;
+  difficulty?: Difficulty;
+}
+
+export interface ActivePracticeSession {
+  id: string;
+  questionIds: string[];
+  currentIndex: number;
+  correctCount: number;
+  filters: PracticeSessionFilters;
+}
+
 export interface ProgressClient {
   isGuest: boolean;
 
@@ -77,7 +93,13 @@ export interface ProgressClient {
   toggleBookmark(itemType: BookmarkItemType, id: string): Promise<boolean>;
 
   getMockExamHistory(): Promise<MockExamSummary[]>;
+  getActiveMockExam(): Promise<MockExamInProgress | null>;
   startMockExam(): Promise<MockExamInProgress>;
+  saveMockExamProgress(
+    examId: string,
+    answers: Record<string, number[]>,
+    currentIndex: number,
+  ): Promise<void>;
   submitMockExam(
     examId: string,
     answers: Record<string, number[]>,
@@ -95,4 +117,12 @@ export interface ProgressClient {
 
   getViewedOverviews(): Promise<ViewedOverviews>;
   markOverviewViewed(itemType: "DOMAIN" | "SCENARIO", key: string): Promise<void>;
+
+  getActivePracticeSession(): Promise<ActivePracticeSession | null>;
+  startPracticeSession(questionIds: string[], filters: PracticeSessionFilters): Promise<{ id: string }>;
+  updatePracticeSessionProgress(
+    id: string,
+    input: { currentIndex: number; correctCount: number },
+  ): Promise<void>;
+  completePracticeSession(id: string): Promise<void>;
 }

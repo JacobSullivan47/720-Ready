@@ -31,6 +31,7 @@ model User {
   tutorMessages      TutorMessage[]
   exerciseAttempts   ExerciseAttempt[]
   overviewViews      OverviewView[]
+  practiceSessions   PracticeSession[]
 }
 
 model Account {
@@ -241,6 +242,8 @@ model MockExam {
   scaledScore   Int?
   passed        Boolean?
   domainBreakdown Json? // { [DomainKey]: { correct, total } }
+  answers       Json           @default("{}") // { [questionId]: number[] } — saved incrementally while in progress
+  currentIndex  Int            @default(0) // last question the user was viewing, for resume
 
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   questions MockExamQuestion[]
@@ -260,6 +263,29 @@ model MockExamQuestion {
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([mockExamId, order])
+}
+
+// Untimed Practice session state, for resuming after navigating away.
+// questionIds is the fixed shuffled order decided at session start (Practice
+// question order isn't reconstructible from filters alone, same as mock
+// exams). No per-question answer replay is needed on resume — Practice has
+// no "back" navigation, so currentIndex + correctCount is always enough.
+model PracticeSession {
+  id               String        @id @default(cuid())
+  userId           String
+  questionIds      Json // string[], fixed order
+  currentIndex     Int           @default(0)
+  correctCount     Int           @default(0)
+  domainFilter     DomainKey?
+  scenarioFilter   ScenarioKey?
+  difficultyFilter Difficulty?
+  completedAt      DateTime?
+  startedAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, completedAt])
 }
 
 // ---------------------------------------------------------------------------
