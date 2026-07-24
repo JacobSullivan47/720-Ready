@@ -3,7 +3,16 @@
 // keyed on a stable, deterministic ID derived from the content itself, so
 // re-seeding after editing a content file updates existing rows instead of
 // duplicating them.
+import path from "node:path";
+import { config as loadEnv } from "dotenv";
+
+// `npm run db:seed` runs this file directly via tsx, bypassing the Prisma
+// CLI's own env loading (prisma.config.ts) — so load .env.local ourselves.
+loadEnv({ path: path.join(__dirname, "..", ".env.local") });
+loadEnv({ path: path.join(__dirname, "..", ".env") });
+
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { createHash } from "node:crypto";
 import { domains } from "../src/content/domains";
 import { scenarios } from "../src/content/scenarios";
@@ -19,7 +28,8 @@ import { questions as promptEngineeringQuestions } from "../src/content/question
 import { questions as contextManagementQuestions } from "../src/content/questions/context-management";
 import type { FlashcardSeed, QuestionSeed } from "../src/content/types";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 const allFlashcards: FlashcardSeed[] = [
   ...agenticArchitectureCards,
