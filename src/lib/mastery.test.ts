@@ -16,9 +16,51 @@ describe("computeReadiness", () => {
 
   it("weights overall readiness by domain weight, not a plain average", () => {
     // Perfect mastery only in the highest-weighted domain (Agentic Architecture, 27%).
-    // Each of 10 questions answered correctly TWICE, since mastery requires
-    // MASTERY_MIN_REPETITIONS correct answers per question, not just one.
+    // Each of 10 questions answered correctly TWICE (mastery requires
+    // MASTERY_MIN_REPETITIONS correct answers per question), AND all 4 of
+    // that domain's flashcards mastered too — full mastery requires both.
+    const cardStates = Object.fromEntries(
+      cardsByDomain.AGENTIC_ARCHITECTURE.map((id) => [
+        id,
+        { easeFactor: 2.8, intervalDays: 30, repetitions: 5, lapses: 0 },
+      ]),
+    );
     const attempts: AttemptRecord[] = Array.from({ length: 10 }, (_, i) => i)
+      .flatMap((i) => [i, i])
+      .map((i, idx) => ({
+        questionId: `q${i}`,
+        domainKey: "AGENTIC_ARCHITECTURE" as const,
+        selectedIndexes: [0],
+        isCorrect: true,
+        mode: "PRACTICE" as const,
+        createdAt: new Date(Date.now() + idx).toISOString(),
+      }));
+    const result = computeReadiness(cardsByDomain, cardStates, attempts);
+    const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
+    expect(agentic.masteryPct).toBe(100);
+    expect(agentic.questionsMastered).toBe(10);
+    expect(agentic.questionsAttempted).toBe(10);
+    // Overall should be well below 100 since 4 other domains are untouched.
+    expect(result.overallReadinessPct).toBeLessThan(50);
+    expect(result.overallReadinessPct).toBeGreaterThan(0);
+  });
+
+  it("caps mastery at 50% when only flashcards (no questions) have been done", () => {
+    const cardStates = Object.fromEntries(
+      cardsByDomain.AGENTIC_ARCHITECTURE.map((id) => [
+        id,
+        { easeFactor: 2.8, intervalDays: 30, repetitions: 5, lapses: 0 },
+      ]),
+    );
+    const result = computeReadiness(cardsByDomain, cardStates, []);
+    const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
+    expect(agentic.cardRetentionPct).toBe(100);
+    expect(agentic.quizAccuracyPct).toBe(0);
+    expect(agentic.masteryPct).toBe(50);
+  });
+
+  it("caps mastery at 50% when only questions (no flashcards) have been done", () => {
+    const attempts: AttemptRecord[] = Array.from({ length: 4 }, (_, i) => i)
       .flatMap((i) => [i, i])
       .map((i, idx) => ({
         questionId: `q${i}`,
@@ -30,12 +72,9 @@ describe("computeReadiness", () => {
       }));
     const result = computeReadiness(cardsByDomain, {}, attempts);
     const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
-    expect(agentic.masteryPct).toBe(100);
-    expect(agentic.questionsMastered).toBe(10);
-    expect(agentic.questionsAttempted).toBe(10);
-    // Overall should be well below 100 since 4 other domains are untouched.
-    expect(result.overallReadinessPct).toBeLessThan(50);
-    expect(result.overallReadinessPct).toBeGreaterThan(0);
+    expect(agentic.cardRetentionPct).toBe(0);
+    expect(agentic.quizAccuracyPct).toBe(100);
+    expect(agentic.masteryPct).toBe(50);
   });
 
   it("does NOT count a question as mastered after only one correct answer", () => {

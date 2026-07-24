@@ -25,11 +25,13 @@ export interface ReadinessSummary {
 
 /**
  * Blends flashcard retention (SM-2 state) and question mastery into a single
- * 0-100 mastery score per domain, then a weight-adjusted overall readiness
- * score. A domain with no activity at all scores 0, not an average of
- * nothing, so "what to study next" reliably surfaces untouched domains.
- * Both inputs require repeat success (see MASTERY_MIN_REPETITIONS) — one
- * correct answer or one good flashcard rating isn't mastery on its own.
+ * 0-100 mastery score per domain (always a 50/50 average of the two — a
+ * domain with 100% flashcard retention but zero question attempts caps out
+ * at 50%, not 100%; full mastery requires engaging with both), then a
+ * weight-adjusted overall readiness score. A domain with no activity at all
+ * scores 0. Both inputs also require repeat success on the individual
+ * item level (see MASTERY_MIN_REPETITIONS) — one correct answer or one good
+ * flashcard rating isn't mastery on its own.
  */
 export function computeReadiness(
   cardsByDomain: Record<DomainKey, string[]>, // domainKey -> all card IDs in that domain
@@ -71,18 +73,10 @@ export function computeReadiness(
     ).length;
     const quizAccuracyPct = questionsAttempted > 0 ? (questionsMastered / questionsAttempted) * 100 : 0;
 
-    const hasCardData = reviewed.length > 0;
-    const hasQuizData = questionsAttempted > 0;
-    let masteryPct: number;
-    if (hasCardData && hasQuizData) {
-      masteryPct = 0.5 * cardRetentionPct + 0.5 * quizAccuracyPct;
-    } else if (hasCardData) {
-      masteryPct = cardRetentionPct;
-    } else if (hasQuizData) {
-      masteryPct = quizAccuracyPct;
-    } else {
-      masteryPct = 0;
-    }
+    // Always blend both halves, even when one side has no data yet (0%).
+    // Doing nothing but flashcards (or nothing but questions) for a domain
+    // caps out at 50% — full mastery requires engaging with both.
+    const masteryPct = 0.5 * cardRetentionPct + 0.5 * quizAccuracyPct;
 
     return {
       domainKey: d.key,
