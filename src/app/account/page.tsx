@@ -45,11 +45,11 @@ export default function AccountPage() {
         Sign out
       </button>
       <p className="mt-6 text-xs text-foreground-muted">
-        To delete your account and data, see our{" "}
-        <Link href="/legal/privacy" className="text-brand hover:underline">
-          Privacy Policy
-        </Link>{" "}
-        for how to request deletion.
+        Want to delete your account and all associated data?{" "}
+        <Link href="/legal/privacy#delete-account" className="text-brand hover:underline">
+          Do that from the Privacy page
+        </Link>
+        .
       </p>
     </div>
   );
