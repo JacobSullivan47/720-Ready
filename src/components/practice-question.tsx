@@ -27,6 +27,8 @@ export function PracticeQuestionCard({
   const [selected, setSelected] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [bookmarked, setBookmarked] = useState(initiallyBookmarked);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   // Stored option order otherwise leaks the answer (the correct one is
   // overwhelmingly the same position in the content bank) — shuffle the
@@ -51,18 +53,37 @@ export function PracticeQuestionCard({
     });
   }
 
+  async function saveAttempt(isCorrect: boolean) {
+    setSaveError(null);
+    try {
+      await client.recordAttempt({
+        questionId: question.id,
+        domainKey: question.domainKey,
+        selectedIndexes: selected,
+        isCorrect,
+        mode: "PRACTICE",
+      });
+      onAnswered?.(isCorrect);
+    } catch (err) {
+      // Grading itself already happened locally (isCorrectOverall below), so
+      // the user still sees Correct/Not quite — but without this, a failed
+      // save here was previously silent and just never counted toward
+      // progress, with no indication anything went wrong.
+      setSaveError(err instanceof Error ? err.message : "Couldn't save this attempt.");
+    }
+  }
+
   async function submit() {
     if (selected.length === 0 || submitted) return;
     const isCorrect = arraysEqualAsSets(selected, question.correctIndexes);
     setSubmitted(true);
-    await client.recordAttempt({
-      questionId: question.id,
-      domainKey: question.domainKey,
-      selectedIndexes: selected,
-      isCorrect,
-      mode: "PRACTICE",
-    });
-    onAnswered?.(isCorrect);
+    await saveAttempt(isCorrect);
+  }
+
+  async function retrySave() {
+    setRetrying(true);
+    await saveAttempt(arraysEqualAsSets(selected, question.correctIndexes));
+    setRetrying(false);
   }
 
   async function toggleBookmark() {
@@ -156,6 +177,21 @@ export function PracticeQuestionCard({
           >
             {isCorrectOverall ? "Correct" : "Not quite"}
           </p>
+          {saveError && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-danger-soft px-3 py-2 text-sm text-danger"
+            >
+              <span>Didn&apos;t save to your progress: {saveError}</span>
+              <button
+                onClick={retrySave}
+                disabled={retrying}
+                className="rounded-md border border-danger px-2 py-1 text-xs font-semibold hover:bg-danger/10 disabled:opacity-60"
+              >
+                {retrying ? "Retrying…" : "Retry"}
+              </button>
+            </div>
+          )}
           <div className="rounded-md bg-surface-muted p-4">
             <p className="text-sm font-semibold text-foreground">Explanation</p>
             <p className="mt-1 text-sm text-foreground-muted">{question.explanation}</p>
