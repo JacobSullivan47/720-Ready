@@ -26,10 +26,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer is deciding whether to connect their coding agent to a newly published MCP server that exposes tools for modifying files in a cloud storage bucket. Before granting broad trust to whatever these tools claim to do, what should most directly inform how much the developer trusts the tool calls?",
     options: [
-      "Whether the tool descriptions mention safety considerations",
-      "The reputation and origin of whoever operates that MCP server",
-      "Whether the tools are named descriptively",
-      "Whether the JSON schema includes required fields",
+      "Whether the tool descriptions happen to mention safety considerations",
+      "The reputation and track record of whoever operates that MCP server",
+      "Whether the tools have clear, descriptive, well-chosen names",
+      "Whether the JSON schema properly marks its required fields",
     ],
     correctIndexes: [1],
     explanation:
@@ -45,7 +45,7 @@ export const questions: QuestionSeed[] = [
       "Two engineers write descriptions for a create_calendar_event tool. Engineer A writes: 'Creates a calendar event.' Engineer B writes: 'Creates an event on the current user's primary calendar. Use for scheduling meetings with a specific start and end time; do not use for recurring series, which requires create_recurring_event. Expects start and end as ISO 8601 timestamps, for example 2026-03-01T14:00:00-05:00. Returns the created event_id and a confirmation link.' Which description will produce more reliable tool selection and correct inputs, and why?",
     options: [
       "Engineer A's, because shorter descriptions reduce token overhead and confusion",
-      "Engineer B's, because it states purpose, boundaries, input format with an example, and output contents",
+      "Engineer B's, because it states the purpose, boundaries, input format, and output",
       "Both are equivalent, since the JSON schema types already convey everything the model needs",
       "Engineer A's, because models perform better with minimal, open-ended instructions",
     ],
@@ -63,10 +63,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A support agent's issue_refund tool currently accepts a free-text customer_name field and searches for a matching account before issuing the refund. Two customers named 'Pat Nguyen' exist in the system, and a refund was recently applied to the wrong one. What redesign most directly addresses this class of bug?",
     options: [
-      "Add a confirmation dialog asking the customer to re-type their name",
-      "Require a find_customer lookup tool that returns a stable customer_id, and have issue_refund accept only that id",
-      "Make customer_name a required field with a minimum character length",
-      "Log every refund call for later manual auditing",
+      "Add a confirmation dialog that asks the customer to re-type and verify their full name",
+      "Require a find_customer lookup that returns a stable customer_id for issue_refund to use",
+      "Make customer_name a required field with a minimum character length requirement before saving",
+      "Log every refund call in an audit trail so a supervisor can review it manually later",
     ],
     correctIndexes: [1],
     explanation:
@@ -82,8 +82,8 @@ export const questions: QuestionSeed[] = [
       "A fitness app has one log_workout tool with an activity_type field plus a large set of optional parameters: pace and distance for runs, sets, reps, and weight for strength training, and elevation and route for hikes, where each group only makes sense for certain activity_type values and several combinations are actually invalid together. What is the recommended fix?",
     options: [
       "Add validation error messages explaining which fields are invalid for each activity_type",
-      "Split the tool into separate tools per activity, such as log_run, log_strength_session, and log_hike, each with only its own relevant parameters",
-      "Convert all optional parameters into a single freeform notes string the model fills in",
+      "Split the tool into separate tools per activity, such as log_run, log_strength_session, and log_hike",
+      "Convert all optional parameters into one freeform notes string for the model to fill in as it sees fit",
       "Keep one tool but mark every parameter as required to force the model to always provide full context",
     ],
     correctIndexes: [1],
@@ -99,10 +99,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A logistics tool returns a shipment's origin_warehouse_id, and separately returns an estimated_transit_days value computed at call time from current traffic conditions. A downstream rerouting tool needs to accept a reference to the shipment's warehouse. Which value should that downstream tool accept as input, and why?",
     options: [
-      "estimated_transit_days, because it reflects the most current conditions",
-      "origin_warehouse_id, because it's a stable identifier that won't change meaning between calls",
-      "Both values combined into a single composite string",
-      "Neither; the downstream tool should recompute both values itself",
+      "estimated_transit_days, because it reflects the most current traffic conditions",
+      "origin_warehouse_id, because it's a stable identifier that keeps its meaning",
+      "Both values combined together into a single composite reference string",
+      "Neither; the downstream tool should independently recompute both values itself",
     ],
     correctIndexes: [1],
     explanation:
@@ -118,10 +118,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A document-search tool used in an extraction pipeline returns an empty array both when a query legitimately matches nothing in the corpus and when the search backend fails to respond. An agent using this tool recently treated a backend outage as if there were simply no matching documents, and went on to write a report claiming no data existed. What is the most direct fix?",
     options: [
-      "Make the tool retry more aggressively before giving up",
-      "Have the tool return distinguishable outputs, such as a genuine empty match marked with an ok status versus a separate error status when the backend call fails",
-      "Change the tool description to warn the model that this ambiguity can occur",
-      "Require the model to always double-check with a second search tool",
+      "Make the tool retry more aggressively several times before finally giving up and returning",
+      "Have the tool return a distinct status for a genuine empty match versus a backend failure",
+      "Change the tool description to warn the model that this kind of ambiguity can occur",
+      "Require the model to always double-check results with a second, independent search tool call",
     ],
     correctIndexes: [1],
     explanation:
@@ -136,10 +136,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An internal API used by a support tool returns results in pages of 50. A developer wires the tool so that whenever the model asks for 'all open tickets,' the tool loops internally and concatenates every page before returning one giant array. With a queue of 3,000 open tickets, what problem does this design create?",
     options: [
-      "It violates the MCP protocol, which forbids returning arrays",
-      "It floods the model's context with a huge result set instead of returning a manageable first page with a total count and continuation token",
-      "It has no downside, since the model receives complete information in one call",
-      "It will always exceed the API's page-size limit and fail outright",
+      "It violates the MCP protocol, which explicitly forbids tools from ever returning arrays",
+      "It floods the model's context with the full result set instead of one paged response",
+      "It has no real downside, since the model simply receives complete information in one call",
+      "It will always exceed the underlying API's own page-size limit and therefore fail outright",
     ],
     correctIndexes: [1],
     explanation:
@@ -155,10 +155,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "As an internal platform accumulates over 200 narrow automation tools across many teams, a developer proposes collapsing them all behind one call_platform_tool(operation_name, params) tool to keep the active tool list manageable. What is the main problem with this approach compared to progressive tool availability?",
     options: [
-      "It technically exceeds the maximum number of tools a model can be given",
-      "It hides the real tool surface behind a single generic entry point, which tends to produce worse tool selection than surfacing a small ranked shortlist and revealing specific tools on demand",
-      "It requires every team to rewrite their tool schemas from scratch",
-      "It prevents the tools from being used by more than one agent at a time",
+      "It technically exceeds the maximum number of tools that a model is allowed to be given at once",
+      "It hides the real tool surface behind one generic entry point, hurting tool selection",
+      "It requires every team across the platform to rewrite their existing tool schemas from scratch",
+      "It prevents the underlying tools from ever being used by more than one agent at a time",
     ],
     correctIndexes: [1],
     explanation:
@@ -174,10 +174,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A receipt-parsing tool flags requires_review whenever its confidence score falls below a cutoff the engineering team picked because '0.7 felt about right.' After launch, receipts near that cutoff are inconsistently flagged: some clearly wrong ones pass through untagged while some clearly correct ones get needlessly queued for review. What does this indicate about the threshold?",
     options: [
-      "Confidence scores should be removed from the tool output entirely",
-      "The threshold should have been calibrated against a labeled validation set instead of chosen by intuition",
-      "requires_review should always default to true regardless of confidence",
-      "The tool should stop returning a numeric confidence and only return a boolean",
+      "Confidence scores should be removed from the tool's output entirely and not exposed at all",
+      "The threshold should have been calibrated against a labeled validation set, not intuition",
+      "requires_review should simply always default to true no matter what the confidence score is",
+      "The tool should stop returning a numeric confidence score and only return a plain boolean",
     ],
     correctIndexes: [1],
     explanation:
@@ -192,10 +192,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A workspace-management tool is defined as delete_workspace(workspace_id, dry_run: boolean), where dry_run: true just prints what would happen. A reviewer worries this is unsafe as an agent-facing design. What is the core risk, and what's the recommended alternative?",
     options: [
-      "The risk is that dry_run defaults to false; the fix is simply changing the default to true",
-      "The risk is that a boolean flag on a single tool can simply be set to false by the model with nothing structurally stopping it; the fix is a separate preview tool that issues a short-lived confirmation token, plus an execute tool that only runs given that exact token after a real human confirms",
-      "The risk is that workspace_id could be guessed; the fix is switching to a random UUID",
-      "The risk is performance overhead from running the check twice; the fix is caching the dry-run result",
+      "The risk is that dry_run defaults to false in the schema; the fix is simply flipping that default so it defaults to true",
+      "The risk is nothing stops a second call with dry_run: false; the fix is a preview tool issuing a one-time token, plus an execute tool requiring it",
+      "The risk is that workspace_id values are sequential and could be easily guessed by an outside attacker; the fix is switching to randomly generated UUIDs instead",
+      "The risk is unnecessary performance overhead from running the safety check twice; the fix is simply caching the dry-run result for later reuse",
     ],
     correctIndexes: [1],
     explanation:
@@ -211,9 +211,9 @@ export const questions: QuestionSeed[] = [
       "A team building an MCP server for their internal wiki needs to expose three things: a static list of team-space names that rarely changes, a live 'search the wiki right now' capability, and a canned onboarding walkthrough that a new hire's assistant should run only when the new hire explicitly asks for it. How should these map onto MCP's three building blocks?",
     options: [
       "All three should be Tools, since Tools are the only building block MCP actually supports in practice",
-      "The team-space list as a Resource, the live search as a Tool, and the onboarding walkthrough as a Prompt",
+      "Team-space list as a Resource, live search as a Tool, and onboarding walkthrough as a Prompt",
       "The team-space list as a Tool, the live search as a Resource, and the onboarding walkthrough as a Tool",
-      "All three should be Resources, since none of them modify any state",
+      "All three should just be Resources, since none of them ever modify any state at all",
     ],
     correctIndexes: [1],
     explanation:
@@ -229,10 +229,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An MCP server advertises a purge_cache tool with the annotation readOnlyHint: true. A host application is deciding whether to auto-approve calls to this tool without any user confirmation, reasoning that the annotation guarantees the tool is safe. What is the correct assessment?",
     options: [
-      "Auto-approval is safe, since readOnlyHint is a protocol-enforced guarantee",
-      "Auto-approval is risky, since annotations are only hints a server chooses to set and could be wrong or malicious; real approval decisions should rest on server trust, user policy, and assessed risk instead",
-      "Auto-approval is safe as long as the tool's name doesn't contain the word 'delete'",
-      "Auto-approval is risky only if the tool comes from an unofficial, non-Anthropic MCP server",
+      "Auto-approval is completely safe, since readOnlyHint is always a protocol-enforced guarantee the server truly cannot ever misreport",
+      "Auto-approval is risky, since annotations are self-reported hints a server chooses to set and could be wrong or malicious",
+      "Auto-approval is safe as long as the tool's name doesn't literally contain a word like 'delete' or 'purge'",
+      "Auto-approval is risky, but only if the tool happens to come from an unofficial, non-Anthropic MCP server",
     ],
     correctIndexes: [1],
     explanation:
@@ -248,11 +248,11 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A multi-agent research assistant has a pipeline that: (1) fetches a webpage and extracts its raw text, (2) summarizes the extracted text, and (3) decides whether to include that summary in a final report shared with the user. The team is deciding which steps to merge into single tool calls versus keep as separate decision points. Which two statements reflect good practice here?",
     options: [
-      "Fetching the page and extracting its raw text are good candidates to merge into a single tool call, since they are mechanical and always performed together",
-      "All three steps should be merged into a single tool to minimize the number of tool calls the model has to make",
-      "Deciding whether to include the summary in the final report should remain a separate, distinct decision point rather than being folded silently into the summarization tool",
-      "Summarization should never be exposed as a tool at all, since only fetching counts as a real tool action",
-      "Because latency matters, every network-touching step should always be split into its own separate tool regardless of context",
+      "Fetching the page and extracting its text are good candidates to merge, since they're mechanical and always paired together",
+      "All three steps should always be merged into a single tool call to minimize the total number of tool calls made",
+      "Deciding whether to include the summary in the report should stay a separate decision point, not folded into summarization",
+      "Summarization should never be exposed as a tool at all, since only fetching a page ever counts as a genuine tool action",
+      "Because latency always matters most, every network-touching step should always be split into its own separate, standalone tool",
     ],
     correctIndexes: [0, 2],
     explanation:
@@ -267,11 +267,11 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is categorizing failure modes for their order-management tool: (1) the backend database connection times out, (2) the model passes an invalid three-letter country code, (3) the customer's account is genuinely not eligible for the requested action under company policy, and (4) the calling agent's credentials lack permission for this operation. Which two statements describe correct handling?",
     options: [
-      "The database timeout (1) should be retried inside the tool with backoff rather than immediately surfaced to the model as a failure",
-      "The invalid country code (2) should trigger the same human-escalation path as the permission error (4)",
-      "The ineligibility case (3) should return a structured, non-retryable result with a clear explanation, since retrying won't change the underlying policy outcome",
-      "All four cases should be retried automatically, since retries are always safe for order-management tools",
-      "The permission error (4) should be silently retried by the tool until it eventually succeeds",
+      "The database timeout (1) should be retried inside the tool with backoff, not surfaced immediately to the model as a failure",
+      "The invalid country code (2) should trigger the exact same human-escalation path used for the permission error (4)",
+      "The ineligibility case (3) should return a structured, non-retryable result with a clear explanation of the policy",
+      "All four of these cases should be retried automatically, since retries are always considered safe for order-management tools",
+      "The permission error (4) should be silently retried by the tool over and over until it eventually succeeds",
     ],
     correctIndexes: [0, 2],
     explanation:
@@ -287,10 +287,10 @@ export const questions: QuestionSeed[] = [
       "An MCP-connected client encounters four situations: (1) it calls a tool name the server doesn't recognize, (2) a real tool call reaches the server but hits a downstream 404 for a record that doesn't exist, (3) it sends arguments that fail the tool's declared schema before any tool logic runs, and (4) a real tool call reaches the server and hits a temporary 503 from a dependency. Which two statements correctly classify these?",
     options: [
       "Situations (1) and (3) are protocol-level errors, since the request never becomes valid enough to reach real tool logic",
-      "Situation (2) should also be reported as a protocol-level error, since the record genuinely doesn't exist",
-      "Situations (2) and (4) should be reported as tool-execution errors inside a normal tool result, since the request was valid and reached real backend logic that then hit an application-level or transient condition",
-      "All four situations are equivalent and the client should handle them identically",
-      "Situation (4) should be treated as a permanent failure with no possibility of a later retry",
+      "Situation (2) should also be reported as a protocol-level error, since the requested record genuinely doesn't exist at all",
+      "Situations (2) and (4) should be tool-execution errors in a normal result, since the call was valid and reached real logic",
+      "All four of these situations are essentially equivalent, and the client should handle each of them identically",
+      "Situation (4) should always be treated as a permanent failure with absolutely no possibility of a later retry",
     ],
     correctIndexes: [0, 2],
     explanation:
@@ -308,7 +308,7 @@ export const questions: QuestionSeed[] = [
       "The local-scope definition wins entirely, since local scope has higher precedence than project scope",
       "Claude Code merges the two definitions field by field, taking the command path from whichever scope defined it first",
       "Because project scope is checked into version control and shared with the team, it always overrides local scope for consistency",
-      "If the developer instead only had a user-scope 'analytics' entry with no project or local entry present, that user-scope definition would be the one used",
+      "If the developer only had a user-scope 'analytics' entry with no project or local entry present, that entry would be used",
       "Since the two definitions share the same server name, Claude Code refuses to load either until the conflict is manually resolved",
     ],
     correctIndexes: [0, 3],
@@ -325,9 +325,9 @@ export const questions: QuestionSeed[] = [
       "A ticket-routing tool accepts a priority parameter typed as a free-text string. In practice, callers have sent 'high', 'High', 'URGENT', 'sev1', and 'asap', and the downstream routing logic has to guess at each variant's meaning, sometimes incorrectly. What is the most direct fix?",
     options: [
       "Add a longer description explaining the intended values without changing the parameter's type",
-      "Convert priority to an enum with a small fixed set of allowed values, such as 'low', 'medium', 'high', 'critical'",
-      "Rename the parameter to priority_level for clarity",
-      "Keep priority as free text but validate that the string is non-empty",
+      "Convert priority to an enum with a fixed set: low, medium, high, critical",
+      "Rename the parameter to priority_level so that its purpose becomes clearer to callers",
+      "Keep priority as free text but validate that the submitted string is non-empty and trimmed",
     ],
     correctIndexes: [1],
     explanation:
@@ -342,10 +342,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A reporting tool exposes a single parameter, filter_expression: string, where callers are expected to write things like \"status=open AND assigned_to=alice AND created_after=2026-01-01\". The model frequently gets the syntax slightly wrong, producing malformed expressions that fail to parse. Which redesign best follows recommended parameter design?",
     options: [
-      "Add a detailed grammar reference for filter_expression inside the tool description",
-      "Replace filter_expression with distinct typed parameters that mirror the real domain model, such as status (enum), assignee_id (string), and created_after (date)",
-      "Keep filter_expression but return a clearer parsing-error message whenever the syntax is wrong",
-      "Ask the model to first call a separate tool that validates filter_expression syntax before the real call",
+      "Add a detailed grammar reference and several worked examples for filter_expression inside the description",
+      "Replace filter_expression with typed parameters like a status enum, assignee_id, and a date field",
+      "Keep filter_expression as-is but return a clearer, more specific parsing-error message when syntax is wrong",
+      "Ask the model to first call a separate tool that validates filter_expression's syntax before making the real call",
     ],
     correctIndexes: [1],
     explanation:
@@ -361,9 +361,9 @@ export const questions: QuestionSeed[] = [
       "A scheduling tool defines a parameter named start_time_iso8601_utc_string, but the tool's description and schema say nothing further about the expected format. What is the problem with relying on the parameter name alone to communicate this?",
     options: [
       "There is no real problem, since a descriptive parameter name fully replaces the need for stating format in the description",
-      "Naming conventions are not a substitute for stating the format explicitly in the description, since the model may not reliably infer format expectations from an identifier alone",
-      "Parameter names longer than roughly 20 characters silently degrade model performance",
-      "JSON Schema rejects parameter names that contain multiple underscores",
+      "Naming conventions are not a substitute for explicitly stating the format, since the model may not reliably infer it",
+      "Parameter names longer than roughly 20 characters will silently degrade the model's overall tool-calling performance",
+      "JSON Schema explicitly rejects any parameter name that contains more than one underscore character",
     ],
     correctIndexes: [1],
     explanation:
@@ -379,10 +379,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A support-ticket lookup tool returns its result as one sentence: 'Ticket #4471 for customer Dana Cole is currently marked resolved.' A separate reopen_ticket tool needs a ticket_id to act, and engineers notice the model sometimes transposes digits when copying the number out of the sentence into the next call. What is the most direct fix?",
     options: [
-      "Ask the model to always re-read the sentence twice before calling reopen_ticket",
-      "Have the lookup tool return structured fields, such as ticket_id, customer_name, and status, so ticket_id can be passed forward directly instead of being retyped out of prose",
-      "Shorten the sentence so it's easier to copy accurately",
-      "Add a checksum digit to ticket numbers so typos can be caught after the fact",
+      "Ask the model to always carefully re-read the sentence twice before it calls reopen_ticket",
+      "Have the lookup tool return structured fields, like ticket_id, customer_name, and status",
+      "Shorten the sentence and reformat it so that the ticket number is easier to copy accurately",
+      "Add a checksum digit to every ticket number so that typos can be automatically caught afterward",
     ],
     correctIndexes: [1],
     explanation:
@@ -397,10 +397,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An agent calls a charge_card tool to bill a customer. The HTTP request times out with no response, but logs later show the charge was likely submitted to the payment processor before the timeout occurred. The agent's retry logic is about to call charge_card again with the same amount. What is the correct handling?",
     options: [
-      "Retry immediately, since timeouts are always transient infrastructure errors",
-      "Treat the outcome as uncertain rather than retrying blindly, since a retry could duplicate a charge that may have already gone through",
+      "Retry immediately and automatically every time, since timeouts are always transient infrastructure errors",
+      "Treat the outcome as uncertain instead of retrying blindly, since a retry could duplicate the charge",
       "Skip charging entirely and mark the invoice as paid, since the timeout implies the charge succeeded",
-      "Treat it as a permanent validation error and ask the model to change the input",
+      "Treat it as a permanent validation error and ask the model to go change the charge input",
     ],
     correctIndexes: [1],
     explanation:
@@ -417,8 +417,8 @@ export const questions: QuestionSeed[] = [
       "A team is building a single internal agent that calls a bespoke deployment script specific to their own pipeline, one that no other team or agent will ever need. A developer proposes wrapping this script as a full MCP server anyway, reasoning that 'MCP is the standard so everything should use it.' What is the most reasonable assessment?",
     options: [
       "This is a good use of MCP, since MCP servers always simplify authentication and error handling for any tool they expose",
-      "A plain custom tool is likely the better fit here, since MCP's main advantage is reusability across multiple clients or agents, which doesn't apply to a single, one-off, application-specific workflow",
-      "MCP must be used, since production tools are only ever exposed through MCP servers",
+      "A plain custom tool likely fits better, since MCP's main advantage is reusability, which this workflow doesn't need",
+      "MCP must always be used here, since production tools are only ever meant to be exposed through MCP servers",
       "Neither approach works; the script must instead be rewritten as an Anthropic-defined client-side tool",
     ],
     correctIndexes: [1],
@@ -434,10 +434,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team adopts an MCP server to expose their internal ticketing system to several agents. After launch, they're surprised to hit rate-limit errors from the underlying ticketing API and see inconsistent behavior when two agents call the same tool at the same time. What does this reveal about a common misconception?",
     options: [
-      "That MCP servers are incompatible with concurrent access and must be restricted to a single caller at a time",
-      "That adopting MCP by itself does not automatically provide rate limiting, caching, or concurrency handling; those still need to be engineered into the server or the backend it wraps",
-      "That the team should have used a server-side tool instead, since only server-side tools handle rate limits",
-      "That MCP tools cannot call APIs that enforce rate limits",
+      "That MCP servers are fundamentally incompatible with concurrent access and must serve only one caller",
+      "That adopting MCP alone does not automatically provide rate limiting, caching, or concurrency handling",
+      "That the team should have used a server-side tool instead, since only those tools ever handle rate limits",
+      "That MCP tools simply cannot call any backend APIs that already enforce their own rate limits",
     ],
     correctIndexes: [1],
     explanation:
@@ -452,10 +452,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer wants to connect Claude Code to an MCP server that requires their personal API key. They don't want the key checked into the shared repository or visible to the rest of the team, but they still want the server available while working in this particular project. Which MCP configuration scope best fits this need?",
     options: [
-      "Project scope, since it's specific to this repository",
-      "User scope, since it applies to every project the developer works on",
-      "Local scope, since it's per-user and per-project and isn't checked into the shared repository",
-      "There is no way to keep a credential out of the shared repository while still using it in this project",
+      "Project scope, since it's specific only to this one repository",
+      "User scope, since it applies across every project the developer works on",
+      "Local scope, since it's per-user, per-project, and not checked into the shared repository",
+      "There's no way to keep a credential out of the shared repo while still using it in this project",
     ],
     correctIndexes: [2],
     explanation:
@@ -470,12 +470,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A code reviewer is auditing a newly written send_notification tool. The tool's description reads only 'Sends a notification.' Its parameters are message: string, recipient: string, and options: string, where options is meant to hold things like urgency and delivery channel packed together as free text. Which two statements correctly identify problems with this design?",
     options: [
-      "The description fails to state when to use the tool, when not to, or what the output contains, leaving the model to guess",
-      "Packing urgency and delivery channel into one free-text options string discards structure that could instead be separate, well-typed parameters like an urgency enum and a channel enum",
-      "The tool is fine as written, since message and recipient are both correctly typed as strings",
-      "recipient should also stay free text, since notification recipients vary too much to ever type strictly",
-      "The real fix is simply renaming options to config_options for clarity",
-      "Splitting options into typed parameters would violate a rule limiting tools to at most two parameters",
+      "The description fails to state when to use the tool, when not to, or what it returns, leaving the model to guess",
+      "Packing urgency and channel into one free-text string discards structure that enums could enforce",
+      "The tool is basically fine as written, since message and recipient are both correctly typed as strings",
+      "recipient should also stay free text, since notification recipients vary far too much to type strictly",
+      "The real fix here is simply renaming the options parameter to config_options for extra clarity",
+      "Splitting options into typed parameters would violate a rule that limits tools to at most two parameters",
     ],
     correctIndexes: [0, 1],
     explanation:
@@ -491,12 +491,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer connects five different MCP servers to their coding assistant, and three of them each expose a similarly named create_task tool with overlapping but slightly different behavior. The assistant frequently picks the wrong one. Which two responses are the recommended way to address this?",
     options: [
-      "Sharpen each create_task tool's description so it clearly states its specific purpose and how it differs from the similarly named tools on other servers",
-      "Introduce progressive availability, such as a lightweight discovery step that surfaces a short ranked list of matching tools before the specific one becomes callable",
+      "Sharpen each create_task tool's description so it states its specific purpose and how it differs from the others",
+      "Introduce progressive availability, such as a discovery step surfacing a short ranked list of matching tools first",
       "Disconnect four of the five MCP servers, since only one server per capability can be connected at a time",
-      "Merge all three create_task tools behind one aggregator tool that takes a server_name parameter, since fewer top-level tools always means better selection",
-      "Rename all three tools to the exact same name so the assistant treats them as interchangeable",
-      "Nothing can be done; tool name collisions across independent MCP servers are always unresolvable",
+      "Merge all three create_task tools behind one aggregator tool with a server_name parameter for fewer top-level tools",
+      "Rename all three tools to the exact same name so the assistant treats them as fully interchangeable options",
+      "Nothing can really be done here; tool name collisions across independent MCP servers are always unresolvable",
     ],
     correctIndexes: [0, 1],
     explanation:

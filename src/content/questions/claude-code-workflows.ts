@@ -12,10 +12,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer asks an assistant to locate the function that handles order cancellations somewhere in an unfamiliar codebase, but doesn't know the filename. The assistant instead tries a series of filename patterns like **/*cancel*.ts and **/*order*.ts, none of which turn up the function, which actually lives in a broadly named file called handlers.ts. What went wrong?",
     options: [
-      "The assistant should have used Bash to run the test suite instead",
-      "The assistant used Glob to search for something that required Grep, since the function name lives inside file contents rather than in a filename",
-      "The assistant should have skipped exploration entirely and just guessed at the fix",
-      "Glob patterns cannot include wildcards for file extensions",
+      "The assistant should have used Bash to run the full test suite and inspect the output for the handler instead",
+      "The assistant used Glob when the target text lives inside file contents, which calls for Grep instead",
+      "The assistant should have skipped exploration entirely and just guessed at the fix based on the filename",
+      "Glob patterns cannot include wildcards for file extensions, so extension-based searches never match anything",
     ],
     correctIndexes: [1],
     explanation:
@@ -30,10 +30,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A single line inside an otherwise correct 400-line file has a hardcoded timeout value that needs to change from 30 to 60. Which built-in approach best fits this change?",
     options: [
-      "Read the file, then Write an entirely new version of it",
+      "Read the file first, then Write out a full replacement copy of it",
       "A targeted Edit that matches the unique line and replaces it",
-      "Delegate the change to a subagent via Task",
-      "Use Glob to locate the number 30 and replace it",
+      "Delegate the one-line change to a subagent via the Task tool",
+      "Use Glob to search for the number 30 and replace it directly",
     ],
     correctIndexes: [1],
     explanation:
@@ -49,10 +49,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An engineer is trying to understand how a specific webhook route processes incoming events in an unfamiliar service. Which sequence best matches an efficient exploration strategy?",
     options: [
-      "Read every file in the service directory in file-size order",
-      "Grep for the webhook's route name or a related error code, read the matching entry files, follow their imports to core abstractions, then trace one representative event through the code",
-      "Immediately rewrite the webhook handler from scratch based on general webhook conventions",
-      "Search only the project's README for a description of the webhook, and stop there",
+      "Read every file in the service directory from smallest to largest, in file-size order, regardless of relevance",
+      "Grep for the route name or error code, read the matches, follow imports to core logic, then trace one event through",
+      "Immediately rewrite the webhook handler from scratch, relying only on general webhook conventions rather than the existing code",
+      "Search only the project's README for a description of the webhook's behavior, and stop there without checking the code",
     ],
     correctIndexes: [1],
     explanation:
@@ -68,10 +68,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is planning to change how three separate services share a database connection pool, a change that touches all three services' configuration and could break existing behavior if done incorrectly. Which workflow best fits this situation?",
     options: [
-      "Direct execution, since database connections are a routine detail",
+      "Direct execution, treating the shared database connections as a routine, low-stakes detail",
       "Plan mode, exploring read-only first and proposing an approach before any file is changed",
-      "Extended thinking alone, without changing the workflow at all",
-      "Skipping exploration and applying the same fix used for a previous, unrelated bug",
+      "Extended thinking alone, without otherwise changing the workflow being used",
+      "Skipping exploration and reapplying the same fix used for a previous, unrelated bug",
     ],
     correctIndexes: [1],
     explanation:
@@ -87,10 +87,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer enables plan mode for a complex migration and assumes this automatically means the assistant is now reasoning more deeply about tricky edge cases in the migration logic. Is this assumption correct?",
     options: [
-      "Yes, plan mode and extended/deep reasoning are the same underlying mechanism",
-      "No — plan mode is a workflow control governing explore-then-approve behavior, while reasoning depth is a separate mechanism; enabling one does not enable the other",
-      "Yes, but only when the migration involves more than five files",
-      "No, because plan mode actually disables all reasoning until a plan is approved",
+      "Yes, plan mode and extended or deep reasoning mode are simply two different names for the exact same underlying mechanism",
+      "No — plan mode governs explore-then-approve workflow behavior; reasoning depth is a separate, independent mechanism",
+      "Yes, but only once the migration involves more than five separate files being touched during the work",
+      "No, because enabling plan mode actually disables all reasoning entirely until a plan gets approved",
     ],
     correctIndexes: [1],
     explanation:
@@ -105,10 +105,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer worked in one terminal yesterday on a refactor, then opened a second terminal later that day to quickly check something unrelated in the same project directory. This morning, they want to resume yesterday's refactor specifically. Which approach is safest?",
     options: [
-      "Use the flag that resumes the most recent conversation in the current directory",
-      "Use the resume-specific-session flag or picker to explicitly choose yesterday's refactor session",
-      "Start a brand-new session and hope it remembers the refactor automatically",
-      "Open a third terminal and use the most-recent flag there instead",
+      "Use the flag that resumes the most recent conversation in the current project directory",
+      "Use the resume-specific-session flag or picker to explicitly choose yesterday's session",
+      "Start a brand-new session and hope it somehow remembers yesterday's refactor automatically",
+      "Open yet another, third terminal and use the most-recent flag there instead",
     ],
     correctIndexes: [1],
     explanation:
@@ -143,10 +143,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer has a long, carefully built investigation session tracing a subtle bug and wants to try a completely different hypothesis about the root cause without risking the existing transcript. What best achieves this?",
     options: [
-      "Resume the same session and simply ask it to consider an alternative hypothesis",
+      "Resume the same session and simply ask it to consider an alternative hypothesis instead",
       "Fork the session, branching a new transcript so the original investigation stays untouched",
       "Start a brand-new session and manually retype a summary of everything discovered so far",
-      "Close the session entirely and start over from nothing",
+      "Close the original session entirely and start the whole investigation over from nothing",
     ],
     correctIndexes: [1],
     explanation:
@@ -161,10 +161,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer forks a session to try an alternative implementation of a feature, but continues working in the very same project directory on disk as the original session used. What is the risk here?",
     options: [
-      "There is no risk, since forking a session also isolates all file changes automatically",
-      "Forking only preserves conversation history, not filesystem state — both the original and the alternative approach would be editing the same files on disk",
-      "Forking a session always fails if the directory is not empty",
-      "Forking automatically creates a matching git worktree, so this concern doesn't apply",
+      "There is no risk at all, since forking a session also isolates all file changes automatically",
+      "Forking only preserves conversation history, not filesystem state, so both attempts edit the same files on disk",
+      "Forking a session always fails outright whenever the target directory is not already completely empty",
+      "Forking automatically creates a matching git worktree for you, so this particular concern doesn't really apply here",
     ],
     correctIndexes: [1],
     explanation:
@@ -179,10 +179,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "While tracing an intermittent bug across several files, an engineer keeps losing track of which files matter and what's already been confirmed each time the conversation runs long. What practice best addresses this?",
     options: [
-      "Keep a concise scratchpad noting key files, the data flow understood so far, open questions, and confirmed assumptions as the investigation proceeds",
-      "Avoid taking any notes and rely purely on memory of the conversation",
-      "Restart the investigation completely from the beginning every time it feels long",
-      "Only note the final conclusion once the entire investigation is fully finished",
+      "Keep a concise scratchpad noting key files, data flow so far, open questions, and confirmed assumptions",
+      "Avoid taking any notes at all, relying purely on memory of the conversation as it unfolds over time",
+      "Restart the investigation completely from the beginning every single time it starts feeling long",
+      "Only write anything down once the entire investigation is completely finished and fully confirmed",
     ],
     correctIndexes: [0],
     explanation:
@@ -197,10 +197,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A repository has a root-level CLAUDE.md describing general coding conventions, and a second CLAUDE.md inside services/billing/ describing conventions specific to that directory. When working inside services/billing/, what should be expected?",
     options: [
-      "Only the nested services/billing/ CLAUDE.md is loaded, fully replacing the root one",
-      "Only the root CLAUDE.md is loaded; nested CLAUDE.md files are ignored",
-      "Both are loaded together, with the nested file adding detail for that subtree rather than overriding the root's conventions wholesale",
-      "The two files must be manually merged by the developer before either can be used",
+      "Only the nested services/billing/ CLAUDE.md is loaded, fully replacing the root one entirely",
+      "Only the root-level CLAUDE.md is loaded; any nested CLAUDE.md files are always silently ignored",
+      "Both are loaded together, with the nested file adding detail rather than overriding the root",
+      "The two files must always be manually merged into one by a developer before either can be used",
     ],
     correctIndexes: [2],
     explanation:
@@ -215,10 +215,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team wants a rule file describing mocking conventions to be visible only when working on test files, without cluttering every other session's context. What is the correct way to achieve this?",
     options: [
-      "Write the rule directly into the root CLAUDE.md so it always loads",
+      "Write the rule directly into the root CLAUDE.md so that it always loads for every session",
       "Scope the rule file to a glob pattern matching test files, such as **/*.test.ts",
-      "Store the rule only in assistant memory instead of a rule file",
-      "Duplicate the same rule text into every individual test file",
+      "Store the rule only in assistant memory instead of writing an actual rule file",
+      "Duplicate the exact same rule text into every individual test file by hand",
     ],
     correctIndexes: [1],
     explanation:
@@ -233,10 +233,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team lead writes \"CRITICAL: never run a database migration without explicit approval\" in the project's CLAUDE.md and considers the rule fully handled. What is the flaw in this approach?",
     options: [
-      "There is no flaw; capitalized keywords in CLAUDE.md are enforced the same way a permission rule is",
-      "CLAUDE.md is read context that shapes behavior but guarantees no compliance; a rule that absolutely must hold needs a hook or an explicit permission-deny rule instead",
-      "CLAUDE.md files cannot contain instructions about migrations at all",
-      "The rule would only work if it were placed in assistant memory instead of CLAUDE.md",
+      "There is no flaw here; capitalized keywords in CLAUDE.md get enforced the exact same way a permission rule does",
+      "CLAUDE.md is read as context that shapes behavior, not enforced; a must-hold rule needs a hook or deny rule instead",
+      "CLAUDE.md files simply cannot ever contain any instructions about database migrations at all, by design",
+      "The rule would only actually work if it were placed in assistant memory instead of inside a CLAUDE.md file",
     ],
     correctIndexes: [1],
     explanation:
@@ -252,10 +252,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Immediately after writing a new caching layer, the same session that wrote it is asked whether the code has any bugs, and it reports back that everything looks solid. What consideration is most relevant to how much weight that self-review deserves?",
     options: [
-      "None — a session's review of its own recent work is exactly as reliable as any other review",
-      "The session that just wrote the code tends to be less critical of choices it already committed to, so a fresh session, dedicated review subagent, or external CI review is generally more reliable for a high-stakes review",
-      "Self-review is always more reliable than any external review, since the author understands the intent best",
-      "The review should be trusted only if the session used plan mode while writing the code",
+      "None at all — a session's review of its own recent work is exactly as reliable as any independent, fresh review would be",
+      "The session that wrote the code tends to be less critical of its own choices, so a fresh session or review subagent tends to be more reliable",
+      "Self-review is always strictly more reliable than any kind of external code review, since the original author best understands the original intent",
+      "The review should only be trusted if the very same session happened to use plan mode while originally writing the code",
     ],
     correctIndexes: [1],
     explanation:
@@ -271,10 +271,10 @@ export const questions: QuestionSeed[] = [
       "Which TWO of the following are accurate distinctions between the built-in tools Grep and Glob in Claude Code?",
     options: [
       "Grep searches for patterns inside file contents, while Glob matches files by name or path pattern",
-      "Glob can be used to search for a specific error string buried inside a JSON config value",
+      "Glob can be used to search for a specific error string buried inside a JSON config value's contents",
       "Using Glob to try to find a code reference that's actually inside file contents is a common tool-selection mistake",
-      "Grep and Glob are simply two different names for the exact same underlying search behavior",
-      "Glob is only usable on directories, never on individual files",
+      "Grep and Glob are simply two different names for the exact same underlying search behavior internally",
+      "Glob is only ever usable on whole directories, never on individual files by themselves",
     ],
     correctIndexes: [0, 2],
     explanation:
@@ -289,11 +289,11 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which TWO statements correctly describe session management flags/mechanisms in Claude Code?",
     options: [
-      "A continue-most-recent flag is convenient for returning to the latest work in a directory, but risky if multiple terminals were active and 'most recent' isn't actually the intended session",
-      "A session-ID mechanism is best suited for programmatic or automated workflows that need a stable, addressable session rather than whatever ran last",
-      "Forking a session automatically isolates file changes on disk as well as conversation history",
-      "Resuming the same saved session from two terminals at once is always perfectly safe with no risk of conflicting state",
-      "The resume-specific-session mechanism is only usable for sessions created within the last hour",
+      "A continue-most-recent flag is convenient, but risky if multiple terminals were active and it isn't the intended session",
+      "A session-ID mechanism suits automated workflows needing a stable, addressable session rather than whatever ran last",
+      "Forking a session automatically isolates file changes on disk, in addition to the conversation history itself",
+      "Resuming the same saved session from two terminals at once is always perfectly safe, with zero risk whatsoever",
+      "The resume-specific-session mechanism only ever works for sessions that were created within the past hour or so",
     ],
     correctIndexes: [0, 1],
     explanation:
@@ -308,11 +308,11 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which TWO of the following correctly describe CLAUDE.md and/or assistant memory in Claude Code?",
     options: [
-      "Both CLAUDE.md and assistant-maintained memory are loaded as context that shapes behavior, without any guarantee of compliance",
-      "A rule that must be enforced without exception, such as blocking a specific destructive command, is better placed in a hook or permission-deny rule than in CLAUDE.md prose alone",
-      "Nested CLAUDE.md files completely replace the repo-root CLAUDE.md whenever both exist",
-      "Assistant-maintained memory can only be edited by directly modifying the project's CLAUDE.md file",
-      "CLAUDE.md is compiled into an enforced permission rule automatically the moment it's saved",
+      "Both CLAUDE.md and assistant-maintained memory load as context that shapes behavior, with no guarantee of compliance",
+      "A rule that must be enforced without exception belongs in a hook or permission-deny rule, not CLAUDE.md prose alone",
+      "Nested CLAUDE.md files completely replace the repo-root CLAUDE.md file entirely, whenever both happen to exist",
+      "Assistant-maintained memory can only ever be edited by directly modifying the project's root CLAUDE.md file itself",
+      "CLAUDE.md gets automatically compiled into an enforced permission rule the very moment it is saved",
     ],
     correctIndexes: [0, 1],
     explanation:
@@ -327,9 +327,9 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which TWO statements correctly describe plan mode as a workflow control in Claude Code?",
     options: [
-      "Plan mode explores read-only and proposes an approach before any file is changed",
-      "Plan mode is best suited to work spanning many files, architectural decisions, or changes needing approval before implementation",
-      "Plan mode is simply another name for enabling extended/deep reasoning",
+      "Plan mode explores the codebase read-only and proposes an approach before any file gets changed",
+      "Plan mode best suits work spanning many files, architectural decisions, or changes needing approval first",
+      "Plan mode is simply just another name for enabling extended or deep reasoning mode",
       "Plan mode can only ever be enabled at the very start of a session and never toggled afterward",
       "Plan mode guarantees the eventual implementation will require zero further changes after approval",
     ],
@@ -346,10 +346,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer needs to bump one dependency's version string inside package.json, a change confined to a single file with no architectural implications and a clearly defined target line. Which workflow best fits this?",
     options: [
-      "Plan mode, since any dependency bump could theoretically introduce risk somewhere",
+      "Plan mode, since any dependency bump could theoretically introduce risk somewhere down the line",
       "Direct execution, since this is a small, localized, low-risk change with a clearly defined target",
-      "Delegating the entire task to a subagent via Task",
-      "Forking the session first, so the version bump can be tried on a separate transcript",
+      "Delegating the entire one-line task to a subagent via Task, to keep the main session free",
+      "Forking the session first, so the version bump can be tried out on a separate transcript",
     ],
     correctIndexes: [1],
     explanation:
@@ -364,10 +364,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "One engineer asks for a new API endpoint by saying only 'follow our usual style,' while another asks for the same endpoint by saying 'match the pattern in src/routes/users.ts and register it in src/routes/index.ts the way the other routes are registered.' Which request is more likely to produce a correctly styled result, and why?",
     options: [
-      "The vague request, because 'usual style' implicitly covers every edge case without needing detail",
-      "The specific request, because pointing to concrete files gives a verifiable pattern to follow instead of relying on an ambiguous general instruction",
-      "Both are equally effective, since the assistant will infer the same conventions regardless of what's said",
-      "Neither matters, since referenced files are never actually read before writing new code",
+      "The vague request, because 'usual style' implicitly covers every possible edge case without needing detail",
+      "The specific request, because pointing to concrete files gives a verifiable pattern rather than an ambiguous instruction",
+      "Both are equally effective either way, since the assistant infers identical conventions regardless of how the request is phrased",
+      "Neither matters much, since referenced files are never actually read before new code gets written",
     ],
     correctIndexes: [1],
     explanation:
@@ -383,10 +383,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team wants to understand why their nightly build has gradually slowed down over several months. The cause could be CI configuration drift, dependency changes, test suite growth, or infrastructure changes, and there's no single obvious file or function to start from. Which approach best fits this kind of broad, open-ended investigation?",
     options: [
-      "A single Grep for the word 'slow' across the entire repository",
-      "Delegating the broad investigation to a subagent via the Task mechanism, since it spans many unrelated areas with no single clear starting point",
-      "A targeted Edit to the CI configuration file, assuming that alone is the cause",
-      "Read-then-Write the entire CI pipeline definition from scratch without further investigation",
+      "A single Grep search for the literal word 'slow' across the entire repository's whole codebase and history",
+      "Delegating the investigation to a subagent via Task, since it spans many unrelated areas with no clear start",
+      "A targeted Edit straight to the CI configuration file, simply assuming that alone is the cause",
+      "Read-then-Write the entire CI pipeline definition completely from scratch, skipping further investigation",
     ],
     correctIndexes: [1],
     explanation:
@@ -401,10 +401,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer paused a saved session three months ago while investigating a performance issue. Since then, another engineer substantially rewrote the module in question, so the old transcript's specific file contents and code snippets likely no longer match reality. What is the better approach now?",
     options: [
-      "Resume the old session and continue exactly where it left off without mentioning anything about the rewrite",
-      "Start a fresh session with a concise summary of the goal, since the old transcript's specifics are likely stale enough to mislead more than help",
-      "Use the continue-most-recent flag, trusting it to automatically detect and account for the rewrite",
-      "Fork the old session, since forking automatically refreshes its understanding of the current file contents",
+      "Resume the old session and continue exactly where it left off yesterday, without mentioning the rewrite at all",
+      "Start a fresh session with a concise summary of the goal, since the old transcript's specifics are likely stale",
+      "Use the continue-most-recent flag, trusting that it will automatically detect and account for the rewrite",
+      "Fork the old session, since forking automatically refreshes its understanding of current file contents too",
     ],
     correctIndexes: [1],
     explanation:
@@ -420,9 +420,9 @@ export const questions: QuestionSeed[] = [
       "A team wants to properly compare two alternative implementations of a caching strategy side by side, making sure neither attempt's file changes interfere with the other and that each line of reasoning stays separate. Which combination correctly achieves this?",
     options: [
       "Forking the session alone, since a forked session isolates both conversation history and file changes automatically",
-      "Forking the session to branch the conversation, paired with a separate git branch or worktree so each implementation's file changes stay isolated on disk",
-      "Resuming the same session twice in sequence, since resuming preserves all necessary isolation",
-      "Copy-pasting a summary of the original conversation into two brand-new sessions instead of forking",
+      "Forking the session to branch the conversation, paired with a separate git branch or worktree for disk isolation",
+      "Resuming the same saved session twice in sequence, since resuming alone preserves all necessary isolation",
+      "Copy-pasting a summary of the original conversation into two brand-new sessions instead of forking it",
     ],
     correctIndexes: [1],
     explanation:
@@ -456,10 +456,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A configuration file needs to be restructured from a flat list of key-value pairs into a nested, grouped format, a change that touches nearly every line and alters the file's overall shape rather than one isolated spot. Which built-in approach fits best?",
     options: [
-      "A single targeted Edit matching one unique flat key-value block",
-      "Read the file to understand its current content, then Write a complete replacement in the new nested structure",
-      "Glob for the configuration file's name to restructure its contents directly",
-      "Delegate the single-file restructuring to a subagent via Task, since it counts as broad exploration",
+      "A single targeted Edit that matches just one unique flat key-value block within the file",
+      "Read the file to understand its content, then Write a full replacement in the new nested structure",
+      "Glob for the configuration file's name and restructure its contents directly through the match",
+      "Delegate the entire single-file restructuring to a subagent via Task, treating it as broad exploration",
     ],
     correctIndexes: [1],
     explanation:
@@ -474,10 +474,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team scopes a rule file about REST error-handling conventions to the glob pattern src/api/v1/**/*.ts, intending it to guide all of their HTTP handlers. Months later they add a new src/api/v2/ directory with the same kind of handlers, and notice the rule never seems to apply there. What happened?",
     options: [
-      "Rule files can only ever be scoped to one directory for the entire lifetime of a project",
-      "The glob pattern was scoped too narrowly, so it silently fails to apply to the new v2 handlers even though the same convention should govern them",
-      "CLAUDE.md and rule files stop functioning once any new top-level directory is added to a project",
-      "Rule files only apply to files that already existed at the moment the rule file was written",
+      "Rule files can only ever be scoped to a single fixed directory for a project's entire lifetime",
+      "The glob pattern was scoped too narrowly, so it silently fails to apply to the new v2 handlers as well",
+      "CLAUDE.md and rule files stop functioning entirely once any new top-level directory gets added",
+      "Rule files only ever apply to files that already existed at the exact moment the rule file was originally written",
     ],
     correctIndexes: [1],
     explanation:
@@ -494,10 +494,10 @@ export const questions: QuestionSeed[] = [
       "Which TWO statements accurately describe when to reach for particular built-in tools in Claude Code?",
     options: [
       "Bash is the appropriate tool for running a test suite or other shell commands, not for searching file contents",
-      "A full-file Read-then-Write is a reasonable fit when a change touches nearly the entire file's structure, rather than one isolated line",
-      "Task-based subagent delegation is best reserved for the smallest, most trivial single-line changes",
-      "Edit is the preferred tool whenever a change spans dozens of unrelated files at once",
-      "Grep should be used instead of Bash whenever the goal is to actually execute a test suite",
+      "A full-file Read-then-Write fits when a change touches nearly the entire file's structure, not just one isolated line",
+      "Task-based subagent delegation is best reserved for only the smallest, most trivial single-line changes possible",
+      "Edit is the preferred tool of choice whenever a change spans dozens of completely unrelated files at once",
+      "Grep should always be used instead of Bash whenever the actual goal is to execute a test suite",
     ],
     correctIndexes: [0, 1],
     explanation:
@@ -512,11 +512,11 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which TWO statements correctly describe how to handle resuming work after significant time has passed and the codebase may have changed?",
     options: [
-      "If most of a saved session's context is still useful, resuming and explicitly telling the assistant exactly which files or functions have changed is a reasonable approach",
-      "If the old transcript is likely stale or misleading, starting a fresh session with a concise summary of the goal is often safer than resuming",
-      "A saved session automatically re-scans the codebase for changes the moment it's resumed",
-      "Once a session is forked, its understanding of the codebase is guaranteed to be current, regardless of how much time has passed",
-      "Assistant-maintained memory automatically rewrites itself to match any codebase changes without being told",
+      "If most of a saved session's context is still useful, resuming and noting exactly what changed is reasonable",
+      "If the old transcript is likely stale or misleading, starting fresh with a concise goal summary is often safer",
+      "A saved session automatically re-scans the entire codebase for any changes the moment it gets resumed again",
+      "Once a session is forked, its understanding of the codebase is guaranteed current no matter how much time passed",
+      "Assistant-maintained memory automatically rewrites itself to match any codebase changes, without ever being told",
     ],
     correctIndexes: [0, 1],
     explanation:

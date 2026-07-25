@@ -67,9 +67,9 @@ export const questions: QuestionSeed[] = [
       "An on-call engineer asks an agent to figure out why a service intermittently times out. The agent starts by looking at one alert, and only after seeing what it says decides whether to pull application logs, query a metrics dashboard, or escalate to a human — each choice changes based on what was just found. Which risk is most specifically associated with running this kind of investigation without any guardrails?",
     options: [
       "The investigation will always reach the wrong root cause, since dynamic decomposition can't handle intermittent bugs",
-      "The number of steps and total cost become unpredictable, so the agent could keep investigating indefinitely without an explicit stopping point",
-      "The agent will be unable to use any tools, since dynamic decomposition assumes a tool-free reasoning process",
-      "The investigation becomes identical to a fixed chain, since each new finding just replays the same script",
+      "The number of steps and total cost become unpredictable, so the agent could investigate indefinitely with no stopping point",
+      "The agent will be completely unable to use any tools, since dynamic decomposition assumes a tool-free reasoning process",
+      "The investigation becomes identical to a fixed chain, since each new finding just replays the exact same fixed script",
     ],
     correctIndexes: [1],
     explanation:
@@ -85,10 +85,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is producing a competitive landscape report from 30 source documents. Early drafts of the pipeline treated the documents as fully independent, giving one subagent per document and merging results afterward. But several documents directly reference and update claims made in other documents in the set, so slicing them apart loses that relationship. What's the most accurate assessment?",
     options: [
-      "Parallel fan-out is still the right choice, since 30 documents is a large enough number to justify it regardless of their content",
-      "This is a poor fit for pure independent fan-out, since the documents aren't actually independent units — the partitioning should account for the cross-references before splitting",
+      "Parallel fan-out is still the right choice here, since 30 total documents is a large enough number to justify it regardless of content",
+      "This is a poor fit for independent fan-out, since the documents aren't truly independent — partitioning should account for cross-references",
       "The problem is that the documents should have been processed with prompt chaining instead, since chaining tolerates cross-references automatically",
-      "The problem is unrelated to partitioning and is really about needing a bigger step cap",
+      "The problem is unrelated to partitioning and is really just about needing a bigger step cap for this investigation",
     ],
     correctIndexes: [1],
     explanation:
@@ -103,10 +103,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A fan-out job splits 12 equally-sized files across 12 subagents, expecting them all to finish around the same time. In practice, one file turns out to require far more analysis than the other 11, and the whole job's completion time ends up matching that one subagent's runtime. What does this best illustrate?",
     options: [
-      "Parallel fan-out total time is the sum of every subagent's runtime, so this outcome was unavoidable",
-      "Elapsed time in a fan-out phase is bounded by the slowest single partition, so partitions should be balanced by expected effort rather than by equal count",
-      "This shows fan-out should never be used when files differ in size at all",
-      "This shows the coordinator should have used routing instead of fan-out",
+      "Parallel fan-out's total elapsed time is simply the sum of every subagent's own individual runtime added together",
+      "Elapsed time in a fan-out phase is bounded by the slowest partition, so work should be balanced by effort, not item count",
+      "Fan-out should never be used again whenever any of the files being processed differ in size, even slightly, from one another",
+      "The coordinator should have used routing instead of fan-out for processing this particular batch of twelve files",
     ],
     correctIndexes: [1],
     explanation:
@@ -122,9 +122,9 @@ export const questions: QuestionSeed[] = [
       "A coordinator agent has just retrieved three short facts via a lookup tool and now needs only to combine them into one sentence for the user. Instead, it spawns a subagent, gives it the three facts, and waits for the subagent's response before replying. What's the best assessment of this design choice?",
     options: [
       "This is good practice, since delegating work to a subagent is always more thorough than answering directly",
-      "This is over-delegation: the coordinator already has everything it needs in its own context, and spawning a subagent for such a small task adds overhead without benefit",
-      "This is required, since a coordinator is never allowed to produce final text itself",
-      "This is fine as long as the subagent has access to every tool available in the system",
+      "This is over-delegation: the coordinator already has what it needs, so spawning a subagent just adds needless overhead",
+      "This is required, since a coordinator is never allowed to produce any final text itself under the orchestration pattern",
+      "This is fine as long as the subagent has access to every single tool available anywhere in the whole system",
     ],
     correctIndexes: [1],
     explanation:
@@ -140,10 +140,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A synthesized research report states that adoption of a technology was '40% in one section' and '25% in another,' with no other context, making the two numbers read as a flat contradiction. Investigation reveals both figures were accurate at the time they were reported, but one subagent had dropped the original publication date when it passed its finding along. What is the most direct fix?",
     options: [
-      "Have every subagent write in a more confident tone so the numbers seem less contradictory",
-      "Have each subagent preserve and pass forward the date associated with each finding, so the synthesis step can present the figures as a trend over time rather than a contradiction",
-      "Remove one of the two figures from the report so only one number remains",
-      "Merge the two subagents into a single subagent so there's only one source of numbers",
+      "Have every subagent rewrite its finding in a more confident, assertive tone so the numbers stop sounding contradictory to readers",
+      "Have each subagent preserve and pass forward the date behind its finding, so synthesis can frame the figures as a trend over time",
+      "Remove one of the two conflicting figures from the report entirely so only a single number remains for the reader to see",
+      "Merge the two research subagents into one single combined subagent so there is only one source of numbers left",
     ],
     correctIndexes: [1],
     explanation:
@@ -158,10 +158,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Two coordinators each delegate a summarization task to a subagent. Coordinator A's prompt to its subagent reads: 'Summarize the findings.' Coordinator B's prompt reads: 'Summarize these five claim records into a 200-word executive summary; keep each claim's confidence level visible, and cite each claim by its source_id.' Which statement is most accurate?",
     options: [
-      "Both prompts are equally effective, since the subagent will infer the needed structure either way",
-      "Coordinator B's handoff is stronger because it specifies the desired output shape, length, and required fields, while Coordinator A's is vague and leaves the subagent guessing",
-      "Coordinator A's handoff is stronger because shorter instructions always produce better subagent performance",
-      "Neither handoff matters, since subagents ignore instructions about output format",
+      "Both prompts are equally effective, since a capable subagent will always infer the needed structure either way regardless of what it's told",
+      "Coordinator B's handoff is stronger: it specifies the output shape, length, and required fields, while A's vague prompt leaves the subagent guessing",
+      "Coordinator A's handoff is actually stronger, since shorter instructions reliably produce better subagent performance than longer, more detailed ones",
+      "Neither handoff matters much, since subagents generally ignore instructions about desired output format and structure anyway",
     ],
     correctIndexes: [1],
     explanation:
@@ -177,10 +177,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A support agent's escalation rule currently says: 'escalate to a human after any three consecutive failed tool calls.' A customer whose account lookup fails twice due to a transient network blip, then succeeds on the third try with a routine, low-risk request, does NOT get escalated — but a customer whose very first request involves a regulated compliance exception also does not get escalated, because it only took one tool call to identify. What's the core problem with this rule?",
     options: [
-      "The threshold of three is too low and should be raised to five",
-      "The rule ties escalation to a raw retry count rather than to the category and risk of the situation, so it can miss genuinely high-risk cases and doesn't reflect the transient-failure case well either",
-      "There is no problem; retry-count-based escalation is the recommended approach for all support agents",
-      "The rule should be removed entirely, since support agents should never escalate automatically",
+      "The threshold of three is simply set too low here and should instead be raised to five consecutive failed tool calls",
+      "The rule ties escalation to a raw retry count instead of the situation's category and risk, missing high-risk cases and misreading failures",
+      "There is no real problem here; retry-count-based escalation is the industry-recommended approach for every support agent design",
+      "The rule should be removed entirely, since support agents should never escalate any request to a human under any circumstances",
     ],
     correctIndexes: [1],
     explanation:
@@ -195,10 +195,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A multi-agent system gives every subagent — including a subagent whose only job is to write a final report from findings it's handed — full access to web search, a file-editing tool, a database query tool, and a code execution tool. What is the most likely consequence of this design choice?",
     options: [
-      "Nothing changes; giving every subagent every tool has no meaningful downside as long as the tools work correctly",
-      "It increases the chance a subagent selects the wrong tool or acts outside its intended role, since tool selection gets harder as irrelevant options pile up",
-      "It guarantees faster completion, since more available tools always speeds up a task",
-      "It is required, since MCP mandates that all agents in a system share an identical tool list",
+      "Nothing changes; giving every subagent every tool has no meaningful downside as long as each tool works correctly on its own",
+      "It increases the chance a subagent picks the wrong tool or acts outside its role, since selection gets harder as irrelevant options pile up",
+      "It guarantees faster completion overall, since having more available tools on hand always speeds up how quickly a task finishes",
+      "It is required, since the underlying protocol mandates that every agent in a multi-agent system share an identical tool list",
     ],
     correctIndexes: [1],
     explanation:
@@ -213,10 +213,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A workflow that spans several days and multiple sessions needs to be resumable if the process restarts partway through. Which approach best supports resuming efficiently without re-deriving already-completed work?",
     options: [
-      "Replay the full raw transcript of every prior session into the new session's context before continuing",
-      "Persist a structured record of workflow state (such as completed steps, produced artifacts, and open gaps) and load only the relevant parts of it into the next session's prompt",
-      "Discard all prior state and restart the entire workflow from scratch each time, to avoid any risk of stale information",
-      "Rely on the coordinator's memory of the previous session, since conversation history persists automatically across restarts",
+      "Replay the full raw transcript of every prior session into the new session's context before letting it continue any further",
+      "Persist a structured record of workflow state — completed steps, artifacts, open gaps — and load only the relevant parts into the next prompt",
+      "Discard all prior state and restart the entire workflow completely from scratch every time, to avoid any risk of stale information",
+      "Rely on the coordinator's own memory of the previous session, since conversation history is assumed to persist automatically across restarts",
     ],
     correctIndexes: [1],
     explanation:
@@ -232,10 +232,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer configures a coding assistant's own permitted tool list to include file editing and shell execution, but not the delegation tool used to spawn subagents. The developer then asks the assistant to 'delegate the test-writing work to a subagent while you handle the refactor yourself.' What happens?",
     options: [
-      "The assistant delegates successfully, since delegation is always available regardless of configuration",
-      "The assistant cannot spawn a subagent at all, since the delegation (Task/Agent) tool must itself be present in the coordinator's own allowed-tools list before it can delegate anything",
-      "The assistant delegates successfully, but the subagent will be missing its own tools instead",
-      "The request fails only because the phrase 'delegate' wasn't recognized; rewording the request would fix it",
+      "The assistant delegates the work successfully anyway, since delegation is always available to a coordinator regardless of its tool configuration",
+      "The assistant cannot spawn a subagent at all, since the delegation tool itself must be present in the coordinator's own allowed-tools list first",
+      "The assistant delegates successfully, but the resulting subagent ends up missing its own tools and cannot complete its assigned task",
+      "The request fails only because the specific phrase 'delegate' wasn't recognized by the assistant; simply rewording the request would fix the problem",
     ],
     correctIndexes: [1],
     explanation:
@@ -345,10 +345,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team builds a coordinator that, for every incoming password-reset request, spends time deciding whether it needs to delegate to a 'verify identity' subagent, a 'generate reset token' subagent, and a 'send reset email' subagent — even though these exact three steps run, in this exact order, for every single request with no variation. What's the best critique of this design?",
     options: [
-      "This is a reasonable use of orchestrator-workers, since any task with more than one step benefits from a coordinator deciding what's needed",
-      "This is overkill: the steps never actually vary, so a simple fixed chain would accomplish the same result more simply and cheaply than a coordinator re-deciding subtasks every time",
-      "The design is broken because orchestrator-workers requires at least five subtasks to function correctly",
-      "The design is correct only if the three subagents are run at the same time instead of one after another",
+      "This is a reasonable use of orchestrator-workers, since any task involving more than one step benefits from a coordinator actively deciding what's needed each time",
+      "This is overkill: the steps never vary, so a simple fixed chain would get the same result more simply and cheaply than re-deciding subtasks every time",
+      "The design is fundamentally broken because orchestrator-workers requires at least five distinct subtasks in order to function correctly at all",
+      "The design is only correct if the three subagents are run all at the same time instead of running one after another in sequence",
     ],
     correctIndexes: [1],
     explanation:
@@ -364,10 +364,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "During a long support conversation, a customer tells the coordinating agent, 'Please don't close this ticket until I confirm the refund posted to my card.' Later, the coordinator delegates the actual refund step to a subagent, passing along only 'process a refund for order #48213.' The subagent processes the refund and immediately marks the ticket closed. What is the most likely root cause?",
     options: [
-      "The subagent ignored an instruction it had definitely received, since all subagents automatically inherit the full prior conversation",
-      "The coordinator failed to include the customer's stated constraint in the subagent's prompt, and the subagent has no automatic access to earlier turns it wasn't explicitly given",
-      "The refund tool itself is broken, since closing a ticket is a side effect no tool should ever be able to trigger",
-      "This is expected behavior, since subagents should always close a ticket immediately after taking any action",
+      "The subagent ignored an instruction it had definitely already received, since all subagents automatically inherit the full prior conversation history",
+      "The coordinator left the customer's constraint out of the subagent's prompt, and the subagent has no automatic access to earlier turns",
+      "The refund tool itself must be broken, since closing a ticket is a side effect that no tool should ever be able to trigger on its own",
+      "This is expected, normal behavior, since subagents are designed to always close a ticket immediately after taking any action at all",
     ],
     correctIndexes: [1],
     explanation:
@@ -382,10 +382,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A coordinator building a repository dependency report needs to first determine which package-manifest format a project uses (npm, pip, or cargo) before it can know how to correctly parse that project's version constraints. An engineer suggests starting the 'detect manifest format' step and the 'parse version constraints' step as two subagents running at the same time to save time. What's wrong with this suggestion?",
     options: [
-      "Nothing is wrong; running independent-looking subagents concurrently always saves time regardless of what each one needs as input",
-      "The second step needs the first step's output as input, so running them concurrently risks the parsing subagent starting before it knows which format to parse against — these steps should run sequentially, not in parallel",
-      "The problem is that a dependency report should never use subagents in any capacity",
-      "The problem is that both steps must be handled by prompt chaining rather than by any kind of subagent",
+      "Nothing is wrong here; running independent-looking subagents concurrently always saves time no matter what input each one actually needs",
+      "The parsing step depends on the detection step's output, so running them concurrently risks starting too early — run them in sequence instead",
+      "The real problem is that a dependency report of this kind should never make use of subagents in any capacity whatsoever, ever",
+      "The real problem is that both of these particular steps must be handled by prompt chaining instead of by any kind of subagent",
     ],
     correctIndexes: [1],
     explanation:
@@ -438,10 +438,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer asks an agent to figure out why a newly cloned, unfamiliar repository fails to build. The agent starts by running the build to see the actual error, and only after reading that error decides whether to check a missing dependency, a misconfigured environment variable, or a version mismatch — each next action determined by what the previous one revealed. A reviewer suggests writing a fixed five-step checklist instead so the process is 'more predictable.' What's the strongest response to that suggestion?",
     options: [
-      "The checklist is a good idea, since prompt chaining is always safer than any exploratory approach",
-      "A fixed checklist is a poor fit here, since the real cause is unknown up front and a pre-written sequence risks missing the actual problem that only emerges from earlier findings",
-      "Neither approach works, since build failures can only ever be diagnosed by a human",
-      "The checklist is necessary, since dynamic decomposition cannot use any tools to actually run the build",
+      "The checklist is a good idea here, since a fixed prompt-chaining sequence is always safer than any exploratory, open-ended approach",
+      "A fixed checklist is a poor fit: the cause is unknown up front, and a pre-written sequence risks missing what only emerges from earlier findings",
+      "Neither approach really works here, since build failures of this kind can only ever be properly diagnosed by a human engineer",
+      "The checklist is necessary here, since dynamic decomposition is fundamentally incapable of using any tools to actually run the build",
     ],
     correctIndexes: [1],
     explanation:
@@ -456,10 +456,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A coordinator asks a synthesis subagent to combine three research subagents' outputs into a final report that must cite every claim. Each research subagent, however, only wrote a short prose paragraph like 'adoption appears to be growing,' with no indication of which specific source, page, or record backs that statement. What is the most accurate assessment of this handoff design?",
     options: [
-      "This is fine, since prose summaries are always sufficient input for any downstream synthesis task",
-      "The handoff is inadequate for this use case: since citations are required downstream, the research subagents needed to pass a structured index of claims to sources, not just prose summaries with no provenance",
-      "The problem is unrelated to the handoff and is really a limitation of the synthesis subagent's writing ability",
-      "The fix is to have the synthesis subagent guess plausible sources for each claim so the report still contains citations",
+      "This is fine as it stands, since prose summaries are always a sufficient input for any downstream synthesis task to work with",
+      "The handoff is inadequate: citations are required downstream, so subagents needed a structured claims-to-sources index, not bare prose",
+      "The problem here is unrelated to the handoff and is really just a limitation of the synthesis subagent's own writing ability",
+      "The fix is to have the synthesis subagent guess a plausible source for each claim so the final report still contains citations",
     ],
     correctIndexes: [1],
     explanation:
@@ -475,10 +475,10 @@ export const questions: QuestionSeed[] = [
       "A team is reviewing how their multi-agent research assistant behaves after its first pass over source material turns up a gap — for instance, a claim with no clear timeframe, or a contested figure backed by only one source. Which TWO of the following describe correct practice for handling this situation?",
     options: [
       "The system should be able to trigger a follow-up round of investigation specifically targeting the identified gap, rather than treating research as strictly one-pass",
-      "A gap like a missing timeframe or a single-sourced contested figure should be flagged as such (for example, marked contested or insufficiently supported) rather than presented in the final report as settled fact",
-      "Once a first pass is complete, the report should be finalized immediately regardless of any gaps found, since revisiting sources after the first pass is never worthwhile",
-      "Every subagent should be given every tool in the system so that whichever one happens to notice the gap can also resolve it",
-      "Gaps should be resolved by having the synthesis step silently pick whichever version of a contested figure sounds more authoritative",
+      "A gap like a missing timeframe or a single-sourced figure should be flagged as such — marked contested or insufficiently supported — rather than presented as settled fact",
+      "Once a first pass is complete, the report should be finalized immediately regardless of gaps found, since revisiting sources afterward is never worthwhile",
+      "Every subagent in the system should be given every available tool, so that whichever one happens to notice the gap can also go resolve it itself",
+      "Gaps like this should be resolved by having the synthesis step silently pick whichever version of a contested figure simply sounds more authoritative",
     ],
     correctIndexes: [0, 1],
     explanation:
@@ -493,11 +493,11 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A coordinator is designing a fan-out job: plan which partitions are needed, run subagents on those partitions, then combine their results into one output. Which TWO statements correctly describe how this kind of job should be structured for genuinely independent, I/O-heavy partitions?",
     options: [
-      "The job should follow a serial-planning, then parallel-execution, then serial-synthesis shape: decide the partitions first, run them concurrently, then combine results afterward",
-      "If one later partition's work genuinely depends on an earlier partition's output, that dependent step should run after the earlier one finishes, not concurrently with it",
-      "Running every partition concurrently regardless of dependencies always produces a correct result faster, since concurrency never affects correctness",
-      "The synthesis step should happen before the parallel execution step, so that results are ready to combine as soon as partitions start",
-      "Partition sizing doesn't matter for overall elapsed time, since only the total number of partitions affects when the job finishes",
+      "The job should be planned serially, executed in parallel, then synthesized serially: decide partitions first, run them concurrently, then combine results",
+      "If a later partition's work genuinely depends on an earlier partition's output, that step should run after the earlier one finishes, not alongside it",
+      "Running every single partition concurrently regardless of dependencies always produces a correct result faster, since concurrency never affects correctness at all",
+      "The synthesis step should happen before the parallel execution step even begins, so results are already ready to combine the moment partitions start",
+      "Partition sizing doesn't matter at all for overall elapsed time, since only the total raw number of partitions affects when the job finishes",
     ],
     correctIndexes: [0, 1],
     explanation:
