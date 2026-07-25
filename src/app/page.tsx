@@ -1,8 +1,13 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { domains } from "@/content/domains";
 import { scenarios } from "@/content/scenarios";
+import { ExamOverviewCard } from "@/components/exam-overview-card";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await auth();
+  const isSignedIn = !!session?.user;
+
   return (
     <div>
       <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-24">
@@ -17,23 +22,40 @@ export default function LandingPage() {
           original practice questions with plain-language explanations, interactive exercises, and
           full-length mock exams — all tracked against the exam&apos;s real domain weighting.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href="/dashboard"
-            className="rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
-          >
-            Start studying — no account needed
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted"
-          >
-            Create a free account
-          </Link>
+        {isSignedIn ? (
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/dashboard"
+              className="rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
+            >
+              Go to your dashboard
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/dashboard"
+                className="rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
+              >
+                Start studying — no account needed
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted"
+              >
+                Create a free account
+              </Link>
+            </div>
+            <p className="mt-3 text-sm text-foreground-muted">
+              Guest progress is saved on this device only — create an account any time to sync it.
+            </p>
+          </>
+        )}
+
+        <div className="mt-10 max-w-3xl">
+          <ExamOverviewCard />
         </div>
-        <p className="mt-3 text-sm text-foreground-muted">
-          Guest progress is saved on this device only — create an account any time to sync it.
-        </p>
       </section>
 
       <section className="border-t border-border bg-surface py-14">

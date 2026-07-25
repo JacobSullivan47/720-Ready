@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useReadiness } from "@/hooks/use-readiness";
 import { useProgress } from "@/hooks/use-progress";
 import { ProgressBar } from "@/components/progress-bar";
-import { ExamOverviewCard } from "@/components/exam-overview-card";
 import { ScoreTrendChart } from "@/components/score-trend-chart";
 import { AskTutorButton } from "@/components/ask-tutor-button";
 import { domainSlug } from "@/lib/slugs";
@@ -118,10 +117,6 @@ export default function DashboardPage() {
           </div>
         </div>
       ))}
-
-      <div className="mt-6">
-        <ExamOverviewCard />
-      </div>
 
       {!loading && readiness && (
         <>
