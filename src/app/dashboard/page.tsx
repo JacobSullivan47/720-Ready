@@ -175,10 +175,12 @@ export default function DashboardPage() {
                       {d.cardsReviewed} reviewed)
                     </div>
                     <div>
-                      Questions mastered: {d.quizAccuracyPct}% ({d.questionsMastered}/{d.questionsAttempted} attempted)
+                      Questions mastered: {d.quizAccuracyPct}% ({d.questionsMastered} mastered /{" "}
+                      {d.questionsAttempted} attempted)
                     </div>
                     <div>
-                      Exercises mastered: {d.exerciseMasteryPct}% ({d.exercisesMastered}/{d.exercisesTotal})
+                      Exercises mastered: {d.exerciseMasteryPct}% ({d.exercisesMastered} mastered /{" "}
+                      {d.exercisesTotal} total)
                     </div>
                   </div>
                 </div>
