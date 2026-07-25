@@ -13,7 +13,7 @@ export interface DomainMastery {
   weightPct: number;
   cardRetentionPct: number; // 0-100
   quizAccuracyPct: number; // 0-100 — % of attempted questions "mastered" (answered correctly at least MASTERY_MIN_REPETITIONS times)
-  exerciseMasteryPct: number; // 0-100 — % of this domain's exercise items "mastered" (correct at least MASTERY_MIN_REPETITIONS times)
+  exerciseMasteryPct: number; // 0-100 — % of this domain's exercise items "mastered" (correct at least once)
   masteryPct: number; // 0-100, blended
   cardsReviewed: number;
   cardsMastered: number; // reviewed cards at/above CARD_MASTERY_RETENTION_CUTOFF
@@ -37,10 +37,11 @@ export interface ReadinessSummary {
  * even three-way average — a domain with 100% flashcard retention but zero
  * activity in questions or exercises caps out at 33%, not 100%; full mastery
  * requires engaging with all three), then a weight-adjusted overall readiness
- * score. A domain with no activity at all scores 0. All three inputs also
+ * score. A domain with no activity at all scores 0. Flashcards and questions
  * require repeat success on the individual item level (see
- * MASTERY_MIN_REPETITIONS) — one correct answer, one good flashcard rating,
- * or one correct exercise attempt isn't mastery on its own.
+ * MASTERY_MIN_REPETITIONS) — one correct answer or one good flashcard rating
+ * isn't mastery on its own. Exercises are the exception: one correct attempt
+ * is enough to count an item as mastered.
  */
 export function computeReadiness(
   cardsByDomain: Record<DomainKey, string[]>, // domainKey -> all card IDs in that domain
@@ -91,22 +92,16 @@ export function computeReadiness(
     ).length;
     const quizAccuracyPct = questionsAttempted > 0 ? (questionsMastered / questionsAttempted) * 100 : 0;
 
-    // Same repeat-success rule applied to interactive exercises: an exercise
-    // item counts as mastered only once answered correctly at least
-    // MASTERY_MIN_REPETITIONS times. Denominator is the domain's total
-    // available exercise items (not just attempted ones), since the exercise
-    // bank is small and fully enumerable per domain.
+    // Unlike flashcards/questions, an exercise item counts as mastered after
+    // a single correct attempt — no repeat-success requirement. Denominator
+    // is the domain's total available exercise items (not just attempted
+    // ones), since the exercise bank is small and fully enumerable per domain.
     const exerciseItemIds = EXERCISE_ITEMS_BY_DOMAIN[d.key] ?? [];
     const domainExerciseAttempts = exerciseAttemptsByDomain.get(d.key) ?? [];
-    const correctCountByExerciseItem = new Map<string, number>();
-    for (const a of domainExerciseAttempts) {
-      if (a.isCorrect) {
-        correctCountByExerciseItem.set(a.itemId, (correctCountByExerciseItem.get(a.itemId) ?? 0) + 1);
-      }
-    }
-    const exercisesMastered = exerciseItemIds.filter(
-      (itemId) => (correctCountByExerciseItem.get(itemId) ?? 0) >= MASTERY_MIN_REPETITIONS,
-    ).length;
+    const correctExerciseItemIds = new Set(
+      domainExerciseAttempts.filter((a) => a.isCorrect).map((a) => a.itemId),
+    );
+    const exercisesMastered = exerciseItemIds.filter((itemId) => correctExerciseItemIds.has(itemId)).length;
     const exercisesTotal = exerciseItemIds.length;
     const exerciseMasteryPct = exercisesTotal > 0 ? (exercisesMastered / exercisesTotal) * 100 : 0;
 

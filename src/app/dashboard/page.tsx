@@ -185,9 +185,9 @@ export default function DashboardPage() {
               ))}
             </div>
             <p className="mt-2 text-xs text-foreground-muted">
-              A question or exercise only counts toward mastery once you&apos;ve gotten it right at least twice; a
-              flashcard counts once its spaced-repetition retention score crosses 75%. Full domain mastery requires
-              engaging with flashcards, questions, and exercises alike.
+              A question only counts toward mastery once you&apos;ve gotten it right at least twice; an exercise
+              counts after one correct attempt; a flashcard counts once its spaced-repetition retention score
+              crosses 75%. Full domain mastery requires engaging with flashcards, questions, and exercises alike.
             </p>
           </div>
 

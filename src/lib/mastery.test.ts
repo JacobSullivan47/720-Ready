@@ -12,10 +12,13 @@ const cardsByDomain = Object.fromEntries(
 const agenticExerciseItems = EXERCISE_ITEMS_BY_DOMAIN.AGENTIC_ARCHITECTURE!;
 
 function masteredExerciseAttempts(itemIds: string[]): ExerciseAttemptRecord[] {
-  return itemIds.flatMap((itemId) => [
-    { itemId, domainKey: "AGENTIC_ARCHITECTURE" as const, isCorrect: true, createdAt: new Date().toISOString() },
-    { itemId, domainKey: "AGENTIC_ARCHITECTURE" as const, isCorrect: true, createdAt: new Date().toISOString() },
-  ]);
+  // Exercises need just one correct attempt to count as mastered.
+  return itemIds.map((itemId) => ({
+    itemId,
+    domainKey: "AGENTIC_ARCHITECTURE" as const,
+    isCorrect: true,
+    createdAt: new Date().toISOString(),
+  }));
 }
 
 describe("computeReadiness", () => {
@@ -29,8 +32,8 @@ describe("computeReadiness", () => {
     // Perfect mastery only in the highest-weighted domain (Agentic Architecture, 27%).
     // Each of 10 questions answered correctly TWICE (mastery requires
     // MASTERY_MIN_REPETITIONS correct answers per question), all 4 of that
-    // domain's flashcards mastered, AND all of its exercise items mastered too
-    // — full mastery requires engaging with all three.
+    // domain's flashcards mastered, AND all of its exercise items mastered
+    // (one correct attempt each) — full mastery requires engaging with all three.
     const cardStates = Object.fromEntries(
       cardsByDomain.AGENTIC_ARCHITECTURE.map((id) => [
         id,
@@ -118,12 +121,27 @@ describe("computeReadiness", () => {
     expect(agentic.masteryPct).toBe(67);
   });
 
-  it("does NOT count an exercise item as mastered after only one correct attempt", () => {
+  it("counts an exercise item as mastered after just one correct attempt", () => {
     const exerciseAttempts: ExerciseAttemptRecord[] = [
       {
         itemId: agenticExerciseItems[0],
         domainKey: "AGENTIC_ARCHITECTURE",
         isCorrect: true,
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    const result = computeReadiness(cardsByDomain, {}, [], exerciseAttempts);
+    const agentic = result.domains.find((d) => d.domainKey === "AGENTIC_ARCHITECTURE")!;
+    expect(agentic.exercisesMastered).toBe(1);
+    expect(agentic.exerciseMasteryPct).toBeGreaterThan(0);
+  });
+
+  it("does NOT count an exercise item as mastered with zero correct attempts", () => {
+    const exerciseAttempts: ExerciseAttemptRecord[] = [
+      {
+        itemId: agenticExerciseItems[0],
+        domainKey: "AGENTIC_ARCHITECTURE",
+        isCorrect: false,
         createdAt: new Date().toISOString(),
       },
     ];
