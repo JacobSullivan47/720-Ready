@@ -35,16 +35,16 @@ export default async function LandingPage() {
           <>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href="/dashboard"
+                href="/register"
                 className="rounded-md bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
               >
-                Start studying — no account needed
+                Create a free account
               </Link>
               <Link
-                href="/register"
+                href="/dashboard"
                 className="rounded-md border border-border px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted"
               >
-                Create a free account
+                Start studying — no account needed
               </Link>
             </div>
             <p className="mt-3 text-sm text-foreground-muted">
