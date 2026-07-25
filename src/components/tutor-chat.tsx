@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import clsx from "clsx";
 import { domains } from "@/content/domains";
 import { scenarios } from "@/content/scenarios";
+import { TutorMascot } from "@/components/tutor-mascot";
 
 interface ChatMessage {
   id: string;
@@ -175,10 +176,13 @@ export function TutorChat({
           : "mx-auto flex h-[calc(100vh-4rem)] max-w-2xl flex-col px-4 py-6 sm:px-6"
       }
     >
-      <div className="flex items-baseline justify-between gap-2">
-        <h1 className={isDrawer ? "text-lg font-semibold tracking-tight" : "text-xl font-semibold tracking-tight"}>
-          AI Study Tutor
-        </h1>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <TutorMascot thinking={sending} size={isDrawer ? "sm" : "md"} />
+          <h1 className={isDrawer ? "text-lg font-semibold tracking-tight" : "text-xl font-semibold tracking-tight"}>
+            AI Study Tutor
+          </h1>
+        </div>
         <div className="flex items-center gap-3">
           {remaining != null && limit != null && (
             <span className="text-xs text-foreground-muted">
