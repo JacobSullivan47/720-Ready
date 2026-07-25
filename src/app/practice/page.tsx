@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useContentBank } from "@/hooks/use-content-bank";
 import { useProgress } from "@/hooks/use-progress";
+import { useTutorDrawer } from "@/components/tutor-drawer-provider";
 import { PracticeQuestionCard } from "@/components/practice-question";
 import { domains } from "@/content/domains";
 import { scenarios } from "@/content/scenarios";
@@ -22,6 +23,7 @@ interface Session {
 function PracticePageInner() {
   const { bank, loading } = useContentBank();
   const { client } = useProgress();
+  const { close: closeTutor } = useTutorDrawer();
   const searchParams = useSearchParams();
 
   const [domainFilter, setDomainFilter] = useState<DomainKey | "ALL">(
@@ -33,11 +35,22 @@ function PracticePageInner() {
   const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | "ALL">("ALL");
   const [session, setSession] = useState<Session | null>(null);
   const [activeSession, setActiveSession] = useState<ActivePracticeSession | null>(null);
+  const [bookmarkedQuestionIds, setBookmarkedQuestionIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!bank) return;
     client.getActivePracticeSession().then(setActiveSession);
   }, [bank, client]);
+
+  useEffect(() => {
+    let cancelled = false;
+    client.getBookmarks().then((bm) => {
+      if (!cancelled) setBookmarkedQuestionIds(new Set(bm.questionIds));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [client]);
 
   const filtered = useMemo(() => {
     if (!bank) return [];
@@ -57,6 +70,14 @@ function PracticePageInner() {
         scenarioKey: scenarioFilter === "ALL" ? undefined : scenarioFilter,
         difficulty: difficultyFilter === "ALL" ? undefined : difficultyFilter },
     );
+    setActiveSession(null);
+    setSession({ id, questions, index: 0, correct: 0 });
+  }
+
+  async function startBookmarkedSession() {
+    if (!bank) return;
+    const questions = shuffle(bank.questions.filter((q) => bookmarkedQuestionIds.has(q.id)));
+    const { id } = await client.startPracticeSession(questions.map((q) => q.id), {});
     setActiveSession(null);
     setSession({ id, questions, index: 0, correct: 0 });
   }
@@ -86,6 +107,7 @@ function PracticePageInner() {
   }
 
   async function endSession() {
+    closeTutor();
     if (session) await client.completePracticeSession(session.id);
     setSession(null);
   }
@@ -137,7 +159,8 @@ function PracticePageInner() {
           </button>
           {!isLast ? (
             <button
-              onClick={() =>
+              onClick={() => {
+                closeTutor();
                 setSession((s) => {
                   if (!s) return s;
                   const next = { ...s, index: s.index + 1 };
@@ -148,8 +171,8 @@ function PracticePageInner() {
                     })
                     .catch(() => {});
                   return next;
-                })
-              }
+                });
+              }}
               className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-strong"
             >
               Next question →
@@ -197,6 +220,15 @@ function PracticePageInner() {
           </div>
         </div>
       )}
+
+      <button
+        onClick={startBookmarkedSession}
+        disabled={bookmarkedQuestionIds.size === 0}
+        className="mt-6 block w-full rounded-lg border border-accent bg-accent-soft p-4 text-left transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <span className="font-medium text-accent">★ Bookmarked questions</span>
+        <span className="ml-2 text-sm text-foreground-muted">{bookmarkedQuestionIds.size} questions</span>
+      </button>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <label className="text-sm">

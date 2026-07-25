@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useProgress } from "@/hooks/use-progress";
 import type { BankFlashcard } from "@/lib/content-bank-client";
 import { INITIAL_SRS_STATE, type SrsState } from "@/lib/srs";
@@ -214,9 +213,6 @@ export function FlashcardSession({
         <button onClick={onExit} className="text-sm text-foreground-muted hover:text-foreground hover:underline">
           Exit to deck picker
         </button>
-        <Link href="/bookmarks" className="text-sm text-brand hover:underline">
-          ★ View bookmarked cards
-        </Link>
       </div>
     </div>
   );

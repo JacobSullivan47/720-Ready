@@ -1,35 +1,55 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
-import Link from "next/link";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useContentBank } from "@/hooks/use-content-bank";
+import { useProgress } from "@/hooks/use-progress";
 import { FlashcardSession } from "@/components/flashcard-session";
 import { domains } from "@/content/domains";
 import { scenarios } from "@/content/scenarios";
 import type { DomainKey, ScenarioKey } from "@/content/types";
 
+type Selection =
+  | { type: "all" }
+  | { type: "bookmarked" }
+  | { type: "domain"; key: DomainKey }
+  | { type: "scenario"; key: ScenarioKey };
+
 function FlashcardsPageInner() {
   const { bank, loading } = useContentBank();
+  const { client } = useProgress();
   const router = useRouter();
   const searchParams = useSearchParams();
   const domainParam = searchParams.get("domain") as DomainKey | null;
   const scenarioParam = searchParams.get("scenario") as ScenarioKey | null;
 
-  const [selection, setSelection] = useState<
-    { type: "all" } | { type: "domain"; key: DomainKey } | { type: "scenario"; key: ScenarioKey } | null
-  >(domainParam ? { type: "domain", key: domainParam } : scenarioParam ? { type: "scenario", key: scenarioParam } : null);
+  const [selection, setSelection] = useState<Selection | null>(
+    domainParam ? { type: "domain", key: domainParam } : scenarioParam ? { type: "scenario", key: scenarioParam } : null,
+  );
+  const [bookmarkedCardIds, setBookmarkedCardIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    client.getBookmarks().then((bm) => {
+      if (!cancelled) setBookmarkedCardIds(new Set(bm.cardIds));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [client]);
 
   const filtered = useMemo(() => {
     if (!bank || !selection) return [];
     if (selection.type === "all") return bank.flashcards;
+    if (selection.type === "bookmarked") return bank.flashcards.filter((c) => bookmarkedCardIds.has(c.id));
     if (selection.type === "domain") return bank.flashcards.filter((c) => c.domainKey === selection.key);
     return bank.flashcards.filter((c) => c.scenarioKey === selection.key);
-  }, [bank, selection]);
+  }, [bank, selection, bookmarkedCardIds]);
 
   const deckLabel = useMemo(() => {
     if (!selection) return "";
     if (selection.type === "all") return "All terms";
+    if (selection.type === "bookmarked") return "Bookmarked cards";
     if (selection.type === "domain") return domains.find((d) => d.key === selection.key)?.name ?? "Domain deck";
     return scenarios.find((s) => s.key === selection.key)?.name ?? "Scenario deck";
   }, [selection]);
@@ -45,12 +65,7 @@ function FlashcardsPageInner() {
   if (!selection) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Flashcards</h1>
-          <Link href="/bookmarks" className="text-sm font-medium text-brand hover:underline">
-            ★ View bookmarked cards
-          </Link>
-        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">Flashcards</h1>
         <p className="mt-2 text-foreground-muted">Choose a deck to study.</p>
 
         <button
@@ -59,6 +74,15 @@ function FlashcardsPageInner() {
         >
           <span className="font-medium text-brand-strong">All terms</span>
           <span className="ml-2 text-sm text-foreground-muted">{bank.flashcards.length} cards</span>
+        </button>
+
+        <button
+          onClick={() => setSelection({ type: "bookmarked" })}
+          disabled={bookmarkedCardIds.size === 0}
+          className="mt-3 block w-full rounded-lg border border-accent bg-accent-soft p-4 text-left transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <span className="font-medium text-accent">★ Bookmarked cards</span>
+          <span className="ml-2 text-sm text-foreground-muted">{bookmarkedCardIds.size} cards</span>
         </button>
 
         <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-foreground-muted">By domain</h2>
