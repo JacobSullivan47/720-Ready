@@ -7,6 +7,13 @@ import type { DomainKey } from "@/content/types";
 /** A flashcard counts as individually "mastered" once its retention score crosses this line. */
 export const CARD_MASTERY_RETENTION_CUTOFF = 0.75;
 
+/** How much each component contributes to a domain's blended mastery score. Must sum to 1. */
+export const MASTERY_WEIGHTS = {
+  cards: 0.3,
+  quiz: 0.5,
+  exercises: 0.2,
+} as const;
+
 export interface DomainMastery {
   domainKey: DomainKey;
   name: string;
@@ -33,15 +40,15 @@ export interface ReadinessSummary {
 
 /**
  * Blends flashcard retention (SM-2 state), question mastery, and interactive
- * exercise mastery into a single 0-100 mastery score per domain (always an
- * even three-way average — a domain with 100% flashcard retention but zero
- * activity in questions or exercises caps out at 33%, not 100%; full mastery
- * requires engaging with all three), then a weight-adjusted overall readiness
- * score. A domain with no activity at all scores 0. Flashcards and questions
- * require repeat success on the individual item level (see
- * MASTERY_MIN_REPETITIONS) — one correct answer or one good flashcard rating
- * isn't mastery on its own. Exercises are the exception: one correct attempt
- * is enough to count an item as mastered.
+ * exercise mastery into a single 0-100 mastery score per domain, weighted per
+ * MASTERY_WEIGHTS (questions 50%, flashcards 30%, exercises 20%) — a domain
+ * with 100% flashcard retention but zero activity in questions or exercises
+ * caps out at 30%, not 100%; full mastery requires engaging with all three —
+ * then a weight-adjusted overall readiness score. A domain with no activity
+ * at all scores 0. Flashcards and questions require repeat success on the
+ * individual item level (see MASTERY_MIN_REPETITIONS) — one correct answer
+ * or one good flashcard rating isn't mastery on its own. Exercises are the
+ * exception: one correct attempt is enough to count an item as mastered.
  */
 export function computeReadiness(
   cardsByDomain: Record<DomainKey, string[]>, // domainKey -> all card IDs in that domain
@@ -109,7 +116,10 @@ export function computeReadiness(
     // (0%). Doing nothing but one or two of flashcards/questions/exercises
     // for a domain caps out below 100% — full mastery requires engaging
     // with all three.
-    const masteryPct = (cardRetentionPct + quizAccuracyPct + exerciseMasteryPct) / 3;
+    const masteryPct =
+      cardRetentionPct * MASTERY_WEIGHTS.cards +
+      quizAccuracyPct * MASTERY_WEIGHTS.quiz +
+      exerciseMasteryPct * MASTERY_WEIGHTS.exercises;
 
     return {
       domainKey: d.key,
