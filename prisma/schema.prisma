@@ -386,6 +386,12 @@ model TutorConversation {
   id        String   @id @default(cuid())
   userId    String
   title     String   @default("New conversation")
+  // The focus key (e.g. "question:abc123") this conversation was started
+  // for, or null for a general/nav-bar conversation. A new focus that
+  // differs from the most recent conversation's focus starts a fresh one
+  // instead of appending to unrelated history — keeps token usage down and
+  // keeps old, unrelated Q&A from bleeding into a new question's context.
+  focus     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

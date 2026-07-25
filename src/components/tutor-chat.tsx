@@ -64,15 +64,21 @@ export function TutorChat({
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch("/api/tutor/messages")
+    let cancelled = false;
+    const url = focus ? `/api/tutor/messages?focus=${encodeURIComponent(focus)}` : "/api/tutor/messages";
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
+        if (cancelled) return;
         setMessages(data.messages.map((m: ChatMessage) => ({ id: m.id, role: m.role, content: m.content })));
         setRemaining(data.remainingToday);
         setLimit(data.limitPerDay);
         setLoaded(true);
       });
-  }, [status]);
+    return () => {
+      cancelled = true;
+    };
+  }, [status, focus]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

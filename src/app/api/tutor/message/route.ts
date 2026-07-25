@@ -37,18 +37,26 @@ export async function POST(request: Request) {
     );
   }
 
-  let conversation = await prisma.tutorConversation.findFirst({
+  const mostRecent = await prisma.tutorConversation.findFirst({
     where: { userId: auth.userId },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
     include: { messages: { orderBy: { createdAt: "desc" }, take: TUTOR_HISTORY_WINDOW } },
   });
 
-  if (!conversation) {
-    conversation = await prisma.tutorConversation.create({
-      data: { userId: auth.userId, title: "Study tutor" },
-      include: { messages: true },
-    });
-  }
+  // A focus-carrying message only continues the most recent conversation if
+  // it's about the SAME focus; a different (or first) focus starts a fresh
+  // conversation instead of dragging in unrelated prior history. A focus-less
+  // message (general/nav-bar chat) always continues whatever's most recent.
+  const needsNewConversation =
+    !!parsed.data.focus && (!mostRecent || mostRecent.focus !== parsed.data.focus);
+
+  const conversation =
+    !needsNewConversation && mostRecent
+      ? mostRecent
+      : await prisma.tutorConversation.create({
+          data: { userId: auth.userId, title: "Study tutor", focus: parsed.data.focus ?? null },
+          include: { messages: true },
+        });
 
   const history = [...conversation.messages].reverse().map((m) => ({
     role: m.role.toLowerCase() as "user" | "assistant",
