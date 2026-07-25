@@ -20,6 +20,7 @@ export default async function AdminPage() {
       name: true,
       email: true,
       createdAt: true,
+      marketingOptIn: true,
       _count: {
         select: {
           questionAttempts: true,
@@ -45,6 +46,7 @@ export default async function AdminPage() {
               <th className="px-4 py-2.5">Name</th>
               <th className="px-4 py-2.5">Email</th>
               <th className="px-4 py-2.5">Signed up</th>
+              <th className="px-4 py-2.5">Opted in</th>
               <th className="px-4 py-2.5">Questions answered</th>
               <th className="px-4 py-2.5">Cards reviewed</th>
               <th className="px-4 py-2.5">Mock exams</th>
@@ -58,6 +60,17 @@ export default async function AdminPage() {
                 <td className="px-4 py-2.5 text-foreground-muted">{u.email ?? "—"}</td>
                 <td className="px-4 py-2.5 text-foreground-muted">
                   {u.createdAt.toLocaleDateString()}
+                </td>
+                <td className="px-4 py-2.5">
+                  <span
+                    className={
+                      u.marketingOptIn
+                        ? "rounded-full bg-success-soft px-2 py-0.5 text-xs font-medium text-success"
+                        : "rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-foreground-muted"
+                    }
+                  >
+                    {u.marketingOptIn ? "Yes" : "No"}
+                  </span>
                 </td>
                 <td className="px-4 py-2.5">{u._count.questionAttempts}</td>
                 <td className="px-4 py-2.5">{u._count.cardProgress}</td>
