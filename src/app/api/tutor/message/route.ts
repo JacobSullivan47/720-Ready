@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/api-auth";
@@ -23,12 +24,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: auth.userId },
+    select: { tutorUnlimited: true },
+  });
+
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
   const usedToday = await prisma.tutorMessage.count({
     where: { userId: auth.userId, role: "USER", createdAt: { gte: startOfDay } },
   });
-  if (usedToday >= TUTOR_MAX_MESSAGES_PER_DAY) {
+  if (!user?.tutorUnlimited && usedToday >= TUTOR_MAX_MESSAGES_PER_DAY) {
     return NextResponse.json(
       {
         error: `You've reached today's limit of ${TUTOR_MAX_MESSAGES_PER_DAY} tutor messages. Please come back tomorrow.`,
@@ -73,9 +79,18 @@ export async function POST(request: Request) {
   try {
     reply = await askTutor(history, { learnerContext, focusContext });
   } catch (err) {
-    console.error("Tutor request failed", err);
+    const isBillingError = err instanceof Anthropic.APIError && err.type === "billing_error";
+    if (isBillingError) {
+      console.error("Tutor request failed: Anthropic account is out of credits", err);
+    } else {
+      console.error("Tutor request failed", err);
+    }
     return NextResponse.json(
-      { error: "The tutor is temporarily unavailable. Please try again shortly." },
+      {
+        error: isBillingError
+          ? "The AI Tutor is taking a short break for maintenance and will be back soon. Sorry for the inconvenience!"
+          : "The tutor is temporarily unavailable. Please try again shortly.",
+      },
       { status: 502 },
     );
   }
@@ -105,6 +120,9 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     reply,
-    remainingToday: Math.max(0, TUTOR_MAX_MESSAGES_PER_DAY - usedToday - 1),
+    remainingToday: user?.tutorUnlimited
+      ? null
+      : Math.max(0, TUTOR_MAX_MESSAGES_PER_DAY - usedToday - 1),
+    unlimited: !!user?.tutorUnlimited,
   });
 }

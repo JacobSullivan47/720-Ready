@@ -43,7 +43,7 @@ export default function RegisterPage() {
       setError("Account created, but sign-in failed. Try signing in manually.");
       return;
     }
-    router.push("/dashboard");
+    router.push("/dashboard?welcome=1");
     router.refresh();
   }
 

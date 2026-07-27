@@ -10,6 +10,8 @@ function LoginPageInner() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
+  const justReset = searchParams.get("reset") === "1";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,12 @@ function LoginPageInner() {
         Sign in to sync your progress across devices.
       </p>
 
+      {justReset && (
+        <p className="mt-4 rounded-md bg-success-soft px-3 py-2 text-sm text-success">
+          Your password has been reset. Sign in with your new password.
+        </p>
+      )}
+
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium">
@@ -52,9 +60,14 @@ function LoginPageInner() {
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium">
-            Password
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-medium">
+              Password
+            </label>
+            <Link href="/forgot-password" className="text-xs font-medium text-brand hover:underline">
+              Forgot password?
+            </Link>
+          </div>
           <input
             id="password"
             type="password"

@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import clsx from "clsx";
-import { ThemeToggle } from "./theme-toggle";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -66,7 +65,6 @@ export function NavBar() {
               <path d="M20 20l-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </Link>
-          <ThemeToggle />
           {status === "authenticated" && session?.user ? (
             <div className="flex items-center gap-2">
               <Link

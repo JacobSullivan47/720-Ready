@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { SEQUENCING_EXERCISES } from "@/content/exercises";
@@ -25,6 +25,21 @@ export default function SequencingPage() {
   const [pool, setPool] = useState<string[]>(() => shuffledDistinctFrom(exercise.steps));
   const [ordered, setOrdered] = useState<string[]>([]);
   const [checked, setChecked] = useState(false);
+  const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    client
+      .getExerciseAttempts()
+      .then((attempts) => {
+        const done = new Set(
+          SEQUENCING_EXERCISES.filter((ex) =>
+            attempts.some((a) => a.itemId === `sequencing:${ex.id}`),
+          ).map((ex) => ex.id),
+        );
+        setDoneIds(done);
+      })
+      .catch(() => {});
+  }, [client]);
 
   const isComplete = pool.length === 0;
   const correctness = useMemo(
@@ -63,6 +78,7 @@ export default function SequencingPage() {
       itemId: `sequencing:${exercise.id}`,
       isCorrect: correctCount === exercise.steps.length,
     });
+    setDoneIds((prev) => new Set(prev).add(exercise.id));
   }
 
   return (
@@ -72,18 +88,27 @@ export default function SequencingPage() {
       </Link>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {SEQUENCING_EXERCISES.map((ex, i) => (
-          <button
-            key={ex.id}
-            onClick={() => loadExercise(i)}
-            className={clsx(
-              "rounded-full px-3 py-1 text-xs font-medium",
-              i === exerciseIndex ? "bg-brand text-white" : "bg-surface-muted text-foreground-muted hover:bg-border",
-            )}
-          >
-            {ex.title}
-          </button>
-        ))}
+        {SEQUENCING_EXERCISES.map((ex, i) => {
+          const isActive = i === exerciseIndex;
+          const isDone = doneIds.has(ex.id);
+          return (
+            <button
+              key={ex.id}
+              onClick={() => loadExercise(i)}
+              className={clsx(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                isActive
+                  ? "bg-brand text-white"
+                  : isDone
+                    ? "bg-success-soft text-success hover:opacity-80"
+                    : "bg-surface-muted text-foreground-muted hover:bg-border",
+              )}
+            >
+              {isDone && "✓ "}
+              {ex.title}
+            </button>
+          );
+        })}
       </div>
 
       <h1 className="mt-3 text-2xl font-semibold tracking-tight">{exercise.title}</h1>

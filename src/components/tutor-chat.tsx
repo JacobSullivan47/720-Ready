@@ -56,6 +56,7 @@ export function TutorChat({
   const [sending, setSending] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [limit, setLimit] = useState<number | null>(null);
+  const [unlimited, setUnlimited] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [chipDismissed, setChipDismissed] = useState(false);
@@ -74,6 +75,7 @@ export function TutorChat({
         setMessages(data.messages.map((m: ChatMessage) => ({ id: m.id, role: m.role, content: m.content })));
         setRemaining(data.remainingToday);
         setLimit(data.limitPerDay);
+        setUnlimited(!!data.unlimited);
         setLoaded(true);
       });
     return () => {
@@ -120,6 +122,7 @@ export function TutorChat({
     if (focusToSend) lastSentFocus.current = focusToSend;
     setMessages((prev) => [...prev, { id: `reply-${Date.now()}`, role: "assistant", content: data.reply }]);
     setRemaining(data.remainingToday);
+    setUnlimited(!!data.unlimited);
   }
 
   function applyQuickStart(prompt: string) {
@@ -184,10 +187,14 @@ export function TutorChat({
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          {remaining != null && limit != null && (
-            <span className="text-xs text-foreground-muted">
-              {remaining} of {limit} left today
-            </span>
+          {unlimited ? (
+            <span className="text-xs text-foreground-muted">Unlimited</span>
+          ) : (
+            remaining != null && limit != null && (
+              <span className="text-xs text-foreground-muted">
+                {remaining} of {limit} left today
+              </span>
+            )
           )}
           {onClose && (
             <button

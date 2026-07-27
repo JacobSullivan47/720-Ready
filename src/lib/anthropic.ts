@@ -10,7 +10,7 @@ export function getAnthropicClient(): Anthropic {
 }
 
 export const TUTOR_MODEL = "claude-opus-4-8";
-export const TUTOR_MAX_MESSAGES_PER_DAY = 30;
+export const TUTOR_MAX_MESSAGES_PER_DAY = 15;
 export const TUTOR_HISTORY_WINDOW = 16; // messages of prior context sent per request
 export const TUTOR_MAX_TOKENS = 1024;
 

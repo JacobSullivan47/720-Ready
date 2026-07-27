@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import { TutorUnlimitedToggle } from "./TutorUnlimitedToggle";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -21,6 +22,7 @@ export default async function AdminPage() {
       email: true,
       createdAt: true,
       marketingOptIn: true,
+      tutorUnlimited: true,
       _count: {
         select: {
           questionAttempts: true,
@@ -47,6 +49,7 @@ export default async function AdminPage() {
               <th className="px-4 py-2.5">Email</th>
               <th className="px-4 py-2.5">Signed up</th>
               <th className="px-4 py-2.5">Opted in</th>
+              <th className="px-4 py-2.5">AI Tutor</th>
               <th className="px-4 py-2.5">Questions answered</th>
               <th className="px-4 py-2.5">Cards reviewed</th>
               <th className="px-4 py-2.5">Mock exams</th>
@@ -71,6 +74,9 @@ export default async function AdminPage() {
                   >
                     {u.marketingOptIn ? "Yes" : "No"}
                   </span>
+                </td>
+                <td className="px-4 py-2.5">
+                  <TutorUnlimitedToggle userId={u.id} initialValue={u.tutorUnlimited} />
                 </td>
                 <td className="px-4 py-2.5">{u._count.questionAttempts}</td>
                 <td className="px-4 py-2.5">{u._count.cardProgress}</td>

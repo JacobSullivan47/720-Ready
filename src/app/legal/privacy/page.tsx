@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DeleteAccountSection } from "@/components/delete-account-section";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Privacy Policy" };
 
@@ -51,12 +51,13 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold text-foreground">Your choices</h2>
           <p className="mt-2">
             If you&apos;re signed in, you can permanently delete your account and all associated
-            data yourself at any time below. Guest progress never leaves your browser, so it can be
-            cleared by clearing your browser&apos;s local storage.
+            data yourself at any time from your{" "}
+            <Link href="/account" className="text-brand hover:underline">
+              Account page
+            </Link>
+            . Guest progress never leaves your browser, so it can be cleared by clearing your
+            browser&apos;s local storage.
           </p>
-          <div className="mt-4">
-            <DeleteAccountSection />
-          </div>
         </section>
       </div>
     </div>

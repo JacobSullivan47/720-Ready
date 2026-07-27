@@ -9,11 +9,14 @@ export async function GET(request: Request) {
 
   const focus = new URL(request.url).searchParams.get("focus");
 
-  const conversation = await prisma.tutorConversation.findFirst({
-    where: { userId: auth.userId },
-    orderBy: { createdAt: "desc" },
-    include: { messages: { orderBy: { createdAt: "asc" } } },
-  });
+  const [user, conversation] = await Promise.all([
+    prisma.user.findUnique({ where: { id: auth.userId }, select: { tutorUnlimited: true } }),
+    prisma.tutorConversation.findFirst({
+      where: { userId: auth.userId },
+      orderBy: { createdAt: "desc" },
+      include: { messages: { orderBy: { createdAt: "asc" } } },
+    }),
+  ]);
 
   // A focus that doesn't match the most recent conversation means a new one
   // will be created on the next message — show an empty thread now rather
@@ -35,7 +38,8 @@ export async function GET(request: Request) {
           content: m.content,
           createdAt: m.createdAt.toISOString(),
         })) ?? []),
-    remainingToday: Math.max(0, TUTOR_MAX_MESSAGES_PER_DAY - usedToday),
+    remainingToday: user?.tutorUnlimited ? null : Math.max(0, TUTOR_MAX_MESSAGES_PER_DAY - usedToday),
     limitPerDay: TUTOR_MAX_MESSAGES_PER_DAY,
+    unlimited: !!user?.tutorUnlimited,
   });
 }
