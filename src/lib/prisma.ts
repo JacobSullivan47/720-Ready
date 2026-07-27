@@ -14,12 +14,19 @@ const globalForPrisma = globalThis as unknown as {
 // string parsing path triggers it.
 function createClient() {
   const url = new URL(process.env.DATABASE_URL!);
+  // Parsing fields individually (see note above) means the connection
+  // string's own `sslmode` query param is never consulted by `pg` — read it
+  // ourselves. Local Docker Postgres has no sslmode param (→ no SSL, as
+  // before); managed hosts like Neon set `sslmode=require` and reject
+  // unencrypted connections without this.
+  const sslmode = url.searchParams.get("sslmode");
   const adapter = new PrismaPg({
     host: url.hostname,
     port: url.port ? Number(url.port) : 5432,
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database: url.pathname.replace(/^\//, ""),
+    ssl: sslmode && sslmode !== "disable" ? { rejectUnauthorized: false } : undefined,
   });
   return new PrismaClient({
     adapter,
