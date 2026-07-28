@@ -266,17 +266,16 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "CLAUDE_CODE_WORKFLOWS",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "Which TWO of the following are accurate distinctions between the built-in tools Grep and Glob in Claude Code?",
+      "Which of the following is an accurate distinction between the built-in tools Grep and Glob in Claude Code?",
     options: [
-      "Grep searches for patterns inside file contents, while Glob matches files by name or path pattern",
+      "Grep searches for patterns inside file contents, while Glob matches files by name or path pattern — so using Glob to find a code reference that's actually inside file contents is a common tool-selection mistake",
       "Glob can be used to search for a specific error string buried inside a JSON config value's contents",
-      "Using Glob to try to find a code reference that's actually inside file contents is a common tool-selection mistake",
       "Grep and Glob are simply two different names for the exact same underlying search behavior internally",
       "Glob is only ever usable on whole directories, never on individual files by themselves",
     ],
-    correctIndexes: [0, 2],
+    correctIndexes: [0],
     explanation:
       "Grep vs. Glob is precisely a contents-search vs. filename/path-search distinction, and mistaking one for the other (especially reaching for Glob when the target text lives inside a file) is a well-known pitfall. Glob cannot see inside a JSON value, so it can't find an error string buried in file content — that's a Grep job. The two tools are not interchangeable or identical. Glob's scope is about matching filename/path patterns, not a restriction to directories only.",
     eli10:
@@ -285,57 +284,54 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "CLAUDE_CODE_WORKFLOWS",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "Which TWO statements correctly describe session management flags/mechanisms in Claude Code?",
+      "Which of the following correctly describes a session management flag/mechanism in Claude Code?",
     options: [
-      "A continue-most-recent flag is convenient, but risky if multiple terminals were active and it isn't the intended session",
-      "A session-ID mechanism suits automated workflows needing a stable, addressable session rather than whatever ran last",
+      "A continue-most-recent flag is convenient, but risky if multiple terminals were active and it isn't the intended session, which is exactly why a session-ID mechanism suits automated workflows that need a stable, addressable session instead",
       "Forking a session automatically isolates file changes on disk, in addition to the conversation history itself",
       "Resuming the same saved session from two terminals at once is always perfectly safe, with zero risk whatsoever",
       "The resume-specific-session mechanism only ever works for sessions that were created within the past hour or so",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "The continue-most-recent flag and its 'most recent isn't always the intended one' risk, and the session-ID mechanism's fit for stable, programmatic workflows, are both accurate. Forking only preserves conversation history, not filesystem state, so it does not by itself isolate files — a worktree is needed for that. Resuming the same session from two terminals at once risks conflicting edits, it isn't safe by default. There's no time restriction limiting the resume-specific-session mechanism to sessions from the last hour.",
+      "The continue-most-recent flag's 'most recent isn't always the intended one' risk, and the session-ID mechanism's fit for stable, programmatic workflows, are both accurate. Forking only preserves conversation history, not filesystem state, so it does not by itself isolate files — a worktree is needed for that. Resuming the same session from two terminals at once risks conflicting edits, it isn't safe by default. And there's no time restriction limiting the resume-specific-session mechanism to sessions from the last hour.",
     eli10:
-      "Grabbing 'whatever you touched last' can hand you the wrong thing if you touched several things recently, and a program that needs to reliably find one exact item should use a fixed label for it — those two ideas are true. But making a copy of your notes doesn't also copy your actual toys, and two people writing in the same notebook at once can absolutely bump into each other.",
+      "Grabbing 'whatever you touched last' can hand you the wrong thing if you touched several things recently, so a program that needs to reliably find one exact item should use a fixed label for it instead. But making a copy of your notes doesn't also copy your actual toys, and two people writing in the same notebook at once can absolutely bump into each other.",
     difficulty: "HARD",
   },
   {
     domainKey: "CLAUDE_CODE_WORKFLOWS",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "Which TWO of the following correctly describe CLAUDE.md and/or assistant memory in Claude Code?",
+      "Which of the following correctly describes CLAUDE.md and/or assistant memory in Claude Code?",
     options: [
-      "Both CLAUDE.md and assistant-maintained memory load as context that shapes behavior, with no guarantee of compliance",
-      "A rule that must be enforced without exception belongs in a hook or permission-deny rule, not CLAUDE.md prose alone",
+      "Both CLAUDE.md and assistant-maintained memory load as context that shapes behavior, with no guarantee of compliance — so a rule that must be enforced without exception belongs in a hook or permission-deny rule, not CLAUDE.md prose alone",
       "Nested CLAUDE.md files completely replace the repo-root CLAUDE.md file entirely, whenever both happen to exist",
       "Assistant-maintained memory can only ever be edited by directly modifying the project's root CLAUDE.md file itself",
       "CLAUDE.md gets automatically compiled into an enforced permission rule the very moment it is saved",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "Both CLAUDE.md and memory are read as context that shapes behavior with no compliance guarantee, and a rule that absolutely must hold belongs in a hook or permission-deny rule rather than relying on CLAUDE.md prose — both of these are accurate. Nested CLAUDE.md files supplement the root one rather than replacing it wholesale. Assistant memory is a separate mechanism from CLAUDE.md, not merely a section within it. CLAUDE.md is never automatically compiled into enforced permissions; it remains advisory context.",
+      "Both CLAUDE.md and memory are read as context that shapes behavior with no compliance guarantee, and a rule that absolutely must hold belongs in a hook or permission-deny rule rather than relying on CLAUDE.md prose. Nested CLAUDE.md files supplement the root one rather than replacing it wholesale. Assistant memory is a separate mechanism from CLAUDE.md, not merely a section within it. CLAUDE.md is never automatically compiled into enforced permissions; it remains advisory context.",
     eli10:
       "A sticky note and a rulebook page are both just reminders someone reads — neither one locks a door by itself. If a door truly must stay locked, you need an actual lock, not a better-written note. And a note about the art room doesn't erase the sign on the school's front door; both apply.",
     difficulty: "HARD",
   },
   {
     domainKey: "CLAUDE_CODE_WORKFLOWS",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "Which TWO statements correctly describe plan mode as a workflow control in Claude Code?",
+      "Which of the following correctly describes plan mode as a workflow control in Claude Code?",
     options: [
-      "Plan mode explores the codebase read-only and proposes an approach before any file gets changed",
-      "Plan mode best suits work spanning many files, architectural decisions, or changes needing approval first",
-      "Plan mode is simply just another name for enabling extended or deep reasoning mode",
-      "Plan mode can only ever be enabled at the very start of a session and never toggled afterward",
-      "Plan mode guarantees the eventual implementation will require zero further changes after approval",
+      "It explores the codebase read-only and proposes an approach before any file gets changed, and best suits work spanning many files, architectural decisions, or changes needing approval first",
+      "It is simply just another name for enabling extended or deep reasoning mode",
+      "It can only ever be enabled at the very start of a session and never toggled afterward",
+      "It guarantees the eventual implementation will require zero further changes after approval",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "Plan mode's defining behavior is exploring read-only and proposing a plan for approval before changes land, and it fits work with wide scope, architectural stakes, or a need for sign-off — both accurate. It is a distinct mechanism from extended thinking, not another name for it. It can typically be toggled during a session, not only at the very start. And approving a plan doesn't guarantee the resulting implementation will need no further revisions.",
+      "Plan mode's defining behavior is exploring read-only and proposing a plan for approval before changes land, and it fits work with wide scope, architectural stakes, or a need for sign-off. It is a distinct mechanism from extended thinking, not another name for it. It can typically be toggled during a session, not only at the very start. And approving a plan doesn't guarantee the resulting implementation will need no further revisions.",
     eli10:
       "Plan mode is like sketching a blueprint and getting it approved before building anything — that part's true, and it suits big, tricky building projects. But sketching a blueprint isn't the same as thinking harder, you can pick up a pencil again mid-project, and an approved blueprint doesn't guarantee the finished building needs zero touch-ups.",
     difficulty: "MEDIUM",
@@ -489,17 +485,16 @@ export const questions: QuestionSeed[] = [
   {
     domainKey: "CLAUDE_CODE_WORKFLOWS",
     scenarioKey: "DEVELOPER_PRODUCTIVITY_TOOLS",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "Which TWO statements accurately describe when to reach for particular built-in tools in Claude Code?",
+      "Which of the following accurately describes when to reach for a particular built-in tool in Claude Code?",
     options: [
-      "Bash is the appropriate tool for running a test suite or other shell commands, not for searching file contents",
-      "A full-file Read-then-Write fits when a change touches nearly the entire file's structure, not just one isolated line",
+      "Bash is the appropriate tool for running a test suite or other shell commands, not for searching file contents, and a full-file Read-then-Write fits when a change touches nearly the entire file's structure, not just one isolated line",
       "Task-based subagent delegation is best reserved for only the smallest, most trivial single-line changes possible",
       "Edit is the preferred tool of choice whenever a change spans dozens of completely unrelated files at once",
       "Grep should always be used instead of Bash whenever the actual goal is to execute a test suite",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
       "Bash is correctly the tool for executing shell commands like a test suite, and Read-then-Write correctly fits a near-total file rewrite rather than an isolated change. Task-based delegation is reserved for broad, open-ended work, not trivial single-line edits — that's backwards from the actual guidance. Edit suits a small, targeted, uniquely identifiable change, not dozens of unrelated files simultaneously. And Grep only searches file contents; it cannot execute anything, so it can't substitute for Bash when running tests.",
     eli10:
@@ -508,21 +503,129 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "CLAUDE_CODE_WORKFLOWS",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "Which TWO statements correctly describe how to handle resuming work after significant time has passed and the codebase may have changed?",
+      "Which of the following correctly describes how to handle resuming work after significant time has passed and the codebase may have changed?",
     options: [
-      "If most of a saved session's context is still useful, resuming and noting exactly what changed is reasonable",
-      "If the old transcript is likely stale or misleading, starting fresh with a concise goal summary is often safer",
+      "If most of a saved session's context is still useful, resuming and noting exactly what changed is reasonable — but if the old transcript is likely stale or misleading instead, starting fresh with a concise goal summary is often safer",
       "A saved session automatically re-scans the entire codebase for any changes the moment it gets resumed again",
       "Once a session is forked, its understanding of the codebase is guaranteed current no matter how much time passed",
       "Assistant-maintained memory automatically rewrites itself to match any codebase changes, without ever being told",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
       "Both are legitimate, complementary strategies depending on how stale the old context is: resume-and-correct when most of it still holds, or start fresh with a summary when it doesn't. There is no automatic re-scanning of the codebase when a session resumes — stale assumptions can persist unless corrected. Forking only branches the conversation transcript; it doesn't refresh or verify anything about current file contents. And assistant memory doesn't self-update to track code changes on its own — it still reflects whatever was previously noted until told otherwise.",
     eli10:
       "Coming back to a project after a long break, you either say 'hey, here's exactly what changed while I was gone' if most of what you remember still holds up, or you start over with just the goal in mind if too much has changed. Nothing automatically re-checks the room for you or magically updates your old notes by itself.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A team wants to build a custom on-call triage agent that runs unattended as part of their own internal service, rather than as an interactive terminal session. Which is the most appropriate way to build this?",
+    options: [
+      "The Claude Agent SDK, since it exposes the same agent harness — tools, permissions, context management — for building a custom agent product",
+      "The Claude Code CLI directly, since it's designed to be embedded inside other services without modification",
+      "The Messages API alone, since it already includes a built-in agentic loop with tool execution and context management",
+      "MCP, since it's the correct mechanism for building an entire standalone agent product from scratch",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "The Agent SDK is specifically meant for building a custom agent that runs as part of a team's own product or service, exposing the harness — tools, permissions, context management, subagents — that also powers Claude Code. The Claude Code CLI is built for interactive terminal use, not embedding inside another service. The raw Messages API returns one completion at a time and does not include an agentic loop; that loop is exactly what the Agent SDK adds on top of it. MCP standardizes exposing tools to an agent; it isn't itself a mechanism for building the agent.",
+    eli10:
+      "If you need a helper that works quietly in the background as part of your own machine, you'd build it with a toolkit meant for that, not hand someone a walkie-talkie meant for face-to-face chats.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A developer building an agent directly against the Messages API finds they're writing their own code to decide when to call a tool, execute it, feed the result back, and decide when to stop. What does this indicate?",
+    options: [
+      "This agentic loop is exactly what the Claude Agent SDK provides, so building it by hand duplicates work the SDK already does",
+      "This is unavoidable; no tooling exists that handles tool-call looping automatically for any Claude product",
+      "This means the Messages API is being called incorrectly, since it should return the agentic loop's results automatically",
+      "This only happens when using MCP tools, and would not happen with a custom tool",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "The Messages API is a single-completion primitive by design — it has no concept of looping tool calls on its own, so a developer wiring that loop up by hand is reimplementing exactly what the Agent SDK already provides, along with permission handling and context management. It isn't a sign of misuse of the Messages API; that's simply its scope. And the loop has to be built regardless of whether the tools involved are custom or MCP-based — the API itself doesn't distinguish between them here.",
+    eli10:
+      "If you keep having to manually pass a ball back and forth between two players yourself, that's a sign you need a referee who already knows how to run the game — not proof that the ball is broken.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A team building an SDK-based agent wants it to modify production infrastructure but only with a human approving each risky action, while a separate SDK-based agent that only reads logs and drafts reports should run unattended with much less oversight. What lets them configure this difference?",
+    options: [
+      "The Agent SDK's permission modes, which control how much autonomy an agent has before an action requires approval",
+      "Choosing a different Claude model for each agent, since permission behavior is entirely determined by model choice",
+      "MCP resource scopes, since permissions are only ever configured at the MCP protocol level",
+      "There is no way to configure this; every SDK-based agent always requires the same level of approval for every action",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "Permission modes are exactly the configurable control for this, mirroring Claude Code's own permission system — a low-stakes, read-only agent can run with more autonomy than one permitted to touch production infrastructure. Model choice doesn't determine permission behavior; that's a separate axis entirely. MCP resource scopes govern what an MCP server exposes, not the SDK agent's own approval requirements. And this is a real, commonly needed distinction the SDK supports, not an unconfigurable constant.",
+    eli10:
+      "You'd let a trusted friend water your plants on their own, but you'd still want to be asked before they rearrange your furniture — same person, different levels of check-in depending on the stakes.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A team building a deployment agent with the Agent SDK wants to guarantee it can never run a command that touches the production database, no matter what the model decides to do. Where should this rule live?",
+    options: [
+      "In an Agent SDK hook that intercepts and can block the tool call, the same enforcement mechanism Claude Code itself uses",
+      "In the agent's system prompt, worded firmly enough that the model will never violate it",
+      "In the tool's description, noting that production database access is discouraged",
+      "Nowhere; the Agent SDK does not support blocking any tool call under any circumstances",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "A hook is the mechanism that actually intercepts and can block a tool call before it executes — the same enforcement gap between 'written context' and 'enforced rule' that applies to Claude Code applies here too. A system-prompt instruction or a note in a tool description are both read as context the model tries to follow, with no guarantee of compliance, which is exactly why they're insufficient for a rule that must hold without exception. And the Agent SDK does support hooks for precisely this kind of enforcement.",
+    eli10:
+      "Writing 'please don't touch the stove' on a sticky note isn't the same as actually installing a stove lock — if it truly must never happen, you need the lock, not just the note.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    scenarioKey: "MULTI_AGENT_RESEARCH",
+    type: "SINGLE",
+    prompt:
+      "An SDK-built research agent needs to fetch and summarize five sources without cluttering its own context with the full text of each one. Which SDK mechanism fits this?",
+    options: [
+      "Delegating the fetch-and-summarize subtask to a subagent with its own fresh context and only the tools that subtask needs",
+      "Calling the Messages API a second time from inside the same context with no isolation at all",
+      "Requiring the coordinator to read every source directly, since subagents aren't available outside interactive Claude Code sessions",
+      "Switching to MCP resources instead, since subagents are a Claude Code-only concept unavailable to the SDK",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "Subagents are available to SDK-built agents, not just interactive Claude Code sessions — delegating this subtask to one keeps the full source text out of the coordinator's own context, which only needs the summarized result back. Calling the Messages API again from inside the same context provides no isolation at all. And subagents are a real Agent SDK capability, not something limited to the Claude Code CLI.",
+    eli10:
+      "Sending an assistant off to read five long books and come back with just the key points keeps your own desk clear of all five books — you only need their notes, not the books themselves.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    type: "SINGLE",
+    prompt:
+      "A long-running SDK-built agent monitors a deployment for several hours, accumulating a large conversation history. Which statement about managing this is accurate?",
+    options: [
+      "The Agent SDK provides its own context management, such as compaction as the session grows, rather than requiring the developer to build summarization logic from scratch",
+      "The developer must implement all context management manually, since the Agent SDK has no context-management features of its own",
+      "Context management is only available through Claude Code's interactive CLI, not through the Agent SDK",
+      "The agent should simply restart from an empty context every few minutes to avoid ever running out of room",
+    ],
+    correctIndexes: [0],
+    explanation:
+      "The Agent SDK provides context management, including compaction as a session's history grows, the same way Claude Code manages context in an interactive session — the developer doesn't need to build this from scratch. It is available through the SDK, not only the CLI, and periodically wiping the context entirely would throw away state the deployment-monitoring task actually needs, rather than managing it sensibly.",
+    eli10:
+      "A long car trip doesn't require you to personally reinvent the fuel gauge — the car already comes with one built in. The SDK already comes with its own way of handling a growing conversation.",
     difficulty: "HARD",
   },
 ];

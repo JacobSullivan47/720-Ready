@@ -236,4 +236,59 @@ export const flashcards: FlashcardSeed[] = [
       "Instead of a growing list of 'never say X, never say Y,' a prompt states 'lead with the answer, no introductory phrase' and shows two example responses written that way.",
     difficulty: "MEDIUM",
   },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    term: "Evaluation set (eval set)",
+    definition:
+      "A curated collection of representative test cases — including known edge cases and past failure modes — run against every prompt or model change to check whether it actually helped, rather than judging a change from a handful of eyeballed examples.",
+    example:
+      "Before shipping a reworded system prompt, a team reruns it against their eval set of 200 saved conversations rather than trusting that the new wording just 'reads better.'",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    term: "LLM-as-judge",
+    definition:
+      "Using a separate model call, guided by an explicit rubric, to grade open-ended or subjective outputs that have no single exact correct answer to match against. Still needs periodic human spot-checking, since the judge model itself can be miscalibrated.",
+    example:
+      "A judge model scores each customer-support reply against a rubric for tone and completeness, and a human periodically reviews a sample of the judge's own scores to confirm it's grading fairly.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    term: "False positive/negative in evaluation",
+    definition:
+      "A false positive is a grader marking a genuinely wrong output as correct; a false negative is a grader marking a genuinely correct output as wrong. Tuning a rubric has to balance both — too lenient hides real failures, too strict flags acceptable answers as broken.",
+    example:
+      "A grader that's too strict about exact phrasing marks a correct-but-differently-worded answer as a failure — a false negative that means the rubric needs loosening, not the model.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    term: "Feedback loop (prompt iteration)",
+    definition:
+      "The cycle of running an eval, finding a specific failure, making a targeted fix that addresses its actual cause, then re-running the full eval set to confirm the fix worked without breaking anything else — rather than patching a single failing example and calling it done.",
+    example:
+      "When an eval reveals the model fabricates a value for a genuinely missing field, the fix is a targeted instruction plus a worked example, followed by a full eval re-run, not just rewording until that one test case passes.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    term: "Regression tracking across prompt versions",
+    definition:
+      "Comparing eval pass rate before and after a prompt or model change, so a new version's overall reliability can be judged against the old one, rather than assuming a change is an improvement just because it fixed the one case it targeted.",
+    example:
+      "A team keeps a running record of eval pass rate per prompt version so they can catch a change that fixes one failure but quietly regresses three others.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "PROMPT_ENGINEERING",
+    scenarioKey: "STRUCTURED_DATA_EXTRACTION",
+    term: "Batch processing for evaluation",
+    definition:
+      "Running a large evaluation suite through a bulk, non-real-time processing path — trading latency for meaningfully lower cost — since eval runs aren't user-facing or time-sensitive the way production requests are.",
+    example:
+      "A 500-case eval suite is run overnight through batch processing instead of the real-time API, since no one is waiting on the results immediately and the cost savings add up at that volume.",
+    difficulty: "MEDIUM",
+  },
 ];

@@ -246,38 +246,36 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "AGENTIC_ARCHITECTURE",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A team is deciding whether parallel subagent fan-out fits a task of reviewing 40 independent log files for a specific error pattern. Which TWO of the following statements are accurate about fan-out in general?",
+      "A team is deciding whether parallel subagent fan-out fits a task of reviewing 40 independent log files for a specific error pattern. Which of the following is an accurate statement about fan-out in general?",
     options: [
-      "Fan-out works best when the units being processed are independent and don't need to consult each other's results",
-      "Total elapsed time for a fan-out phase is roughly bounded by the slowest single partition, not the sum of every partition's time",
-      "Fan-out guarantees a lower total dollar cost than a fixed sequential chain in every case",
-      "Fan-out is the correct choice whenever a task involves more than one file, regardless of whether the files relate to each other",
+      "It works best when the units being processed are independent and don't need to consult each other's results, and its total elapsed time is bounded by the slowest single partition rather than the sum of every partition's time",
+      "It guarantees a lower total dollar cost than a fixed sequential chain in every case",
+      "It is the correct choice whenever a task involves more than one file, regardless of whether the files relate to each other",
       "Subagents in a fan-out phase automatically share progress with one another as they run",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "Fan-out's core requirements are independence of units and a wall-clock time bound set by the slowest partition — both correct statements about the general pattern. It does not guarantee lower cost (running many subagents concurrently can cost more in total tokens even if it's faster), so that option is wrong. It's also not automatically correct just because there's more than one file — relatedness between units matters, as does whether they must consult each other, which contradicts the last option's claim that they automatically share progress (they don't; each subagent's context is isolated).",
+      "Fan-out's core requirements are independence of units and a wall-clock time bound set by the slowest partition — both true of the general pattern. It does not guarantee lower cost (running many subagents concurrently can cost more in total tokens even if it's faster). It's also not automatically correct just because there's more than one file — relatedness between units matters. And subagents don't automatically share progress with each other; each one's context is isolated unless explicitly passed along.",
     eli10:
       "Splitting up chores only saves time if everyone's chore is separate from everyone else's, and the whole group isn't done until the slowest person finishes — but splitting chores doesn't magically make the whole job cheaper, and helpers don't automatically know what each other are doing.",
     difficulty: "MEDIUM",
   },
   {
     domainKey: "AGENTIC_ARCHITECTURE",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "Which TWO of the following are genuine anti-patterns commonly seen in multi-agent orchestration designs?",
+      "Which of the following is a genuine anti-pattern commonly seen in multi-agent orchestration designs?",
     options: [
-      "Passing an unfiltered 100,000-token raw tool output from one agent to the next instead of a structured, filtered summary",
-      "Giving every subagent in a system full access to every available tool, regardless of that subagent's actual role",
+      "Passing an unfiltered 100,000-token raw tool output from one agent to the next instead of a structured, filtered summary, and giving every subagent full access to every available tool regardless of its actual role",
       "Restricting a research subagent's tools to search and fetch, while giving a synthesis-only subagent no external tools at all",
       "Writing a subagent handoff prompt that states the goal, the required output shape, and relevant constraints",
       "Assigning each of 50 independent repositories to its own subagent for a uniform review task",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "Passing raw, unfiltered dumps between agents and giving every subagent every tool are both well-documented anti-patterns — the first wastes context and buries needed fields, the second increases selection complexity and invites role drift. The third option describes correct, role-appropriate tool distribution, not an anti-pattern. The fourth describes a well-constructed handoff prompt, which is the recommended practice, not a mistake. The fifth describes a textbook-appropriate use of fan-out for independent, uniform units, not a flaw.",
+      "Passing raw, unfiltered dumps between agents and giving every subagent every tool are both well-documented anti-patterns — the first wastes context and buries needed fields, the second increases selection complexity and invites role drift. Restricting tools by role describes correct, role-appropriate distribution, not an anti-pattern. A handoff prompt stating the goal, output shape, and constraints is the recommended practice, not a mistake. Assigning independent, uniform units to their own subagents is a textbook-appropriate use of fan-out, not a flaw.",
     eli10:
       "Handing someone a giant messy pile of papers instead of a short clear note is a mistake, and giving every helper every single tool in the shed 'just in case' is also a mistake — but giving people only the tools they need, writing clear notes, and splitting up separate identical chores are all good moves, not mistakes.",
     difficulty: "HARD",
@@ -285,17 +283,16 @@ export const questions: QuestionSeed[] = [
   {
     domainKey: "AGENTIC_ARCHITECTURE",
     scenarioKey: "MULTI_AGENT_RESEARCH",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A coordinator is designing the output format that each research subagent must return for every claim it finds, so that a later synthesis step can merge results while preserving provenance. Which TWO fields are most important to include alongside the claim itself?",
+      "A coordinator is designing the output format that each research subagent must return for every claim it finds, so that a later synthesis step can merge results while preserving provenance. Which of the following best describes the fields most important to include alongside the claim itself?",
     options: [
-      "An identifier or location pointing to the specific source the claim came from",
-      "The date the claim or statistic was originally reported or observed",
+      "An identifier or location pointing to the specific source the claim came from, and the date the claim or statistic was originally reported or observed",
       "The full raw HTML or PDF text of every page the subagent visited",
       "A running token count of how much context the subagent consumed",
       "The subagent's complete internal reasoning trace for every intermediate step it took",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
       "A source identifier/location and a date are exactly what preserve provenance and let a synthesis step cite claims and correctly frame older versus newer findings. Raw HTML or full page text is far more than the next step needs and reintroduces the raw-dump problem instead of a structured summary. A token-count tally doesn't help establish where a claim came from or how current it is. A full internal reasoning trace is unnecessary detail for synthesis and, again, works against passing a compact structured record forward.",
     eli10:
@@ -304,19 +301,18 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "AGENTIC_ARCHITECTURE",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A platform team is choosing control-flow patterns for two different jobs: (1) generating a weekly sales digest that always follows the same five fixed steps, and (2) triaging a newly reported production incident whose cause is unknown and where each finding changes what to check next. Which TWO pairings correctly match a job to its best-fitting pattern?",
+      "A platform team is choosing control-flow patterns for two different jobs: (1) generating a weekly sales digest that always follows the same five fixed steps, and (2) triaging a newly reported production incident whose cause is unknown and where each finding changes what to check next. Which of the following correctly pairs each job to its best-fitting pattern?",
     options: [
-      "The weekly sales digest fits prompt chaining, since its steps are fixed and identical every time",
-      "The incident triage fits dynamic decomposition, since each finding determines what to investigate next",
+      "The weekly sales digest fits prompt chaining, since its steps are fixed and identical every time, and the incident triage fits dynamic decomposition, since each finding determines what to investigate next",
       "The weekly sales digest fits dynamic decomposition, since digests benefit from being re-evaluated fresh every week",
       "The incident triage fits prompt chaining, since incidents should always be checked in the same fixed order for consistency",
       "Both jobs fit routing equally well, since routing can substitute for either chaining or decomposition",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "The sales digest's fixed, always-identical sequence is the definition of a good prompt-chaining fit, and the incident triage's findings-drive-next-step nature is the definition of dynamic decomposition — these two pairings are correct. Claiming the digest needs dynamic decomposition ignores that its steps never actually change. Forcing a fixed order onto incident triage is the classic anti-pattern of applying a rigid script to a problem whose real cause a checklist would likely miss. Routing solves a classification-and-dispatch problem, not either of these two shapes, so it isn't a substitute for both.",
+      "The sales digest's fixed, always-identical sequence is the definition of a good prompt-chaining fit, and the incident triage's findings-drive-next-step nature is the definition of dynamic decomposition. Claiming the digest needs dynamic decomposition ignores that its steps never actually change. Forcing a fixed order onto incident triage is the classic anti-pattern of applying a rigid script to a problem whose real cause a checklist would likely miss. Routing solves a classification-and-dispatch problem, not either of these two shapes, so it isn't a substitute for both.",
     eli10:
       "Baking the same recipe every week is best done the same way every time, but solving a mystery means following each new clue wherever it leads — you wouldn't want to swap those two approaches around.",
     difficulty: "MEDIUM",
@@ -470,38 +466,36 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "AGENTIC_ARCHITECTURE",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A team is reviewing how their multi-agent research assistant behaves after its first pass over source material turns up a gap — for instance, a claim with no clear timeframe, or a contested figure backed by only one source. Which TWO of the following describe correct practice for handling this situation?",
+      "A team is reviewing how their multi-agent research assistant behaves after its first pass over source material turns up a gap — for instance, a claim with no clear timeframe, or a contested figure backed by only one source. Which of the following best describes correct practice for handling this situation?",
     options: [
-      "The system should be able to trigger a follow-up round of investigation specifically targeting the identified gap, rather than treating research as strictly one-pass",
-      "A gap like a missing timeframe or a single-sourced figure should be flagged as such — marked contested or insufficiently supported — rather than presented as settled fact",
+      "The system should be able to trigger a follow-up round of investigation targeting the identified gap, and should flag the gap — a missing timeframe or a single-sourced figure — as contested or insufficiently supported rather than presenting it as settled fact",
       "Once a first pass is complete, the report should be finalized immediately regardless of gaps found, since revisiting sources afterward is never worthwhile",
       "Every subagent in the system should be given every available tool, so that whichever one happens to notice the gap can also go resolve it itself",
       "Gaps like this should be resolved by having the synthesis step silently pick whichever version of a contested figure simply sounds more authoritative",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "Good practice is triggering a targeted follow-up round when gaps are found, and explicitly labeling uncertain or contested findings rather than smoothing them into settled fact. The third option describes exactly the strictly-one-pass anti-pattern the notes warn against. The fourth option repeats the tool-sprawl anti-pattern — the fix for a missed gap is a follow-up investigation step, not blanket tool access for every subagent. The fifth option silently resolves a contested claim instead of flagging the uncertainty, misrepresenting confidence to the reader.",
+      "Good practice is triggering a targeted follow-up round when gaps are found, and explicitly labeling uncertain or contested findings rather than smoothing them into settled fact. Finalizing immediately regardless of gaps is exactly the strictly-one-pass anti-pattern this guards against. Giving every subagent every tool repeats the tool-sprawl anti-pattern — the fix for a missed gap is a follow-up investigation step, not blanket tool access. And silently picking whichever figure sounds more authoritative misrepresents confidence to the reader instead of flagging the uncertainty.",
     eli10:
       "If you're writing a report and notice one fact is shaky, the right move is to go check it again or say 'this one is unsure' — not to just guess which version sounds more confident, and not to hand every helper every tool hoping someone fixes it by accident.",
     difficulty: "MEDIUM",
   },
   {
     domainKey: "AGENTIC_ARCHITECTURE",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A coordinator is designing a fan-out job: plan which partitions are needed, run subagents on those partitions, then combine their results into one output. Which TWO statements correctly describe how this kind of job should be structured for genuinely independent, I/O-heavy partitions?",
+      "A coordinator is designing a fan-out job: plan which partitions are needed, run subagents on those partitions, then combine their results into one output. Which of the following correctly describes how this kind of job should be structured for genuinely independent, I/O-heavy partitions?",
     options: [
-      "The job should be planned serially, executed in parallel, then synthesized serially: decide partitions first, run them concurrently, then combine results",
-      "If a later partition's work genuinely depends on an earlier partition's output, that step should run after the earlier one finishes, not alongside it",
+      "The job should be planned serially, executed in parallel, then synthesized serially — deciding partitions first, running them concurrently, then combining results — and if a later partition's work genuinely depends on an earlier partition's output, that step should run after the earlier one finishes, not alongside it",
       "Running every single partition concurrently regardless of dependencies always produces a correct result faster, since concurrency never affects correctness at all",
       "The synthesis step should happen before the parallel execution step even begins, so results are already ready to combine the moment partitions start",
       "Partition sizing doesn't matter at all for overall elapsed time, since only the total raw number of partitions affects when the job finishes",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "The correct shape for this kind of job is plan once, fan out concurrently across independent partitions, then synthesize afterward — and any partition with a genuine dependency on another's output must wait for it rather than run alongside it. The third option is false: running dependent steps concurrently can produce wrong or incomplete results, not just a faster correct one. The fourth option is impossible as described, since synthesis needs the partition results as input and can't precede execution. The fifth option is false — elapsed time is bounded by the slowest partition, so uneven partition sizes matter a great deal, not just the raw count.",
+      "The correct shape for this kind of job is plan once, fan out concurrently across independent partitions, then synthesize afterward — and any partition with a genuine dependency on another's output must wait for it rather than run alongside it. Running every partition concurrently regardless of dependencies is false: it can produce wrong or incomplete results, not just a faster correct one. Synthesizing before execution begins is impossible as described, since synthesis needs the partition results as input. And partition sizing is false to dismiss — elapsed time is bounded by the slowest partition, so uneven partition sizes matter a great deal, not just the raw count.",
     eli10:
       "First you decide who's doing what, then everyone works on their own separate piece at the same time, and only at the end do you put all the pieces together — you can't combine pieces before they're made, and if one piece truly needs another piece finished first, that one has to wait its turn.",
     difficulty: "HARD",

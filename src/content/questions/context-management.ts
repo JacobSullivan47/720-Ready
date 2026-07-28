@@ -78,19 +78,18 @@ export const questions: QuestionSeed[] = [
   {
     domainKey: "CONTEXT_MANAGEMENT",
     scenarioKey: "CUSTOMER_SUPPORT_AGENT",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A single support chat thread covers three separate open tickets from the same customer, each with its own ticket number, dollar amount, and current resolution status. Which two practices best keep these from getting mixed up as the conversation continues?",
+      "A single support chat thread covers three separate open tickets from the same customer, each with its own ticket number, dollar amount, and current resolution status. Which practice best keeps these from getting mixed up as the conversation continues?",
     options: [
-      "Track each ticket as its own record with fields for ticket ID, amount, and status",
+      "Track each ticket as its own record with fields for ticket ID, amount, and status, and reference each ticket by its explicit ticket ID rather than by vague terms like 'the first one'",
       "Rely on the order messages happen to appear in the transcript to infer which ticket is meant",
-      "Reference each ticket by its explicit ticket ID rather than by vague terms like 'the first one'",
       "Merge all three tickets into a single combined status the moment any one of them changes",
       "Summarize the entire thread into one paragraph and try to re-derive ticket details from that paragraph as needed",
     ],
-    correctIndexes: [0, 2],
+    correctIndexes: [0],
     explanation:
-      "Independently tracked records keyed by explicit IDs are exactly how multi-issue conversations stay reliable — each ticket's state is unambiguous no matter how the conversation flows. Relying on message order (B) is fragile once the user jumps between tickets, merging separate tickets (D) destroys the distinction that matters, and re-deriving specifics from a single prose summary (E) reintroduces the precision loss that structured tracking is meant to avoid.",
+      "Independently tracked records keyed by explicit IDs are exactly how multi-issue conversations stay reliable — each ticket's state is unambiguous no matter how the conversation flows. Relying on message order is fragile once the user jumps between tickets, merging separate tickets destroys the distinction that matters, and re-deriving specifics from a single prose summary reintroduces the precision loss that structured tracking is meant to avoid.",
     eli10:
       "If you're juggling three different homework assignments, it helps to label each one clearly and check on each one by name — not to just guess which assignment someone means from the order you started talking about them, and not to smoosh them into one big assignment.",
     difficulty: "MEDIUM",
@@ -169,19 +168,18 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "CONTEXT_MANAGEMENT",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A team is deciding between building their own application-level structured state object versus leaning on an API-native context-management feature. Which two statements accurately describe the tradeoff?",
+      "A team is deciding between building their own application-level structured state object versus leaning on an API-native context-management feature. Which of the following accurately describes the tradeoff?",
     options: [
-      "Application-level structured state gives the developer more direct control and keeps exact facts intact verbatim",
+      "Application-level structured state gives the developer more direct control and keeps exact facts intact verbatim, while API-native mechanisms reduce custom context-management plumbing at the cost of being more of a black box",
       "API-native mechanisms are always strictly more accurate at preserving exact numeric facts than any application-level approach",
-      "API-native mechanisms reduce custom context-management plumbing, at the cost of being more of a black box",
       "Application-level approaches can essentially never be combined with API-native mechanisms in the same overall system",
       "API-native mechanisms basically guarantee the application never needs to think about context limits again",
     ],
-    correctIndexes: [0, 2],
+    correctIndexes: [0],
     explanation:
-      "The real tradeoff is control and exact-fact fidelity (favoring application-level state) versus reduced implementation burden with less visibility into internals (favoring API-native features) — both A and C capture this accurately. Option B overstates API-native accuracy as an absolute guarantee, which isn't supported; option D is false since a robust design often composes both; and option E overstates what any automatic feature guarantees.",
+      "The real tradeoff is control and exact-fact fidelity (favoring application-level state) versus reduced implementation burden with less visibility into internals (favoring API-native features). The claim that API-native mechanisms are always strictly more accurate overstates it as an absolute guarantee, which isn't supported; the claim that the two approaches can essentially never be combined is false since a robust design often composes both; and the claim that API-native mechanisms guarantee the application never needs to think about context limits again overstates what any automatic feature provides.",
     eli10:
       "Building your own tracking system gives you full control and keeps numbers exact, while using a built-in automatic feature saves you work but you can't see exactly how it decides things. Both can be true at once, and you can often use both together.",
     difficulty: "HARD",
@@ -282,19 +280,18 @@ export const questions: QuestionSeed[] = [
   {
     domainKey: "CONTEXT_MANAGEMENT",
     scenarioKey: "MULTI_AGENT_RESEARCH",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A multi-agent research workflow has been running for hours, issuing dozens of web searches and accumulating retrieved passages, plus tracking a handful of exact figures (like specific statistics) it needs to cite precisely later. Which two practices best manage this session's context?",
+      "A multi-agent research workflow has been running for hours, issuing dozens of web searches and accumulating retrieved passages, plus tracking a handful of exact figures (like specific statistics) it needs to cite precisely later. Which of the following practices best manages this session's context?",
     options: [
-      "Apply a sliding window to retrieved results, keeping only the most recent batches rather than every result ever fetched",
+      "Apply a sliding window to retrieved results, keeping only the most recent batches rather than every result ever fetched, and maintain a small structured store of exact figures needing precise citation rather than a rolling narrative summary",
       "Keep every single retrieved passage from every search made during the entire session in context indefinitely, just in case",
-      "Maintain a small structured store of exact figures needing precise citation, rather than a rolling narrative summary",
       "Fold the exact statistics into that same prose summary used for general conversational continuity",
       "Stop performing any new searches once the context window is more than half full",
     ],
-    correctIndexes: [0, 2],
+    correctIndexes: [0],
     explanation:
-      "Windowing retrieval results to the most recent, relevant batches keeps search-heavy context from ballooning with superseded results, and a dedicated structured store for exact figures protects precision that a general summary would blur. Keeping every retrieval forever (B) is exactly the accumulation problem windowing is meant to prevent; folding exact numbers into a prose summary (D) risks losing precision; and arbitrarily halting new searches at a fixed fill threshold (E) isn't a real context-management technique described here.",
+      "Windowing retrieval results to the most recent, relevant batches keeps search-heavy context from ballooning with superseded results, and a dedicated structured store for exact figures protects precision that a general summary would blur. Keeping every retrieval forever is exactly the accumulation problem windowing is meant to prevent; folding exact numbers into a prose summary risks losing precision; and arbitrarily halting new searches at a fixed fill threshold isn't a real context-management technique.",
     eli10:
       "For a long research project, it helps to only keep your most recent batches of notes handy instead of every scrap ever collected, and to keep the exact numbers you'll need to quote later in their own clearly labeled list instead of burying them in a general summary.",
     difficulty: "HARD",
@@ -319,19 +316,18 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "CONTEXT_MANAGEMENT",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A team designing a long-lived assistant wants a context-management architecture that composes multiple strategies well. Which two design choices reflect the recommended way to combine application-level and API-native approaches?",
+      "A team designing a long-lived assistant wants a context-management architecture that composes multiple strategies well. Which design choice reflects the recommended way to combine application-level and API-native approaches?",
     options: [
-      "Maintain an application-level structured object for facts that must remain exact, such as confirmed order details",
+      "Maintain an application-level structured object for facts that must remain exact, such as confirmed order details, and use an API-native mechanism like compaction to absorb general context-window pressure from ordinary conversational back-and-forth",
       "Rely solely on an API-native compaction feature for every kind of information, including exact numeric facts, to minimize engineering effort",
-      "Use an API-native mechanism like compaction to absorb general context-window pressure from ordinary conversational back-and-forth",
       "Avoid API-native features entirely, since only application-level code can ever really be trusted",
       "Let the structured object be silently overwritten by whatever compaction produces, so there is only one source of truth",
     ],
-    correctIndexes: [0, 2],
+    correctIndexes: [0],
     explanation:
-      "The well-supported pattern is to keep exact-fact-bearing state in an application-maintained structured object while letting an API-native mechanism like compaction handle general conversational overflow — that's exactly A and C. Relying on compaction alone for exact facts (B) risks the precision loss summarization is prone to; refusing API-native features altogether (D) discards a useful tool for reducing plumbing; and letting compaction overwrite the structured object (E) undermines the entire point of keeping exact facts protected in their own store.",
+      "The well-supported pattern is to keep exact-fact-bearing state in an application-maintained structured object while letting an API-native mechanism like compaction handle general conversational overflow. Relying on compaction alone for exact facts risks the precision loss summarization is prone to; refusing API-native features altogether discards a useful tool for reducing plumbing; and letting compaction overwrite the structured object undermines the entire point of keeping exact facts protected in their own store.",
     eli10:
       "It works best to keep the must-be-exact stuff in your own clearly labeled notes, and let the app's automatic 'shorten the old chat' feature handle the everyday chit-chat — not the other way around, and not by throwing away one approach entirely.",
     difficulty: "HARD",
@@ -412,19 +408,18 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "CONTEXT_MANAGEMENT",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "Which two of the following correctly match a kind of information to the context-management strategy best suited for it?",
+      "Which of the following correctly matches a kind of information to the context-management strategy best suited for it?",
     options: [
-      "Recent conversational flow that follow-ups rarely look further back than a few exchanges -> a sliding window",
-      "Exact recurring numeric facts that must stay precise -> folding them into a progressive narrative summary",
-      "Current, occasionally-changing user preferences -> an explicit structured state object updated on change",
-      "A persistent reference bible of world facts or safety-critical information -> a sliding window over the last few messages",
-      "Long-term narrative continuity across a very long session -> deleting all older turns with no replacement",
+      "Recent conversational flow that follow-ups rarely look further back than a few exchanges suits a sliding window, and current, occasionally-changing user preferences suit an explicit structured state object updated on change",
+      "Exact recurring numeric facts that must stay precise suit folding them into a progressive narrative summary",
+      "A persistent reference bible of world facts or safety-critical information suits a sliding window over the last few messages",
+      "Long-term narrative continuity across a very long session suits deleting all older turns with no replacement",
     ],
-    correctIndexes: [0, 2],
+    correctIndexes: [0],
     explanation:
-      "A sliding window is well suited to conversational flow that only depends on recent exchanges, and an explicit structured state object is the right fit for current preferences that can change over time — those are options A and C. Exact numeric facts are precisely what gets blurred by narrative summarization (B), a persistent reference bible needs its own retained section rather than being subject to recency-based dropping (D), and long-term continuity calls for progressive summarization, not outright deletion with nothing kept (E).",
+      "A sliding window is well suited to conversational flow that only depends on recent exchanges, and an explicit structured state object is the right fit for current preferences that can change over time. Exact numeric facts are precisely what gets blurred by narrative summarization, a persistent reference bible needs its own retained section rather than being subject to recency-based dropping, and long-term continuity calls for progressive summarization, not outright deletion with nothing kept.",
     eli10:
       "Matching the right tool to the right job matters: quick recent chit-chat fits a 'just remember the last few things' approach, and preferences that can change fit a labeled card that gets updated — but exact numbers shouldn't be squeezed into a vague summary, and a book of core facts shouldn't just get forgotten as messages scroll by.",
     difficulty: "HARD",
@@ -504,19 +499,18 @@ export const questions: QuestionSeed[] = [
   },
   {
     domainKey: "CONTEXT_MANAGEMENT",
-    type: "MULTI",
+    type: "SINGLE",
     prompt:
-      "A due-diligence assistant reviewing many long documents over one extended session needs three things at once: a general sense of what's been covered so far, the ability to pull exact wording from any document when asked, and reliable recall of a handful of recurring numeric figures. Which two design choices best satisfy all of this together?",
+      "A due-diligence assistant reviewing many long documents over one extended session needs three things at once: a general sense of what's been covered so far, the ability to pull exact wording from any document when asked, and reliable recall of a handful of recurring numeric figures. Which design choice best satisfies all of this together?",
     options: [
-      "Maintain a running narrative summary for general continuity, and retrieve directly from source documents for exact quotes",
-      "Maintain a small structured fact table for the recurring numeric figures, rather than trusting the narrative summary",
+      "Maintain a running narrative summary for general continuity, retrieve directly from source documents for exact quotes, and maintain a small structured fact table for the recurring numeric figures rather than trusting the narrative summary",
       "Fold the recurring numeric figures into the same narrative summary so there is only one artifact to maintain",
       "Rely on the narrative summary alone for exact quotes as well as general continuity, since it is the single most complete record",
       "Apply a sliding window to the document set, discarding any document older than the last three ever reviewed",
     ],
-    correctIndexes: [0, 1],
+    correctIndexes: [0],
     explanation:
-      "The recommended composition is a narrative summary for interpretive continuity, direct source retrieval for exact claims, and a dedicated structured fact table for recurring numbers — options A and B capture exactly that division of labor. Folding the figures into the summary (C) or relying on the summary for exact quotes too (D) reintroduces the precision loss summarization is prone to, and windowing out older documents (E) would remove documents the user might still need to reference.",
+      "The recommended composition is a narrative summary for interpretive continuity, direct source retrieval for exact claims, and a dedicated structured fact table for recurring numbers. Folding the figures into the summary, or relying on the summary for exact quotes too, reintroduces the precision loss summarization is prone to, and windowing out older documents would remove documents the user might still need to reference.",
     eli10:
       "For a big review job, it helps to keep one big-picture recap for the general story, go back to the original pages whenever you need an exact quote, and keep a separate small list just for the important numbers — squishing everything into one fuzzy recap, or throwing away older documents, loses exactly the stuff you still need.",
     difficulty: "HARD",

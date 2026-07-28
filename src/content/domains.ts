@@ -70,19 +70,21 @@ export const domains: DomainContent[] = [
     weightPct: 20,
     sortOrder: 3,
     summary:
-      "Configuring Claude Code for a team and codebase: the CLAUDE.md/rules hierarchy, hooks vs. memory, session and plan-mode workflows, and choosing the right built-in tool for a task.",
+      "Configuring Claude Code for a team and codebase: the CLAUDE.md/rules hierarchy, hooks vs. memory, session and plan-mode workflows, choosing the right built-in tool for a task, and building custom agents with the Claude Agent SDK.",
     keyKnowledge: [
       "CLAUDE.md and .claude/rules/ files are context, not enforcement — Claude reads and tries to follow them, but nothing guarantees compliance. Anything that MUST hold every time (a forbidden command, a required approval) belongs in a hook or a permissions.deny rule, not in prose.",
       "CLAUDE.md can be nested at multiple directory levels; more deeply nested files add detail for that subtree without overriding the parent's conventions wholesale.",
       "Rule files under .claude/rules/ are scoped by glob pattern, so a rule about test conventions can apply only under tests/ while a rule about API style applies repo-wide.",
       "Plan mode (--permission-mode plan, or Shift+Tab to toggle) is a workflow control that explores read-only and proposes before acting — a separate mechanism from extended thinking, which is about reasoning depth; the two can be combined but are not the same lever.",
       "Session flags serve different purposes: --continue resumes the most recent conversation in the current directory, --resume/-r picks a specific saved session, --session-id pins a stable identifier for programmatic use, and --fork-session branches a new transcript so the original stays untouched.",
+      "The Claude Agent SDK exposes the same underlying harness that powers Claude Code — built-in tools, permissions, hooks, subagents, context management — as a library for building a custom agent product or automation, distinct from using the Claude Code CLI interactively.",
     ],
     keySkills: [
       "Choose the right built-in tool for a task: Grep for text inside files, Glob for filenames/paths, Read for a known file, Edit for a small targeted change, Bash for running tests or shell commands.",
       "Decide between direct execution and plan mode based on blast radius: small, localized, low-risk changes go direct; multi-file, architectural, or approval-requiring changes go through plan mode first.",
       "Use --fork-session to try an alternative approach without disturbing the original investigation, especially alongside a separate git worktree for isolated file changes.",
       "Place a hard rule (e.g. 'never run migrations without approval') in a hook or permission rule instead of relying on CLAUDE.md prose to enforce it.",
+      "Recognize when a task calls for the interactive Claude Code CLI versus building a custom agent with the Agent SDK — an unattended automation embedded in a team's own product or pipeline needs the SDK, not the terminal tool.",
     ],
     antiPatterns: [
       "Writing 'CRITICAL: you must always do X' in CLAUDE.md and treating that as equivalent to actually blocking the action.",
@@ -90,6 +92,7 @@ export const domains: DomainContent[] = [
       "Putting a narrow, one-off workflow checklist into global user memory instead of a project-scoped rule file.",
       "Confusing plan mode with extended thinking, and assuming turning one on gives you the other.",
       "Using Glob to search for text inside files (it only matches filenames/paths) instead of Grep.",
+      "Hand-building an agentic tool-call loop directly against the raw Messages API instead of using the Agent SDK, which already provides that loop plus permissions and context management.",
     ],
     examStyleNote:
       "Expect questions that show a CLAUDE.md/rules snippet or a session-flag choice and ask what will actually happen, since this domain rewards precise recall of scoping and precedence rules over general impressions.",
@@ -100,19 +103,21 @@ export const domains: DomainContent[] = [
     weightPct: 20,
     sortOrder: 4,
     summary:
-      "Getting reliable, correctly-shaped output from Claude: system prompt structure, when to use principles vs. explicit conditionals, forcing tool use or schema-validated JSON, and why the system prompt needs reinforcement over long conversations.",
+      "Getting reliable, correctly-shaped output from Claude: system prompt structure, when to use principles vs. explicit conditionals, forcing tool use or schema-validated JSON, why the system prompt needs reinforcement over long conversations, and evaluating whether a prompt change actually helped.",
     keyKnowledge: [
       "The system prompt is resent in full on every API call alongside the message history — there is no server-side memory between calls, so omitting it on a later turn causes an immediate behavior change, and its influence can still drift as a long conversation accumulates competing recent context.",
       "tool_choice has four settings: auto (model decides), any (must use some tool), a named tool (must use that specific one), and none (no tool use) — 'auto' and 'any' are frequently confused.",
       "Structured, schema-validated output is more reliable than asking for JSON in prose and hoping; validation failures should be fed back to the model as a specific correction request, not answered with a blind retry.",
       "Few-shot examples embedded in the prompt often outperform long prose instructions for teaching a subtle distinction (e.g. how to handle missing data without fabricating it).",
       "Principles work well for judgment-heavy behavior ('adapt explanation depth to the user's demonstrated expertise'); explicit conditionals are for rules that must hold without exception ('if this is a medical emergency, direct to emergency services'). Turning every nuance into a conditional bloats the prompt and can reduce adherence.",
+      "A prompt or model change should be judged against an evaluation set of representative cases, not a subjective read of the new wording; subjective or open-ended output can be graded with an LLM-as-judge rubric, spot-checked periodically by a human to catch a miscalibrated grader.",
     ],
     keySkills: [
       "Choose tool_choice correctly for the goal: force a specific tool when the next action is known, use 'any' when some tool call is required but which one is open, leave 'auto' for genuinely optional tool use.",
       "Replace a deprecated assistant-message prefill approach with schema-constrained structured output or an explicit 'respond with no preamble' instruction.",
       "Recognize prompt dilution in a long-running conversation and apply a fix: reinforce key constraints at a natural breakpoint, version the system prompt across long sessions, or move a hard requirement into code instead of prose.",
       "Decide when to ask one focused clarifying question versus proceeding on a reasonable assumption, based on cost of a wrong guess and reversibility of the action.",
+      "Fix an eval failure at its actual cause and re-run the full eval set afterward, rather than patching a single failing example and assuming the fix generalizes.",
     ],
     antiPatterns: [
       "Relying on words like 'IMPORTANT' or 'NEVER' in a system prompt as if capitalization were an enforcement mechanism rather than a salience cue.",
@@ -120,6 +125,7 @@ export const domains: DomainContent[] = [
       "Asking a list of three or four clarifying questions when one targeted question would resolve the ambiguity.",
       "Treating 'auto' and 'any' as interchangeable tool_choice settings.",
       "Stuffing every edge case into an ever-growing list of conditionals instead of stating the underlying principle once.",
+      "Shipping a prompt change because it fixed one failing eval case, without re-running the full eval set to check for regressions elsewhere.",
     ],
     examStyleNote:
       "Look for questions that give you a system prompt or a tool_choice configuration and ask you to predict behavior, or that describe drifting behavior over a long session and ask for the correct fix.",

@@ -243,6 +243,69 @@ export const ANTI_PATTERN_SCENARIOS: AntiPatternScenario[] = [
     ],
     correctFixIndex: 1,
   },
+  {
+    id: "lossy-summary",
+    domainKey: "CONTEXT_MANAGEMENT",
+    title: "Summarizing away an exact fact",
+    setup:
+      "A long trip-planning conversation gets compressed into: 'The user discussed some seat and meal preferences.' Later, the assistant can't recall whether the user wanted an aisle or window seat.",
+    flawOptions: [
+      "The conversation should never have been summarized at all, no matter how long it got.",
+      "The summary is too vague — it collapsed an exact, retrievable fact (the specific seat preference) into vague prose instead of keeping it as a structured, precise value.",
+      "The assistant simply has a bad memory and needs a larger context window.",
+      "Summarization should only ever be applied to the most recent two messages.",
+    ],
+    correctFlawIndex: 1,
+    fixOptions: [
+      "Give up on summarization and keep the entire raw transcript forever instead.",
+      "Replace the vague prose summary with a structured field for exact, recurring facts (e.g. seatPreference: \"aisle\"), and reserve prose summarization for general narrative continuity only.",
+      "Shorten the summary even further to save more tokens.",
+      "Switch to a sliding window over the last three messages instead of summarizing at all.",
+    ],
+    correctFixIndex: 1,
+  },
+  {
+    id: "prefill-deprecated",
+    domainKey: "PROMPT_ENGINEERING",
+    title: "Forcing JSON with assistant prefill",
+    setup:
+      "A team gets inconsistent JSON replies from a classification task, so they prefill the assistant's response with an opening '{' to force JSON-shaped output — a technique that worked on older models but now sometimes returns a validation error on current-generation models.",
+    flawOptions: [
+      "The prefill approach is deprecated on current models for this use case; a schema-constrained structured output (or an enum-typed field) is the modern replacement.",
+      "The classification task itself is impossible to make reliable in any way.",
+      "The team should have prefilled with a closing '}' instead of an opening '{'.",
+      "JSON output can only ever be produced by writing very long prose instructions.",
+    ],
+    correctFlawIndex: 0,
+    fixOptions: [
+      "Keep using prefill, just make the prefilled string shorter.",
+      "Define the response schema with the category field constrained to an enum of the valid values, so the output structurally can't be anything else.",
+      "Ask the model to 'try really hard' to always return valid JSON in the system prompt.",
+      "Post-process every response with a regex that strips anything that isn't JSON-shaped.",
+    ],
+    correctFixIndex: 1,
+  },
+  {
+    id: "claudemd-as-lock",
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    title: "\"CRITICAL: never do X\" in CLAUDE.md",
+    setup:
+      "A team lead writes 'CRITICAL: never run a database migration without explicit approval' in the project's CLAUDE.md, in bold capital letters, and considers the rule fully handled.",
+    flawOptions: [
+      "CLAUDE.md content, however emphatically worded, is read as context the model tries to follow — it does not enforce anything; a rule that must hold without exception needs a hook or a permission-deny rule instead.",
+      "The rule should have been written in lowercase instead, since capital letters actively confuse the model.",
+      "CLAUDE.md files are not allowed to mention database operations at all.",
+      "The rule would only work if it were moved into assistant-maintained memory instead.",
+    ],
+    correctFlawIndex: 0,
+    fixOptions: [
+      "Reword the rule to be even more emphatic, with more capital letters and exclamation points.",
+      "Add a hook that blocks any migration command unless a separate approval step has run, so the rule is actually enforced in code rather than left to prose.",
+      "Remove the rule from CLAUDE.md and don't replace it with anything.",
+      "Move the same wording into assistant memory instead of CLAUDE.md.",
+    ],
+    correctFixIndex: 1,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -297,6 +360,45 @@ export const SEQUENCING_EXERCISES: SequencingExercise[] = [
       "The agent hands the structured summary to a human agent or approval queue, not just the first customer message.",
       "A human reviews the structured handoff and takes the higher-authority action.",
       "The resolution (or its outcome) is recorded back against the original case.",
+    ],
+  },
+  {
+    id: "stale-session-resume",
+    domainKey: "CONTEXT_MANAGEMENT",
+    title: "Handling a returning, possibly-stale conversation",
+    intro: "Order the steps of correctly resuming a paused conversation that may now be out of date.",
+    steps: [
+      "A user returns to a paused conversation after some time has passed.",
+      "The application checks how much time has passed and how likely the old state is to be stale.",
+      "If most of the old context is still valid, the assistant notes what's changed and continues; if it's likely stale, the assistant starts fresh with a concise summary of the goal instead.",
+      "Any state likely to have changed (such as an order status) is re-fetched rather than assumed from the old transcript.",
+      "The assistant responds using the refreshed, authoritative state.",
+    ],
+  },
+  {
+    id: "structured-output-correction",
+    domainKey: "PROMPT_ENGINEERING",
+    title: "Correcting a schema-valid but semantically wrong extraction",
+    intro: "Order the steps of correctly handling a validation failure in a structured-output pipeline.",
+    steps: [
+      "A tool call is forced via tool_choice, and the model returns a response that passes schema validation.",
+      "Application-level validation checks the response and flags a specific field as semantically wrong, such as an impossible date.",
+      "The application sends a new request containing the original source text, the invalid output, and the specific validation error.",
+      "The correction request forces a tool call again, so the result stays structured and re-checkable.",
+      "The corrected response is validated again before being accepted.",
+    ],
+  },
+  {
+    id: "plan-mode-workflow",
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    title: "Using plan mode for a risky, multi-file change",
+    intro: "Order the steps of a properly used plan-mode workflow for a risky change.",
+    steps: [
+      "The developer recognizes the change spans multiple files and carries real risk if done wrong.",
+      "Plan mode is enabled, and the assistant explores the relevant code read-only, without changing anything yet.",
+      "The assistant proposes a specific plan describing the intended changes.",
+      "The developer reviews and approves, or requests revisions to, the plan.",
+      "Only after approval does the assistant begin making the actual file changes.",
     ],
   },
 ];

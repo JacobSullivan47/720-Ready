@@ -235,4 +235,58 @@ export const flashcards: FlashcardSeed[] = [
       "Asking the same session that wrote a caching layer whether the caching layer has bugs tends to get a lighter review than asking a brand-new session to look at just the diff.",
     difficulty: "MEDIUM",
   },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    term: "Claude Agent SDK",
+    definition:
+      "A developer library (available for TypeScript and Python) that exposes the same underlying agent harness that powers Claude Code — built-in tools, permissions, hooks, subagents, and context management — so a team can build a custom agent product or automation, rather than only using Claude Code interactively in a terminal.",
+    example:
+      "A team building an internal on-call triage bot uses the Agent SDK, since the bot needs to run unattended as part of their own service rather than as an interactive terminal session.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    term: "Agent SDK vs. raw Messages API",
+    definition:
+      "Calling the Messages API directly returns one completion per request and leaves the entire agentic loop — deciding when to call a tool, executing it, feeding the result back, deciding when to stop — for the developer to build themselves. The Agent SDK provides that loop, plus built-in tools and context management, instead of requiring it from scratch.",
+    example:
+      "A team that started wiring up their own tool-call loop directly against the Messages API found they were reimplementing permission checks and context compaction the Agent SDK already provides.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    term: "Agent SDK permission modes",
+    definition:
+      "A configurable control, mirroring Claude Code's own permission system, over how much autonomy an SDK-built agent has before an action requires human approval — from requiring confirmation on risky actions to running with broader autonomy for a trusted, narrowly scoped automation.",
+    example:
+      "An SDK-built agent that only reads logs and drafts a report can run with far more autonomy than a separate SDK-built agent permitted to modify production infrastructure.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    term: "Agent SDK hooks",
+    definition:
+      "Programmatic callbacks at points in an SDK-built agent's loop (such as before or after a tool call) that let a developer enforce a hard rule or add custom logic in code — the same enforcement mechanism Claude Code itself relies on, now available to a custom agent a team builds.",
+    example:
+      "A hook that blocks any tool call touching a production database is added to an SDK-built deployment agent, enforcing the rule in code rather than leaving it to a system-prompt instruction.",
+    difficulty: "MEDIUM",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    term: "Agent SDK subagents",
+    definition:
+      "The same delegation pattern used in Claude Code — spawning a subagent with its own fresh context and its own scoped set of tools to handle a subtask — available to a custom agent built with the Agent SDK, not just to interactive Claude Code sessions.",
+    example:
+      "An SDK-built research agent delegates a 'fetch and summarize five sources' subtask to a subagent with only search and fetch tools, keeping the coordinator's own context focused on synthesis.",
+    difficulty: "HARD",
+  },
+  {
+    domainKey: "CLAUDE_CODE_WORKFLOWS",
+    term: "Agent SDK context management",
+    definition:
+      "Automatic handling of a long-running SDK-built agent's context — such as compaction as the conversation approaches its limit — provided by the SDK itself rather than something the developer has to implement from scratch, the same way Claude Code manages context in an interactive session.",
+    example:
+      "A long-running SDK-built agent monitoring a multi-hour deployment doesn't need custom summarization logic, since the SDK's own context management already condenses older history as the session grows.",
+    difficulty: "HARD",
+  },
 ];
