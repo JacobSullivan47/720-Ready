@@ -506,18 +506,30 @@ export default function ExamPage() {
 
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        {viewingPastResult && (
-          <button
-            onClick={() => {
-              setViewingPastResult(false);
-              setResult(null);
-              setPhase("start");
-            }}
-            className="text-sm text-brand hover:underline"
-          >
-            ← Back to history
-          </button>
-        )}
+        <button
+          onClick={() => {
+            if (!viewingPastResult) {
+              // Fold the just-finished exam into the in-memory history list
+              // so it shows up immediately on the way back, without a refetch.
+              const summary: MockExamSummary = {
+                id: result.id,
+                scenarioKeys: result.scenarioKeys,
+                startedAt: result.startedAt,
+                completedAt: result.completedAt,
+                scaledScore: result.scaledScore,
+                passed: result.passed,
+                domainBreakdown: result.domainBreakdown,
+              };
+              setHistory((h) => [summary, ...h.filter((entry) => entry.id !== summary.id)]);
+            }
+            setViewingPastResult(false);
+            setResult(null);
+            setPhase("start");
+          }}
+          className="text-sm text-brand hover:underline"
+        >
+          {viewingPastResult ? "← Back to history" : "← Back to exam list"}
+        </button>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">
           {viewingPastResult ? "Exam results" : "Your results"}
         </h1>
