@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   tutorUnlimited: z.boolean(),
@@ -10,10 +11,19 @@ const bodySchema = z.object({
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
+  const email = session?.user?.email;
   // 404 rather than 401/403 — same rationale as /admin itself: a non-admin
   // shouldn't learn this route exists.
-  if (!isAdminEmail(session?.user?.email)) {
+  if (!isAdminEmail(email)) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
+  const { allowed } = await checkRateLimit(`admin-user-patch:${email}`, {
+    max: 30,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
   }
 
   const { id } = await params;
