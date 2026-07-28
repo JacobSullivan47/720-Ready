@@ -30,11 +30,10 @@ export const questions: QuestionSeed[] = [
       "This is a sliding window failure — a fixed recent-message window dropped a detail the user needed later",
       "The bot should have used a noticeably larger token limit allotted per individual message instead of trimming history",
       "This kind of gap only happens when the user changes topics unusually quickly during the conversation",
-      "This is simply an unavoidable side effect that comes with using any context management approach at all",
     ],
     correctIndexes: [1],
     explanation:
-      "Keeping only the last N messages is precisely the tradeoff a sliding window makes: cheap and simple, but it silently loses anything older that a later message ends up referencing. The 10-message cap is an application design choice, not an inherent model limit (ruling out A), enlarging per-message tokens wouldn't fix a windowing gap (ruling out C), and other strategies like structured summarization are specifically designed to avoid this failure (ruling out D and E).",
+      "Keeping only the last N messages is precisely the tradeoff a sliding window makes: cheap and simple, but it silently loses anything older that a later message ends up referencing. The 10-message cap is an application design choice, not an inherent model limit (ruling out A), enlarging per-message tokens wouldn't fix a windowing gap (ruling out C), and this failure isn't tied to how fast the user changes topics — it's about how far back the reference reaches (ruling out D).",
     eli10:
       "Imagine only keeping the last 10 sticky notes from a conversation and throwing older ones away. If the user talks about something written on note 14, which got thrown out, the assistant just can't see it anymore.",
     difficulty: "MEDIUM",

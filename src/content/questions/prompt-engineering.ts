@@ -71,11 +71,10 @@ export const questions: QuestionSeed[] = [
       "Replace the prose instruction with a JSON Schema the response must conform to",
       "Ask the model to apologize and automatically retry the request whenever any commentary appears before the JSON",
       "Lower the temperature setting, since formatting problems like this are always caused by excess randomness",
-      "Switch every field name to a single-letter abbreviation so there's less for the model to get wrong",
     ],
     correctIndexes: [1],
     explanation:
-      "Schema-validated output is specifically the more reliable mechanism for production pipelines compared to prose formatting requests — it enforces structure rather than hoping the model complies with a written description. Adding emphasis words doesn't guarantee compliance, asking for an apology-and-retry doesn't address the root formatting issue, temperature isn't described as the cause here, and shrinking field names doesn't address the underlying reliability gap at all.",
+      "Schema-validated output is specifically the more reliable mechanism for production pipelines compared to prose formatting requests — it enforces structure rather than hoping the model complies with a written description. Adding emphasis words doesn't guarantee compliance, asking for an apology-and-retry doesn't address the root formatting issue, and temperature isn't described as the cause here.",
     eli10:
       "Asking in words for a form to be filled out a certain way is less reliable than handing over an actual form with boxes that must be filled in correctly. The 'actual form' approach is the schema — it doesn't just ask nicely, it checks the shape.",
     difficulty: "MEDIUM",
@@ -349,11 +348,10 @@ export const questions: QuestionSeed[] = [
       "Update the labeled state section in the next request so it reflects 'Shipped' — state changes must be explicitly represented each call, not assumed to carry over.",
       "Insert a new message with role 'system' into the messages array announcing the change, since the top-level system parameter can't be modified between turns.",
       "Wait until the customer explicitly asks about shipping before mentioning the update, since proactively changing the prompt could confuse the model.",
-      "Re-send the exact same unmodified system prompt as before, since state updates are only ever reflected once the entire conversation session restarts from scratch.",
     ],
     correctIndexes: [1],
     explanation:
-      "Because the API is stateless, a changed real-world fact like order status has to be represented in what's actually sent — updating a labeled state section (or block) is the natural way to do that for the next call. The model has no channel to 'infer' an update it was never given (option A), there's no 'system' role inside the messages array — the top-level system parameter can simply be changed between calls (option C), delaying the update serves no purpose and risks the assistant giving stale information (option D), and nothing requires restarting the conversation to reflect new state (option E).",
+      "Because the API is stateless, a changed real-world fact like order status has to be represented in what's actually sent — updating a labeled state section (or block) is the natural way to do that for the next call. The model has no channel to 'infer' an update it was never given (option A), there's no 'system' role inside the messages array — the top-level system parameter can simply be changed between calls (option C), and delaying the update serves no purpose and risks the assistant giving stale information (option D).",
     eli10:
       "If a substitute teacher was told 'the test is Friday' and then the test gets moved to Monday, someone has to actually tell them the new date before their next class — they won't magically know, and you don't need to start the whole day over, you just update what you tell them.",
     difficulty: "MEDIUM",
@@ -442,11 +440,10 @@ export const questions: QuestionSeed[] = [
       "No — for a costly, hard-to-reverse action like a production deploy, asking several questions up front is safer, even though one focused question is usually preferred.",
       "No — the agent should just deploy to production using its best guess on all three unclear points, since stopping to ask questions slows down a CI/CD pipeline.",
       "Yes, and the one question worth asking should be about the rollback plan only, since the branch and target environment can both be safely assumed.",
-      "No — the agent should silently deploy to staging only instead, since staging deploys never require any clarification regardless of the request's wording.",
     ],
     correctIndexes: [1],
     explanation:
-      "Irreversible, costly, or regulated actions are the specific exception where asking several clarifying questions up front, rather than one at a time, is the safer default — a production deploy with an unclear branch, environment, and rollback plan fits that profile exactly. Rigidly capping every situation at one question ignores that exception (option A), guessing on all three unclear points before an effectively irreversible action is exactly the risk the guidance warns against (option C), picking only one of three equally unclear points to ask about leaves the other two just as risky (option D), and silently redirecting to staging substitutes an unrequested assumption for actually resolving the ambiguity (option E).",
+      "Irreversible, costly, or regulated actions are the specific exception where asking several clarifying questions up front, rather than one at a time, is the safer default — a production deploy with an unclear branch, environment, and rollback plan fits that profile exactly. Rigidly capping every situation at one question ignores that exception (option A), guessing on all three unclear points before an effectively irreversible action is exactly the risk the guidance warns against (option C), and picking only one of three equally unclear points to ask about leaves the other two just as risky (option D).",
     eli10:
       "Normally it's best to ask one clear question at a time so you don't overwhelm someone. But if you're about to do something big and hard to undo — like actually launching a rocket instead of a toy one — it's worth double-checking a few key things first, even if that means more than one question this time.",
     difficulty: "HARD",
