@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { ANTI_PATTERN_SCENARIOS } from "@/content/exercises";
 import { domains } from "@/content/domains";
 import { useProgress } from "@/hooks/use-progress";
+import { shuffle } from "@/lib/scoring";
 
 type Stage = "flaw" | "fix" | "done";
 
@@ -19,6 +20,21 @@ export default function AntiPatternSpotterPage() {
 
   const scenario = ANTI_PATTERN_SCENARIOS[index];
   const isLast = index === ANTI_PATTERN_SCENARIOS.length - 1;
+
+  // Stored option order otherwise always puts the correct answer in the same
+  // spot — shuffle the display order per scenario, computed once (not per
+  // render) so answering doesn't visibly reshuffle it. Grading always uses
+  // the original indices below, unaffected by this.
+  const flawOrder = useMemo(
+    () => shuffle(scenario.flawOptions.map((_, i) => i)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scenario.id],
+  );
+  const fixOrder = useMemo(
+    () => shuffle(scenario.fixOptions.map((_, i) => i)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scenario.id],
+  );
 
   function chooseFlaw(i: number) {
     if (flawChoice != null) return;
@@ -97,7 +113,8 @@ export default function AntiPatternSpotterPage() {
 
       <h2 className="mt-6 font-semibold">What&apos;s wrong here?</h2>
       <div className="mt-3 space-y-2">
-        {scenario.flawOptions.map((option, i) => {
+        {flawOrder.map((i) => {
+          const option = scenario.flawOptions[i];
           const isSelected = flawChoice === i;
           const isCorrect = flawChoice != null && i === scenario.correctFlawIndex;
           const isWrongSelected = isSelected && i !== scenario.correctFlawIndex;
@@ -122,10 +139,17 @@ export default function AntiPatternSpotterPage() {
       </div>
 
       {flawChoice != null && (
+        <div className="mt-3 rounded-md bg-surface-muted p-3 text-sm text-foreground-muted">
+          {scenario.flawRationale}
+        </div>
+      )}
+
+      {flawChoice != null && (
         <>
           <h2 className="mt-6 font-semibold">What&apos;s the correct fix?</h2>
           <div className="mt-3 space-y-2">
-            {scenario.fixOptions.map((option, i) => {
+            {fixOrder.map((i) => {
+              const option = scenario.fixOptions[i];
               const isSelected = fixChoice === i;
               const isCorrect = fixChoice != null && i === scenario.correctFixIndex;
               const isWrongSelected = isSelected && i !== scenario.correctFixIndex;
@@ -149,6 +173,12 @@ export default function AntiPatternSpotterPage() {
             })}
           </div>
         </>
+      )}
+
+      {fixChoice != null && (
+        <div className="mt-3 rounded-md bg-surface-muted p-3 text-sm text-foreground-muted">
+          {scenario.fixRationale}
+        </div>
       )}
 
       {fixChoice != null && (
