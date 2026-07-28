@@ -81,7 +81,7 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A single support chat thread covers three separate open tickets from the same customer, each with its own ticket number, dollar amount, and current resolution status. Which practice best keeps these from getting mixed up as the conversation continues?",
     options: [
-      "Track each ticket as its own record with fields for ticket ID, amount, and status, and reference each ticket by its explicit ticket ID rather than by vague terms like 'the first one'",
+      "Track each ticket as its own record with fields for ticket ID, amount, and status",
       "Rely on the order messages happen to appear in the transcript to infer which ticket is meant",
       "Merge all three tickets into a single combined status the moment any one of them changes",
       "Summarize the entire thread into one paragraph and try to re-derive ticket details from that paragraph as needed",
@@ -171,7 +171,7 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is deciding between building their own application-level structured state object versus leaning on an API-native context-management feature. Which of the following accurately describes the tradeoff?",
     options: [
-      "Application-level structured state gives the developer more direct control and keeps exact facts intact verbatim, while API-native mechanisms reduce custom context-management plumbing at the cost of being more of a black box",
+      "Application-level structured state gives the developer more direct control and keeps exact facts intact verbatim",
       "API-native mechanisms are always strictly more accurate at preserving exact numeric facts than any application-level approach",
       "Application-level approaches can essentially never be combined with API-native mechanisms in the same overall system",
       "API-native mechanisms basically guarantee the application never needs to think about context limits again",
@@ -283,14 +283,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A multi-agent research workflow has been running for hours, issuing dozens of web searches and accumulating retrieved passages, plus tracking a handful of exact figures (like specific statistics) it needs to cite precisely later. Which of the following practices best manages this session's context?",
     options: [
-      "Apply a sliding window to retrieved results, keeping only the most recent batches rather than every result ever fetched, and maintain a small structured store of exact figures needing precise citation rather than a rolling narrative summary",
+      "Apply a sliding window to retrieved results, keeping only the most recent batches rather than every result ever fetched",
       "Keep every single retrieved passage from every search made during the entire session in context indefinitely, just in case",
       "Fold the exact statistics into that same prose summary used for general conversational continuity",
       "Stop performing any new searches once the context window is more than half full",
     ],
     correctIndexes: [0],
     explanation:
-      "Windowing retrieval results to the most recent, relevant batches keeps search-heavy context from ballooning with superseded results, and a dedicated structured store for exact figures protects precision that a general summary would blur. Keeping every retrieval forever is exactly the accumulation problem windowing is meant to prevent; folding exact numbers into a prose summary risks losing precision; and arbitrarily halting new searches at a fixed fill threshold isn't a real context-management technique.",
+      "Windowing retrieval results to the most recent, relevant batches keeps search-heavy context from ballooning with superseded results (a dedicated structured store for the exact figures, kept separate from that windowed summary, protects the precision a general summary would blur). Keeping every retrieval forever is exactly the accumulation problem windowing is meant to prevent; folding exact numbers into a prose summary risks losing precision; and arbitrarily halting new searches at a fixed fill threshold isn't a real context-management technique.",
     eli10:
       "For a long research project, it helps to only keep your most recent batches of notes handy instead of every scrap ever collected, and to keep the exact numbers you'll need to quote later in their own clearly labeled list instead of burying them in a general summary.",
     difficulty: "HARD",
@@ -319,14 +319,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team designing a long-lived assistant wants a context-management architecture that composes multiple strategies well. Which design choice reflects the recommended way to combine application-level and API-native approaches?",
     options: [
-      "Maintain an application-level structured object for facts that must remain exact, such as confirmed order details, and use an API-native mechanism like compaction to absorb general context-window pressure from ordinary conversational back-and-forth",
+      "Maintain an application-level structured object for facts that must remain exact, such as confirmed order details",
       "Rely solely on an API-native compaction feature for every kind of information, including exact numeric facts, to minimize engineering effort",
       "Avoid API-native features entirely, since only application-level code can ever really be trusted",
       "Let the structured object be silently overwritten by whatever compaction produces, so there is only one source of truth",
     ],
     correctIndexes: [0],
     explanation:
-      "The well-supported pattern is to keep exact-fact-bearing state in an application-maintained structured object while letting an API-native mechanism like compaction handle general conversational overflow. Relying on compaction alone for exact facts risks the precision loss summarization is prone to; refusing API-native features altogether discards a useful tool for reducing plumbing; and letting compaction overwrite the structured object undermines the entire point of keeping exact facts protected in their own store.",
+      "The well-supported pattern is to keep exact-fact-bearing state in an application-maintained structured object (while letting an API-native mechanism like compaction separately handle general conversational overflow). Relying on compaction alone for exact facts risks the precision loss summarization is prone to; refusing API-native features altogether discards a useful tool for reducing plumbing; and letting compaction overwrite the structured object undermines the entire point of keeping exact facts protected in their own store.",
     eli10:
       "It works best to keep the must-be-exact stuff in your own clearly labeled notes, and let the app's automatic 'shorten the old chat' feature handle the everyday chit-chat — not the other way around, and not by throwing away one approach entirely.",
     difficulty: "HARD",
@@ -411,14 +411,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which of the following correctly matches a kind of information to the context-management strategy best suited for it?",
     options: [
-      "Recent conversational flow that follow-ups rarely look further back than a few exchanges suits a sliding window, and current, occasionally-changing user preferences suit an explicit structured state object updated on change",
+      "Recent conversational flow, where follow-ups rarely look further back than a few exchanges, suits a sliding window",
       "Exact recurring numeric facts that must stay precise suit folding them into a progressive narrative summary",
       "A persistent reference bible of world facts or safety-critical information suits a sliding window over the last few messages",
       "Long-term narrative continuity across a very long session suits deleting all older turns with no replacement",
     ],
     correctIndexes: [0],
     explanation:
-      "A sliding window is well suited to conversational flow that only depends on recent exchanges, and an explicit structured state object is the right fit for current preferences that can change over time. Exact numeric facts are precisely what gets blurred by narrative summarization, a persistent reference bible needs its own retained section rather than being subject to recency-based dropping, and long-term continuity calls for progressive summarization, not outright deletion with nothing kept.",
+      "A sliding window is well suited to conversational flow that only depends on recent exchanges (an explicit structured state object, kept updated on change, is the separate right fit for current preferences that can shift over time). Exact numeric facts are precisely what gets blurred by narrative summarization, a persistent reference bible needs its own retained section rather than being subject to recency-based dropping, and long-term continuity calls for progressive summarization, not outright deletion with nothing kept.",
     eli10:
       "Matching the right tool to the right job matters: quick recent chit-chat fits a 'just remember the last few things' approach, and preferences that can change fit a labeled card that gets updated — but exact numbers shouldn't be squeezed into a vague summary, and a book of core facts shouldn't just get forgotten as messages scroll by.",
     difficulty: "HARD",
@@ -502,7 +502,7 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A due-diligence assistant reviewing many long documents over one extended session needs three things at once: a general sense of what's been covered so far, the ability to pull exact wording from any document when asked, and reliable recall of a handful of recurring numeric figures. Which design choice best satisfies all of this together?",
     options: [
-      "Maintain a running narrative summary for general continuity, retrieve directly from source documents for exact quotes, and maintain a small structured fact table for the recurring numeric figures rather than trusting the narrative summary",
+      "Maintain a narrative summary for continuity, retrieve exact quotes from source documents, and keep a separate structured fact table for the numeric figures",
       "Fold the recurring numeric figures into the same narrative summary so there is only one artifact to maintain",
       "Rely on the narrative summary alone for exact quotes as well as general continuity, since it is the single most complete record",
       "Apply a sliding window to the document set, discarding any document older than the last three ever reviewed",

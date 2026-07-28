@@ -248,14 +248,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A multi-agent research assistant has a pipeline that: (1) fetches a webpage and extracts its raw text, (2) summarizes the extracted text, and (3) decides whether to include that summary in a final report shared with the user. The team is deciding which steps to merge into single tool calls versus keep as separate decision points. Which statement reflects good practice here?",
     options: [
-      "Fetching the page and extracting its text are good candidates to merge, since they're mechanical and always paired together, but deciding whether to include the summary in the report should stay a separate decision point, not folded into summarization",
+      "Deciding whether to include the summary in the report should stay a separate decision point, not folded into summarization",
       "All three steps should always be merged into a single tool call to minimize the total number of tool calls made",
       "Summarization should never be exposed as a tool at all, since only fetching a page ever counts as a genuine tool action",
       "Because latency always matters most, every network-touching step should always be split into its own separate, standalone tool",
     ],
     correctIndexes: [0],
     explanation:
-      "Fetching and extracting text is mechanical, always-paired, low-judgment work, which is exactly the kind of step that's good to compose into one tool. Deciding to include a summary in a user-facing report is an editorial judgment call, so it should stay a distinct step rather than being silently absorbed into an earlier mechanical action. Merging all three ignores that the inclusion decision needs its own checkpoint; summarization can legitimately be exposed as its own tool; and latency alone doesn't dictate splitting every network step regardless of whether the steps are mechanical and always paired.",
+      "Deciding to include a summary in a user-facing report is an editorial judgment call, so it should stay a distinct step rather than being silently absorbed into an earlier mechanical action (fetching and extracting the page text, by contrast, is mechanical and always paired, so those two are a good pair to compose into one tool). Merging all three ignores that the inclusion decision needs its own checkpoint; summarization can legitimately be exposed as its own tool; and latency alone doesn't dictate splitting every network step regardless of whether the steps are mechanical and always paired.",
     eli10:
       "Grabbing a book off the shelf and opening to the right page can happen in one smooth motion, but deciding whether to actually read that page out loud to the class is its own choice that shouldn't happen automatically.",
     difficulty: "HARD",
@@ -266,14 +266,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is categorizing failure modes for their order-management tool: (1) the backend database connection times out, (2) the model passes an invalid three-letter country code, (3) the customer's account is genuinely not eligible for the requested action under company policy, and (4) the calling agent's credentials lack permission for this operation. Which statement describes correct handling?",
     options: [
-      "The database timeout (1) should be retried inside the tool with backoff, not surfaced immediately to the model as a failure, and the ineligibility case (3) should return a structured, non-retryable result with a clear explanation of the policy",
+      "The database timeout (1) should be retried inside the tool with backoff, not surfaced immediately to the model as a failure",
       "The invalid country code (2) should trigger the exact same human-escalation path used for the permission error (4)",
       "All four of these cases should be retried automatically, since retries are always considered safe for order-management tools",
       "The permission error (4) should be silently retried by the tool over and over until it eventually succeeds",
     ],
     correctIndexes: [0],
     explanation:
-      "A transient timeout belongs to tool-level retry with backoff rather than immediately failing in front of the model. A business-rule ineligibility is non-retryable and just needs a clear explanation, since nothing about retrying changes the policy outcome. The invalid country code is a validation error the model can self-correct, not something needing the same human-escalation path as a genuine permission problem. Blanket automatic retries ignore that non-transient failures won't be fixed by trying again, and a permission error needs an escalation path rather than silent endless retries, which could never succeed without a credential change anyway.",
+      "A transient timeout belongs to tool-level retry with backoff rather than immediately failing in front of the model (the ineligibility case is a separate, non-retryable situation that instead just needs a structured result with a clear explanation of the policy, since nothing about retrying changes that outcome). The invalid country code is a validation error the model can self-correct, not something needing the same human-escalation path as a genuine permission problem. Blanket automatic retries ignore that non-transient failures won't be fixed by trying again, and a permission error needs an escalation path rather than silent endless retries, which could never succeed without a credential change anyway.",
     eli10:
       "If the phone line drops, try calling back. If you're simply not allowed into a room, calling back a hundred times won't open the door — someone needs to actually give you permission first.",
     difficulty: "MEDIUM",
@@ -284,14 +284,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An MCP-connected client encounters four situations: (1) it calls a tool name the server doesn't recognize, (2) a real tool call reaches the server but hits a downstream 404 for a record that doesn't exist, (3) it sends arguments that fail the tool's declared schema before any tool logic runs, and (4) a real tool call reaches the server and hits a temporary 503 from a dependency. Which statement correctly classifies these?",
     options: [
-      "Situations (1) and (3) are protocol-level errors, since the request never becomes valid enough to reach real tool logic, while situations (2) and (4) should be tool-execution errors in a normal result, since the call was valid and reached real logic",
+      "Situations (1) and (3) are protocol-level errors, since the request never becomes valid enough to reach real tool logic",
       "Situation (2) should also be reported as a protocol-level error, since the requested record genuinely doesn't exist at all",
       "All four of these situations are essentially equivalent, and the client should handle each of them identically",
       "Situation (4) should always be treated as a permanent failure with absolutely no possibility of a later retry",
     ],
     correctIndexes: [0],
     explanation:
-      "An unrecognized tool name and schema-invalid arguments never reach genuine tool logic, which makes both protocol-level errors. A downstream 404 and a transient 503 both occur only after a valid call reached real backend logic, so both belong inside a normal tool result as execution errors rather than protocol errors. Treating the 404 as a protocol error miscategorizes a legitimate execution-time outcome, the four cases clearly call for different handling rather than identical treatment, and a 503 is transient by nature rather than a permanently unretriable failure.",
+      "An unrecognized tool name and schema-invalid arguments never reach genuine tool logic, which makes both protocol-level errors (a downstream 404 and a transient 503, by contrast, both occur only after a valid call reached real backend logic, so those belong inside a normal tool result as execution errors instead). Treating the 404 as a protocol error miscategorizes a legitimate execution-time outcome, the four cases clearly call for different handling rather than identical treatment, and a 503 is transient by nature rather than a permanently unretriable failure.",
     eli10:
       "If you dial a phone number that doesn't exist, that's a different kind of problem than dialing correctly but the person you called happens to be busy right now. One means try a different number; the other means maybe try again later.",
     difficulty: "HARD",
@@ -302,14 +302,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer has a server named 'analytics' configured at both project scope, in the repository's committed .mcp.json, and local scope, in their own per-project configuration, with different command paths and different environment variables in each. Which statement correctly describes how Claude Code resolves this?",
     options: [
-      "The local-scope definition wins entirely, since local scope has higher precedence than project scope, and if the developer only had a user-scope 'analytics' entry with no project or local entry present, that entry would be used instead",
+      "The local-scope definition wins entirely, since local scope has higher precedence than project scope",
       "Claude Code merges the two definitions field by field, taking the command path from whichever scope defined it first",
       "Because project scope is checked into version control and shared with the team, it always overrides local scope for consistency",
       "Since the two definitions share the same server name, Claude Code refuses to load either until the conflict is manually resolved",
     ],
     correctIndexes: [0],
     explanation:
-      "Local scope outranks project scope, so the local-scope definition for 'analytics' applies in full. With no project or local entry present, a user-scope entry is simply what gets used, since it's the only definition available. Scopes are never merged field by field — the highest-precedence definition wins entirely. Project scope does not override local scope despite being shared; precedence runs local over project over user. And Claude Code doesn't require manual conflict resolution — the precedence rule resolves it automatically without blocking either definition from loading.",
+      "Local scope outranks project scope, so the local-scope definition for 'analytics' applies in full (with no project or local entry present at all, a user-scope entry would simply be what gets used instead, since it'd be the only definition available). Scopes are never merged field by field — the highest-precedence definition wins entirely. Project scope does not override local scope despite being shared; precedence runs local over project over user. And Claude Code doesn't require manual conflict resolution — the precedence rule resolves it automatically without blocking either definition from loading.",
     eli10:
       "If your own personal note and a shared team note both use the same label, your personal note is the one that counts, not a mix of both, and not the team one just because more people saw it.",
     difficulty: "MEDIUM",
@@ -466,14 +466,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A code reviewer is auditing a newly written send_notification tool. The tool's description reads only 'Sends a notification.' Its parameters are message: string, recipient: string, and options: string, where options is meant to hold things like urgency and delivery channel packed together as free text. Which statement correctly identifies a problem with this design?",
     options: [
-      "The description fails to state when to use the tool, when not to, or what it returns, leaving the model to guess, and packing urgency and channel into one free-text string discards structure that enums could enforce",
+      "The description fails to state when to use the tool, when not to, or what it returns, leaving the model to guess",
       "The tool is basically fine as written, since message and recipient are both correctly typed as strings",
       "recipient should also stay free text, since notification recipients vary far too much to type strictly",
       "The real fix here is simply renaming the options parameter to config_options for extra clarity",
     ],
     correctIndexes: [0],
     explanation:
-      "The bare one-line description gives no guidance on when to use it, when to avoid it, expected input specifics, or output shape, exactly the gap good tool descriptions are meant to close. Bundling urgency and channel into a single free-text field throws away structure that could be enforced with small enums instead, inviting inconsistent values. The tool is not fine as written given those two gaps; recipient could very reasonably be tightened to a stable identifier depending on the domain rather than assumed to require free text; and a rename alone adds no missing structure.",
+      "The bare one-line description gives no guidance on when to use it, when to avoid it, expected input specifics, or output shape, exactly the gap good tool descriptions are meant to close (bundling urgency and channel into the single free-text options field is a second, separate gap — that structure could be enforced with small enums instead). The tool is not fine as written given those gaps; recipient could very reasonably be tightened to a stable identifier depending on the domain rather than assumed to require free text; and a rename alone adds no missing structure.",
     eli10:
       "A tool that just says 'sends a notification' and lets you shove 'urgent, by text' into one blank box is like a form with no instructions and only one giant blank line instead of separate labeled boxes for each piece of information.",
     difficulty: "MEDIUM",
@@ -485,14 +485,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer connects five different MCP servers to their coding assistant, and three of them each expose a similarly named create_task tool with overlapping but slightly different behavior. The assistant frequently picks the wrong one. Which response is the recommended way to address this?",
     options: [
-      "Sharpen each create_task tool's description so it states its specific purpose and how it differs from the others, and introduce progressive availability, such as a discovery step surfacing a short ranked list of matching tools first",
+      "Sharpen each create_task tool's description so it states its specific purpose and how it differs from the others",
       "Disconnect four of the five MCP servers, since only one server per capability can be connected at a time",
       "Merge all three create_task tools behind one aggregator tool with a server_name parameter for fewer top-level tools",
       "Rename all three tools to the exact same name so the assistant treats them as fully interchangeable options",
     ],
     correctIndexes: [0],
     explanation:
-      "Clear, differentiated descriptions and a progressive-availability pattern, where a small discovery step narrows the field before specific tools become callable, are the established remedies for tools competing for the model's attention. There's no hard server-count limit forcing a developer to disconnect servers. Collapsing distinct tools behind one aggregator with a server_name parameter is the anti-pattern the guidance warns against rather than the fix, since it hides rather than clarifies the real tool surface. And making the names identical would make the three tools even harder to tell apart, not easier.",
+      "Clear, differentiated descriptions are an established remedy for tools competing for the model's attention (introducing progressive availability, such as a discovery step surfacing a short ranked list of matches first, is a separate, complementary fix). There's no hard server-count limit forcing a developer to disconnect servers. Collapsing distinct tools behind one aggregator with a server_name parameter is the anti-pattern the guidance warns against rather than the fix, since it hides rather than clarifies the real tool surface. And making the names identical would make the three tools even harder to tell apart, not easier.",
     eli10:
       "If three stores in a mall all had a sign that just said 'Shop,' you'd get confused about which one to walk into. Better signs describing what's actually different about each store, plus asking a helpful directory first, work a lot better than smashing all three stores into one confusing megastore.",
     difficulty: "HARD",

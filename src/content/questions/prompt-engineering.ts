@@ -271,14 +271,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An invoice-extraction pipeline forces a tool call via tool_choice and validates every response's fields in application code even though the response already passed schema validation. On one invoice, the extraction comes back schema-valid but the application-level check flags 'due_date' as not being a real calendar date. Which action best follows the recommended correction pattern for this failure?",
     options: [
-      "Send a new request with the original invoice text, the invalid extraction, and the specific 'due_date' validation error, asking the model to correct it, forcing a tool call on this correction turn too so it reliably produces another structured extraction to check",
+      "Send a new request with the original invoice text, the invalid extraction, and the specific 'due_date' validation error, asking the model to correct it",
       "Immediately re-send the exact same original request completely unchanged and simply hope the model happens to produce a different, valid date this time around",
       "Disable application-level validation for this invoice going forward entirely, since the extraction already passed schema validation successfully once",
       "Silently substitute today's date in place of the invalid 'due_date' value, without telling the model anything or re-checking the result afterward",
     ],
     correctIndexes: [0],
     explanation:
-      "The recommended pattern for a validation failure is a targeted correction request that includes the source document, the invalid output, and the specific error — and continuing to force tool use (rather than leaving it optional) keeps the correction attempt structured and re-checkable. A blind retry with no added information doesn't give the model anything new to fix the mistake with, disabling validation because a response was schema-valid conflates schema compliance with correctness, and silently fabricating a replacement value hides an error rather than correcting it and bypasses the model and validation entirely.",
+      "The recommended pattern for a validation failure is a targeted correction request that includes the source document, the invalid output, and the specific error (continuing to force tool use on that correction turn, rather than leaving it optional, is a related good practice that keeps the attempt structured and re-checkable). A blind retry with no added information doesn't give the model anything new to fix the mistake with, disabling validation because a response was schema-valid conflates schema compliance with correctness, and silently fabricating a replacement value hides an error rather than correcting it and bypasses the model and validation entirely.",
     eli10:
       "If a form comes back with a date that doesn't actually exist on any calendar, the right fix is to hand it back with a note explaining exactly what's wrong so it can be redone correctly — not to resubmit the same blank form and hope for luck, not to stop checking dates afterward, and not to just quietly write in a made-up date yourself.",
     difficulty: "MEDIUM",
@@ -289,14 +289,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team keeps noticing that their assistant's replies all start with the same repetitive opening phrase, and they want a durable fix. Which approach is described as genuinely effective for controlling response format like this?",
     options: [
-      "Give a concrete system-prompt instruction to skip any introductory phrase and lead directly with substance, and provide a small number of positive example responses in the desired style alongside that instruction",
+      "Give a concrete system-prompt instruction to skip any introductory phrase and lead directly with substance",
       "Maintain a continuously growing blacklist of specific banned opening words and phrases as the main mechanism for controlling this",
       "Rely on writing the instruction in all capital letters with the word 'NEVER,' since capitalization alone reliably guarantees compliance",
       "Increase the maximum output token limit, since repetitive openers are caused by the response length being capped too low",
     ],
     correctIndexes: [0],
     explanation:
-      "A concrete instruction to skip preamble and lead with substance, combined with positive style examples, is the durable and effective combination described for this kind of formatting problem. A long blacklist of banned phrases is described as less durable than a positive instruction plus examples, capitalized emphasis words help with salience but don't by themselves guarantee the instruction is always followed, and there's no described connection between output token limits and repetitive openers — that's an unrelated, fabricated cause.",
+      "A concrete instruction to skip preamble and lead with substance is the durable and effective fix here (pairing it with a couple of positive style examples strengthens it further, but the instruction itself is the core mechanism). A long blacklist of banned phrases is described as less durable than a positive instruction plus examples, capitalized emphasis words help with salience but don't by themselves guarantee the instruction is always followed, and there's no described connection between output token limits and repetitive openers — that's an unrelated, fabricated cause.",
     eli10:
       "If someone always starts their emails the same repetitive way, the better fix is telling them clearly 'just get straight to the point' and showing them a couple of good examples of what that looks like — rather than listing every single word they're banned from ever saying, or just typing your request in all caps and assuming that alone will work.",
     difficulty: "MEDIUM",
@@ -307,14 +307,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer is reviewing best practices for how a long-lived assistant's system prompt should be maintained across a very long conversation. Which statement is accurate?",
     options: [
-      "Structuring a system prompt into clearly labeled sections — role, style, safety — helps the model attend to each part correctly, and briefly reinforcing a key instruction at a natural breakpoint is a reasonable way to counter weakening adherence over a long conversation",
+      "Structuring a system prompt into clearly labeled sections — role, style, safety — helps the model attend to each part correctly",
       "Once the system prompt has been included on the very first API call of a conversation, it's safe to omit it from later calls in that same conversation, since the model retains it from that point on",
       "Prompt dilution happens because the API automatically and silently deletes the oldest portion of the system prompt once a conversation crosses some certain length threshold",
       "Translating every conceivable behavioral nuance into its own explicit conditional rule is the most reliable way to prevent instructions from weakening over a long conversation",
     ],
     correctIndexes: [0],
     explanation:
-      "Labeled sections improve attention and reduce ambiguity between similarly-worded instructions in different parts of the prompt, and reinforcing key instructions at natural breakpoints is a real, recommended mitigation for weakening adherence over long conversations. Omitting the system prompt after the first call misunderstands statelessness — nothing is retained between calls. Prompt dilution isn't caused by automatic deletion of prompt content; the full system prompt is still sent every time. And turning every nuance into its own explicit conditional is described as a bloating anti-pattern that can hurt adherence rather than protect it.",
+      "Labeled sections improve attention and reduce ambiguity between similarly-worded instructions in different parts of the prompt (briefly reinforcing a key instruction at a natural breakpoint is a separate, also-recommended way to counter weakening adherence over a long conversation). Omitting the system prompt after the first call misunderstands statelessness — nothing is retained between calls. Prompt dilution isn't caused by automatic deletion of prompt content; the full system prompt is still sent every time. And turning every nuance into its own explicit conditional is described as a bloating anti-pattern that can hurt adherence rather than protect it.",
     eli10:
       "Good ideas here are: writing instructions in clearly labeled sections (like a table of contents), and giving a quick reminder of the important stuff partway through a really long conversation. Bad ideas are: assuming the assistant remembers something you only said once at the very beginning without resending it, blaming a 'auto-delete' that isn't actually happening, or trying to write a rule for every single possible situation, which just makes things worse, not better.",
     difficulty: "HARD",
@@ -472,14 +472,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is documenting guidance on when their assistant should ask a clarifying question versus proceed on its own judgment. Which statement accurately describes that guidance?",
     options: [
-      "Asking a clarifying question is warranted when the user's message has multiple plausible interpretations that would lead to substantially different actions, but it's best to proceed on a reasonable assumption without asking when the action is low-risk, context strongly implies the intended meaning, and the user could easily correct a wrong guess",
+      "Asking a clarifying question is warranted when the user's message has multiple plausible interpretations that would lead to substantially different actions",
       "A single ambiguous phrase always justifies asking three or four questions at once, so that nothing is ever missed.",
       "If the user's stated requirements genuinely conflict with each other, the assistant should silently pick whichever interpretation seems most common and proceed without mentioning the conflict.",
       "Missing information that's actually necessary to complete a request is never a valid reason to ask a clarifying question, since the assistant should always proceed on a best guess instead.",
     ],
     correctIndexes: [0],
     explanation:
-      "Substantially different plausible interpretations is a documented trigger for asking, and proceeding without asking is the right call when the risk is low, context implies intent, and mistakes are easy to correct — these describe complementary halves of the same guidance. Defaulting to a long list of three or four questions for any ambiguity overstates the guidance, which actually favors one focused question outside of high-stakes cases; silently resolving a genuine conflict between stated requirements instead of naming the tension is the opposite of the recommended handling; and missing necessary information is explicitly one of the valid reasons to ask, not a reason to skip asking.",
+      "Substantially different plausible interpretations is a documented trigger for asking (proceeding without asking is the complementary right call when the risk is low, context implies intent, and mistakes are easy to correct instead). Defaulting to a long list of three or four questions for any ambiguity overstates the guidance, which actually favors one focused question outside of high-stakes cases; silently resolving a genuine conflict between stated requirements instead of naming the tension is the opposite of the recommended handling; and missing necessary information is explicitly one of the valid reasons to ask, not a reason to skip asking.",
     eli10:
       "Good rules of thumb: ask a question when a request could really mean two very different things, but don't bother asking when the answer is obvious, low-stakes, and easy to fix later if you guessed wrong. Bad ideas: always firing off a big list of questions for any tiny unclear bit, quietly picking a side when two requests actually clash instead of just saying so, or refusing to ever ask even when truly important information is missing.",
     difficulty: "MEDIUM",
@@ -490,14 +490,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer is reviewing how the four tool_choice settings — auto, any, a named/specific tool, and none — actually behave. Which statement is accurate?",
     options: [
-      "auto is the default setting and leaves both whether to call a tool at all, and which tool to call, up to the model, while any guarantees that some tool call happens this turn but still leaves the choice of which available tool to use up to the model",
+      "auto is the default setting and leaves both whether to call a tool at all, and which tool to call, up to the model",
       "A named/specific tool setting still allows the model to reply with plain text instead, if it determines no tool is truly necessary for the user's message.",
       "auto and any are functionally identical in every situation, since both settings were designed to eventually result in a tool call.",
       "Setting tool_choice to none disables tool use for that turn and also removes the tool schemas from that request's payload entirely, since they're considered unnecessary once tool use is disabled.",
     ],
     correctIndexes: [0],
     explanation:
-      "auto is the default and leaves both decisions — whether to call a tool, and which one — open to the model, while any narrows that to 'a tool call is mandatory' but still leaves the choice of tool open. A named/specific tool setting removes the plain-text option entirely rather than still permitting it. Treating auto and any as identical is exactly the common confusion the two settings are meant to be distinguished from, since auto makes tool use optional while any makes it mandatory. And none disabling tool use for a turn says nothing about the tool schemas being stripped from the payload — that's an unsupported extra claim.",
+      "auto is the default and leaves both decisions — whether to call a tool, and which one — open to the model (any is the related setting that narrows this to 'a tool call is mandatory' while still leaving the choice of tool open). A named/specific tool setting removes the plain-text option entirely rather than still permitting it. Treating auto and any as identical is exactly the common confusion the two settings are meant to be distinguished from, since auto makes tool use optional while any makes it mandatory. And none disabling tool use for a turn says nothing about the tool schemas being stripped from the payload — that's an unsupported extra claim.",
     eli10:
       "Two true facts: 'use your judgment, tools optional' is the default setting, and a different setting means 'you must use some tool, but you still get to pick which one.' It's wrong to think those two settings are the same thing, wrong to think naming one exact tool still lets someone just talk instead, and wrong to assume turning tools off for a turn also erases the tool descriptions from what gets sent.",
     difficulty: "HARD",
@@ -545,7 +545,7 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An eval's grading rubric is so strict about exact wording that it marks several genuinely correct, just differently-phrased answers as failures. What does this illustrate, and what's the fix?",
     options: [
-      "The grader is producing false negatives — marking genuinely correct output as wrong — because the rubric is too strict about exact phrasing, so the rubric needs loosening rather than the model needing to change",
+      "The grader is producing false negatives, marking genuinely correct output as wrong, and the rubric needs loosening",
       "The model itself is broken and needs to be replaced with a different one entirely",
       "This is expected and requires no adjustment, since a stricter grader is always a better grader",
       "The eval set is too small and simply needs more test cases added to it",
@@ -582,7 +582,7 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team changes a prompt to fix one specific failing eval case and ships it, without checking how the new prompt performs against the rest of the eval set. What risk does this introduce?",
     options: [
-      "The change might fix the targeted case while silently regressing other cases that were previously passing, with no way to notice since the rest of the suite was never re-run",
+      "It might silently regress other, previously-passing cases, since the rest of the suite was never re-run",
       "No risk at all; fixing any single failing case always improves overall performance uniformly",
       "The only risk is increased API cost, since correctness itself is unaffected by skipping the rest of the suite",
       "This risk only applies to model upgrades, not to prompt wording changes",

@@ -270,14 +270,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which of the following is an accurate distinction between the built-in tools Grep and Glob in Claude Code?",
     options: [
-      "Grep searches for patterns inside file contents, while Glob matches files by name or path pattern — so using Glob to find a code reference that's actually inside file contents is a common tool-selection mistake",
+      "Grep searches for patterns inside file contents, while Glob matches files by name or path pattern",
       "Glob can be used to search for a specific error string buried inside a JSON config value's contents",
       "Grep and Glob are simply two different names for the exact same underlying search behavior internally",
       "Glob is only ever usable on whole directories, never on individual files by themselves",
     ],
     correctIndexes: [0],
     explanation:
-      "Grep vs. Glob is precisely a contents-search vs. filename/path-search distinction, and mistaking one for the other (especially reaching for Glob when the target text lives inside a file) is a well-known pitfall. Glob cannot see inside a JSON value, so it can't find an error string buried in file content — that's a Grep job. The two tools are not interchangeable or identical. Glob's scope is about matching filename/path patterns, not a restriction to directories only.",
+      "Grep vs. Glob is precisely a contents-search vs. filename/path-search distinction — mistaking one for the other, especially reaching for Glob when the target text lives inside a file, is a well-known pitfall. Glob cannot see inside a JSON value, so it can't find an error string buried in file content — that's a Grep job. The two tools are not interchangeable or identical. Glob's scope is about matching filename/path patterns, not a restriction to directories only.",
     eli10:
       "Grep reads what's written inside books; Glob just looks at the titles on the spines. Mixing them up — like checking spines to find a sentence hidden inside a book — is a common mistake, and they are not the same tool doing the same thing.",
     difficulty: "MEDIUM",
@@ -288,14 +288,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which of the following correctly describes a session management flag/mechanism in Claude Code?",
     options: [
-      "A continue-most-recent flag is convenient, but risky if multiple terminals were active and it isn't the intended session, which is exactly why a session-ID mechanism suits automated workflows that need a stable, addressable session instead",
+      "A continue-most-recent flag is convenient, but risky if multiple terminals were active and it isn't the intended session",
       "Forking a session automatically isolates file changes on disk, in addition to the conversation history itself",
       "Resuming the same saved session from two terminals at once is always perfectly safe, with zero risk whatsoever",
       "The resume-specific-session mechanism only ever works for sessions that were created within the past hour or so",
     ],
     correctIndexes: [0],
     explanation:
-      "The continue-most-recent flag's 'most recent isn't always the intended one' risk, and the session-ID mechanism's fit for stable, programmatic workflows, are both accurate. Forking only preserves conversation history, not filesystem state, so it does not by itself isolate files — a worktree is needed for that. Resuming the same session from two terminals at once risks conflicting edits, it isn't safe by default. And there's no time restriction limiting the resume-specific-session mechanism to sessions from the last hour.",
+      "The continue-most-recent flag's 'most recent isn't always the intended one' risk is real — a session-ID mechanism exists precisely to give automated workflows a stable, addressable session instead. Forking only preserves conversation history, not filesystem state, so it does not by itself isolate files — a worktree is needed for that. Resuming the same session from two terminals at once risks conflicting edits, it isn't safe by default. And there's no time restriction limiting the resume-specific-session mechanism to sessions from the last hour.",
     eli10:
       "Grabbing 'whatever you touched last' can hand you the wrong thing if you touched several things recently, so a program that needs to reliably find one exact item should use a fixed label for it instead. But making a copy of your notes doesn't also copy your actual toys, and two people writing in the same notebook at once can absolutely bump into each other.",
     difficulty: "HARD",
@@ -306,14 +306,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which of the following correctly describes CLAUDE.md and/or assistant memory in Claude Code?",
     options: [
-      "Both CLAUDE.md and assistant-maintained memory load as context that shapes behavior, with no guarantee of compliance — so a rule that must be enforced without exception belongs in a hook or permission-deny rule, not CLAUDE.md prose alone",
+      "Both CLAUDE.md and assistant-maintained memory load as context that shapes behavior, with no guarantee of compliance",
       "Nested CLAUDE.md files completely replace the repo-root CLAUDE.md file entirely, whenever both happen to exist",
       "Assistant-maintained memory can only ever be edited by directly modifying the project's root CLAUDE.md file itself",
       "CLAUDE.md gets automatically compiled into an enforced permission rule the very moment it is saved",
     ],
     correctIndexes: [0],
     explanation:
-      "Both CLAUDE.md and memory are read as context that shapes behavior with no compliance guarantee, and a rule that absolutely must hold belongs in a hook or permission-deny rule rather than relying on CLAUDE.md prose. Nested CLAUDE.md files supplement the root one rather than replacing it wholesale. Assistant memory is a separate mechanism from CLAUDE.md, not merely a section within it. CLAUDE.md is never automatically compiled into enforced permissions; it remains advisory context.",
+      "Both CLAUDE.md and memory are read as context that shapes behavior with no compliance guarantee — a rule that absolutely must hold belongs in a hook or permission-deny rule rather than relying on CLAUDE.md prose, for that same reason. Nested CLAUDE.md files supplement the root one rather than replacing it wholesale. Assistant memory is a separate mechanism from CLAUDE.md, not merely a section within it. CLAUDE.md is never automatically compiled into enforced permissions; it remains advisory context.",
     eli10:
       "A sticky note and a rulebook page are both just reminders someone reads — neither one locks a door by itself. If a door truly must stay locked, you need an actual lock, not a better-written note. And a note about the art room doesn't erase the sign on the school's front door; both apply.",
     difficulty: "HARD",
@@ -324,14 +324,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which of the following correctly describes plan mode as a workflow control in Claude Code?",
     options: [
-      "It explores the codebase read-only and proposes an approach before any file gets changed, and best suits work spanning many files, architectural decisions, or changes needing approval first",
+      "It explores the codebase read-only and proposes an approach before any file gets changed",
       "It is simply just another name for enabling extended or deep reasoning mode",
       "It can only ever be enabled at the very start of a session and never toggled afterward",
       "It guarantees the eventual implementation will require zero further changes after approval",
     ],
     correctIndexes: [0],
     explanation:
-      "Plan mode's defining behavior is exploring read-only and proposing a plan for approval before changes land, and it fits work with wide scope, architectural stakes, or a need for sign-off. It is a distinct mechanism from extended thinking, not another name for it. It can typically be toggled during a session, not only at the very start. And approving a plan doesn't guarantee the resulting implementation will need no further revisions.",
+      "Plan mode's defining behavior is exploring read-only and proposing a plan for approval before changes land — it's the right fit for work with wide scope, architectural stakes, or a need for sign-off, for that same reason. It is a distinct mechanism from extended thinking, not another name for it. It can typically be toggled during a session, not only at the very start. And approving a plan doesn't guarantee the resulting implementation will need no further revisions.",
     eli10:
       "Plan mode is like sketching a blueprint and getting it approved before building anything — that part's true, and it suits big, tricky building projects. But sketching a blueprint isn't the same as thinking harder, you can pick up a pencil again mid-project, and an approved blueprint doesn't guarantee the finished building needs zero touch-ups.",
     difficulty: "MEDIUM",
@@ -489,14 +489,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which of the following accurately describes when to reach for a particular built-in tool in Claude Code?",
     options: [
-      "Bash is the appropriate tool for running a test suite or other shell commands, not for searching file contents, and a full-file Read-then-Write fits when a change touches nearly the entire file's structure, not just one isolated line",
+      "Bash is the appropriate tool for running a test suite or other shell commands, not for searching file contents",
       "Task-based subagent delegation is best reserved for only the smallest, most trivial single-line changes possible",
       "Edit is the preferred tool of choice whenever a change spans dozens of completely unrelated files at once",
       "Grep should always be used instead of Bash whenever the actual goal is to execute a test suite",
     ],
     correctIndexes: [0],
     explanation:
-      "Bash is correctly the tool for executing shell commands like a test suite, and Read-then-Write correctly fits a near-total file rewrite rather than an isolated change. Task-based delegation is reserved for broad, open-ended work, not trivial single-line edits — that's backwards from the actual guidance. Edit suits a small, targeted, uniquely identifiable change, not dozens of unrelated files simultaneously. And Grep only searches file contents; it cannot execute anything, so it can't substitute for Bash when running tests.",
+      "Bash is correctly the tool for executing shell commands like a test suite, not for searching file contents (a full-file Read-then-Write is the separate right call when a change touches nearly the entire file's structure, not just one isolated line). Task-based delegation is reserved for broad, open-ended work, not trivial single-line edits — that's backwards from the actual guidance. Edit suits a small, targeted, uniquely identifiable change, not dozens of unrelated files simultaneously. And Grep only searches file contents; it cannot execute anything, so it can't substitute for Bash when running tests.",
     eli10:
       "Using a wrench to run a race doesn't work, and using a stopwatch to tighten a bolt doesn't either — each tool fits a specific job. Running tests needs the tool that actually runs things, and rewriting almost a whole page needs a fresh page, not a single crossed-out word.",
     difficulty: "MEDIUM",
@@ -507,14 +507,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which of the following correctly describes how to handle resuming work after significant time has passed and the codebase may have changed?",
     options: [
-      "If most of a saved session's context is still useful, resuming and noting exactly what changed is reasonable — but if the old transcript is likely stale or misleading instead, starting fresh with a concise goal summary is often safer",
+      "If most of a saved session's context is still useful, resuming and noting exactly what changed is reasonable",
       "A saved session automatically re-scans the entire codebase for any changes the moment it gets resumed again",
       "Once a session is forked, its understanding of the codebase is guaranteed current no matter how much time passed",
       "Assistant-maintained memory automatically rewrites itself to match any codebase changes, without ever being told",
     ],
     correctIndexes: [0],
     explanation:
-      "Both are legitimate, complementary strategies depending on how stale the old context is: resume-and-correct when most of it still holds, or start fresh with a summary when it doesn't. There is no automatic re-scanning of the codebase when a session resumes — stale assumptions can persist unless corrected. Forking only branches the conversation transcript; it doesn't refresh or verify anything about current file contents. And assistant memory doesn't self-update to track code changes on its own — it still reflects whatever was previously noted until told otherwise.",
+      "Resuming and noting exactly what changed is the right call when most of a saved session's context still holds (starting fresh with a summary instead is the better call when the old transcript is likely stale or misleading — a complementary strategy for the opposite situation). There is no automatic re-scanning of the codebase when a session resumes — stale assumptions can persist unless corrected. Forking only branches the conversation transcript; it doesn't refresh or verify anything about current file contents. And assistant memory doesn't self-update to track code changes on its own — it still reflects whatever was previously noted until told otherwise.",
     eli10:
       "Coming back to a project after a long break, you either say 'hey, here's exactly what changed while I was gone' if most of what you remember still holds up, or you start over with just the goal in mind if too much has changed. Nothing automatically re-checks the room for you or magically updates your old notes by itself.",
     difficulty: "HARD",
