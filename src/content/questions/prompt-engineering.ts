@@ -13,11 +13,11 @@ export const questions: QuestionSeed[] = [
       "A developer builds a six-turn conversation with the Messages API. They attach their system prompt (containing the assistant's persona and scope rules) only to the very first request, assuming the model will 'remember' it for the rest of the session. Starting on turn two, the assistant's persona and tone noticeably disappear. What best explains this?",
     options: [
       "The system prompt has a built-in one-turn expiration and must be resent with a special 'refresh' flag once that first turn has passed.",
-      "The Messages API is stateless, so every request needs its own copy of the system prompt; nothing carries over automatically between calls.",
       "The model gradually forgets instructions over a fixed number of tokens, so the persona fading is expected regardless of whether the system prompt is resent.",
       "The persona disappeared because the messages array exceeded the maximum number of turns allowed in a single conversation session.",
+      "The Messages API is stateless, so every request needs its own copy of the system prompt; nothing carries over automatically between calls.",
     ],
-    correctIndexes: [1],
+    correctIndexes: [3],
     explanation:
       "The Messages API keeps no server-side memory between calls, so any instruction not included in a given request simply isn't seen by the model for that request — this is exactly why the drop starting on turn two is immediate rather than gradual. There's no expiration flag (option A), no turn-count limit being hit here (option D), and the described behavior is about statelessness, not a token-based forgetting curve (option C).",
     eli10:
@@ -30,12 +30,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team wants a turn where the model must definitely make a tool call, but they're fine with the model choosing between a 'lookup_order' tool and a 'lookup_shipment' tool depending on which fits the user's message better. Which tool_choice setting matches this requirement?",
     options: [
-      "auto, because it lets the model pick the best-fitting tool",
-      "any, because it forces some tool call while leaving the choice of tool open",
-      "none, because it disables tool selection logic and always uses the first tool listed",
       "A named/specific tool setting pointed at 'lookup_order', because it guarantees a tool call happens",
+      "auto, because it lets the model pick the best-fitting tool",
+      "none, because it disables tool selection logic and always uses the first tool listed",
+      "any, because it forces some tool call while leaving the choice of tool open",
     ],
-    correctIndexes: [1],
+    correctIndexes: [3],
     explanation:
       "any is the setting that both mandates a tool call this turn and leaves the choice of which tool up to the model — exactly the two requirements stated. auto is wrong because it makes tool use optional, so a plain-text reply could occur with no tool call at all. none disables tool use entirely, the opposite of what's needed. A named tool would guarantee a call but would eliminate the model's ability to pick between the two tools, forcing 'lookup_order' even for shipment questions.",
     eli10:
@@ -49,11 +49,11 @@ export const questions: QuestionSeed[] = [
       "During a multi-step checkout flow, a developer needs one particular turn to always call the 'submit_payment' tool and nothing else — never a different tool, and never a plain-text reply. Which tool_choice configuration achieves this?",
     options: [
       "auto, which leaves both whether to call a tool and which tool to use up to the model's own judgment",
+      "none, which disables tool use for that turn and guarantees a text-only reply instead",
       "any, which forces some tool call to happen this turn but still leaves the choice of tool open to the model",
       "A named/specific tool setting pointed at 'submit_payment', which forces exactly that tool call and nothing else",
-      "none, which disables tool use for that turn and guarantees a text-only reply instead",
     ],
-    correctIndexes: [2],
+    correctIndexes: [3],
     explanation:
       "Pinning tool_choice to the specific 'submit_payment' tool is the only setting that removes both kinds of freedom — whether to use a tool at all, and which one to use. auto leaves both open, any forces a tool call but still lets the model pick among any available tool, and none disables tool use altogether, which is the opposite of the goal.",
     eli10:
@@ -67,12 +67,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A pipeline extracts shipping addresses from customer emails and feeds the result directly into a downstream mailing system. Early on, the team asked the model in prose to 'reply with a JSON object containing street, city, and zip' and occasionally got extra commentary before the JSON or a slightly different field name. What is the most effective fix?",
     options: [
-      "Add the word 'IMPORTANT' in capital letters before the JSON instruction so the model takes it more seriously this time",
-      "Replace the prose instruction with a JSON Schema the response must conform to",
       "Ask the model to apologize and automatically retry the request whenever any commentary appears before the JSON",
+      "Add the word 'IMPORTANT' in capital letters before the JSON instruction so the model takes it more seriously this time",
       "Lower the temperature setting, since formatting problems like this are always caused by excess randomness",
+      "Replace the prose instruction with a JSON Schema the response must conform to",
     ],
-    correctIndexes: [1],
+    correctIndexes: [3],
     explanation:
       "Schema-validated output is specifically the more reliable mechanism for production pipelines compared to prose formatting requests — it enforces structure rather than hoping the model complies with a written description. Adding emphasis words doesn't guarantee compliance, asking for an apology-and-retry doesn't address the root formatting issue, and temperature isn't described as the cause here.",
     eli10:
@@ -86,12 +86,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A contract-review tool uses strict tool-use mode so that every extraction call's input is guaranteed to match its schema exactly — right field names, right types, nothing missing. A reviewer later finds a contract where the tool call returned a perfectly well-formed {\"renewal_term_months\": 12} but the actual contract clause says the renewal term is 24 months. What does this best illustrate?",
     options: [
+      "This kind of mismatch is expected only when tool_choice is set to auto, and wouldn't happen under any other tool_choice setting",
       "Strict mode failed here, since a tool call with the exact right shape and field types should never contain a wrong value",
       "Schema compliance only guarantees the response is structurally valid — it doesn't guarantee the extracted value is factually correct",
       "The contract itself must have been ambiguous or poorly worded, since strict mode cannot make mistakes on clearly written text",
-      "This kind of mismatch is expected only when tool_choice is set to auto, and wouldn't happen under any other tool_choice setting",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "Strict tool-use mode guarantees structural conformance to the schema, not that the extracted value is factually right — schema compliance and semantic correctness are separate guarantees, and this example is a textbook case of the first holding while the second fails. Strict mode did exactly what it promises (option A is wrong), the contract's clarity isn't implicated by this failure mode (option C is an unsupported assumption), and the tool_choice setting used has no bearing on whether an extracted value is correct (option D confuses two unrelated concepts).",
     eli10:
@@ -106,11 +106,11 @@ export const questions: QuestionSeed[] = [
       "A developer maintaining an older integration recalls that previous-generation Claude models supported sending a partial, unfinished assistant message at the end of a request to force the reply to start a certain way. They try this same approach against a current-generation model and it now returns a validation error instead of working as before. What should they do to get equivalent behavior today?",
     options: [
       "Keep retrying the same partial trailing assistant message with small wording tweaks until the error stops appearing",
+      "Switch tool_choice to none instead, so the model is forced to continue writing the partial text automatically from where it left off",
       "Use a schema-constrained output (or an enum field for classification), since prefill is deprecated on current models",
       "Add the partial content as a tool_result block instead of an assistant message, since tool_result blocks aren't validated the same way",
-      "Switch tool_choice to none instead, so the model is forced to continue writing the partial text automatically from where it left off",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "Assistant message prefill is deprecated on current-generation models, and a trailing partial assistant message now typically triggers a validation error rather than being honored — the documented modern replacements are schema-constrained output, an enum field for classification, or a system instruction to suppress preamble. Retrying the same broken approach won't fix a structural incompatibility, tool_result blocks serve a completely different purpose (returning tool output, not shaping assistant text), and tool_choice: none only disables tool use — it has no relationship to continuing partial assistant text.",
     eli10:
@@ -124,11 +124,11 @@ export const questions: QuestionSeed[] = [
       "A prompt includes two complete, fully-written example question-and-answer exchanges earlier in the conversation history to demonstrate the desired answer style, before the user's real question is asked. Is this the same technique as assistant message prefill?",
     options: [
       "Yes — both techniques insert assistant-authored content into the conversation, so they count as functionally identical and are equally deprecated",
+      "No, because few-shot examples must always live in the system prompt instead of the messages array, which is where prefill-style content belongs",
       "No — these are complete worked examples (few-shot prompting), which stays valid; prefill means an unfinished trailing message meant to be continued, and that pattern is deprecated",
       "Yes, because any assistant-role content anywhere in the conversation that isn't the very first message technically counts as prefill by definition, regardless of whether it happens to be complete or only partial",
-      "No, because few-shot examples must always live in the system prompt instead of the messages array, which is where prefill-style content belongs",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "Complete example exchanges placed earlier in the conversation are few-shot prompting, a distinct and still-valid technique; prefill specifically means a partial, trailing assistant message intended to be continued, and that specific pattern is what's deprecated. The two are not the same technique despite both involving assistant-authored text (ruling out options A and C), and few-shot examples aren't restricted to the system prompt — they're commonly placed as ordinary turns in the messages array (ruling out option D).",
     eli10:
@@ -141,12 +141,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is deciding whether to add a fourteenth optional field to a tool that's only actually invoked on roughly one in every fifty requests. One engineer argues it's essentially free since the tool is rarely called. Why is this reasoning incomplete?",
     options: [
-      "It's incomplete because tool definitions are only sent to the model on the very first request of a whole conversation, so later requests aren't affected by it either way",
       "It's incomplete because every tool's full schema is sent in the payload on every call, invoked or not, so the field adds cost on all fifty requests, not just the one where it's used",
-      "It's incomplete because adding more optional fields to a tool's schema always causes tool_choice to silently and automatically switch over from auto to any, without any developer input or awareness",
       "It's incomplete because optional fields are billed at a meaningfully higher per-token rate than required fields, so the field's rarity doesn't offset that added cost",
+      "It's incomplete because adding more optional fields to a tool's schema always causes tool_choice to silently and automatically switch over from auto to any, without any developer input or awareness",
+      "It's incomplete because tool definitions are only sent to the model on the very first request of a whole conversation, so later requests aren't affected by it either way",
     ],
-    correctIndexes: [1],
+    correctIndexes: [0],
     explanation:
       "Tool schemas are part of every request's payload, so their token cost is paid on every call, not only on the call where the tool happens to be invoked — a rarely-used tool's schema is still 'rarely-used' in terms of invocation, but its token overhead applies universally. Tool definitions aren't sent only once at conversation start given the API is stateless (option A misunderstands statelessness), schema size has no described effect on tool_choice's setting (option C is fabricated), and there's no differential billing rate for optional versus required fields (option D is fabricated).",
     eli10:
@@ -159,12 +159,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A system prompt for a writing assistant currently says: 'Adjust your explanation depth based on how experienced the user seems to be.' A reviewer suggests replacing this with fifteen numbered if-then rules covering specific phrasings and experience signals, believing more explicit coverage is always better. What's the most accurate assessment of that suggestion?",
     options: [
+      "It's irrelevant, because tone-adaptation behavior of this particular kind is simply not something any system prompt wording could ever meaningfully influence one way or the other",
+      "It's necessary, because a system prompt is structurally incapable of containing any general, non-conditional guidance — every behavior needs its own explicit rule",
       "It's a good idea, since explicit numbered conditionals always outperform general guiding principles, no matter how nuanced or context-dependent the situation is",
       "It's risky, since adapting to expertise is contextual-judgment behavior principles handle well, and over-translating nuance into rules bloats the prompt",
-      "It's necessary, because a system prompt is structurally incapable of containing any general, non-conditional guidance — every behavior needs its own explicit rule",
-      "It's irrelevant, because tone-adaptation behavior of this particular kind is simply not something any system prompt wording could ever meaningfully influence one way or the other",
     ],
-    correctIndexes: [1],
+    correctIndexes: [3],
     explanation:
       "Judgment-based behavior like calibrating depth to a user's demonstrated expertise is a good fit for a general principle rather than an exhaustive rule list; trying to enumerate every nuance as its own conditional is a known anti-pattern that bloats the prompt and can degrade overall behavior. Explicit conditionals aren't universally superior (option A overstates it) — they're better reserved for safety-critical, must-always-hold requirements. A system prompt absolutely can and does contain general guidance (option C is false), and tone adaptation is a normal, prompt-influenceable behavior (option D is false).",
     eli10:
@@ -177,12 +177,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A healthcare-adjacent assistant's system prompt includes the instruction: 'If the user describes what sounds like an immediate medical emergency, direct them to emergency services.' The team wants this behavior to hold without exception, every single time, no matter how the conversation is phrased. What's the most defensible way to treat this requirement?",
     options: [
+      "Convert it into a vaguer general principle like 'be sensitive to user distress,' since general principles are always more reliable than explicit rules",
       "Leave it exactly as a single prose sentence in the system prompt, since a clearly and carefully written prose instruction is every bit as guaranteed as code",
       "Remove it from the prompt entirely, since even mentioning safety-critical behavior in a system prompt is itself considered an unnecessary liability",
       "Keep it as explicit prompt guidance, but back anything that must hold 100% of the time with application-level logic or tooling too, not prompt text alone",
-      "Convert it into a vaguer general principle like 'be sensitive to user distress,' since general principles are always more reliable than explicit rules",
     ],
-    correctIndexes: [2],
+    correctIndexes: [3],
     explanation:
       "Explicit, unconditional rules are the right category of guidance for safety-critical requirements, but even explicit prompt instructions remain a probabilistic influence rather than an ironclad guarantee — so a true 100%-reliability requirement is safer backed up in code or tooling as well. A prose instruction alone isn't equivalent to a guarantee (option A is false), omitting safety-critical guidance entirely would be worse, not better (option B), and vague principles are a poor substitute for an unconditional rule in a safety-critical case, not a general improvement (option D).",
     eli10:
@@ -195,12 +195,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A support assistant has run for over 150 messages in a single session. Early in the conversation, its system prompt instructed it to always format monetary amounts with a currency symbol. By message 150, it has started omitting the symbol on some replies, even though the exact same system prompt is still being sent with every request. What's the most accurate explanation?",
     options: [
-      "The API silently truncates or drops the oldest parts of the system prompt automatically, once a conversation grows past some fixed length in turns or tokens",
       "The instruction was never actually valid to begin with, and the early replies that happened to include the symbol were simply a coincidental fluke",
-      "Adherence to early instructions can weaken over a long conversation, since many intervening turns compete with instructions from far earlier — even though the full prompt is still sent",
+      "The API silently truncates or drops the oldest parts of the system prompt automatically, once a conversation grows past some fixed length in turns or tokens",
       "The system prompt's influence is completely fixed and totally independent of conversation length, so this drift must instead be caused by some change in the underlying model version",
+      "Adherence to early instructions can weaken over a long conversation, since many intervening turns compete with instructions from far earlier — even though the full prompt is still sent",
     ],
-    correctIndexes: [2],
+    correctIndexes: [3],
     explanation:
       "This is prompt dilution: the system prompt isn't being dropped (it's resent in full every time), but a long accumulation of turns — including the model's own earlier responses — competes with instructions from far earlier in the session, weakening apparent adherence over time. Nothing here indicates silent truncation is happening (option A is a different, unsupported failure mode), the instruction clearly did work initially so it wasn't invalid from the start (option B), and drift over conversation length is a documented phenomenon, not something that requires a model-version change to explain (option D).",
     eli10:
@@ -214,10 +214,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A customer message says: 'Please cancel my subscription.' The account has exactly one active subscription, it's a low-friction monthly plan that's easy to reactivate, and nothing else in the message is ambiguous. What is the most appropriate response strategy?",
     options: [
-      "Ask a clarifying question first, since any account action should always be confirmed with a question no matter how clear the request is",
-      "Proceed with the cancellation — the request is unambiguous, only one subscription exists, and it's easy to reverse if needed",
-      "Escalate to a human immediately instead, since cancellation requests of any kind always require human sign-off no matter the circumstances",
       "Ignore the request entirely and ask the customer to rephrase it in a more formal tone before any action is taken on the account",
+      "Proceed with the cancellation — the request is unambiguous, only one subscription exists, and it's easy to reverse if needed",
+      "Ask a clarifying question first, since any account action should always be confirmed with a question no matter how clear the request is",
+      "Escalate to a human immediately instead, since cancellation requests of any kind always require human sign-off no matter the circumstances",
     ],
     correctIndexes: [1],
     explanation:
@@ -233,12 +233,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A customer writes: 'Please close my account.' The account has both a personal profile and a linked business profile under the same login, closing either one is difficult to reverse once processed, and it isn't clear from the message which profile the customer means. What is the best way to handle this?",
     options: [
-      "Proceed by closing both profiles at once without asking, since that approach covers every reasonable interpretation of what 'my account' could mean",
-      "Ask one focused clarifying question — which of the two profiles the customer means — before acting, since the outcomes are very different and hard to reverse",
       "Guess based on whichever profile was used most recently and proceed without asking, since clarifying questions always frustrate customers unnecessarily",
       "Send a list of four separate questions covering every conceivable detail about both profiles before taking any action at all on the account today",
+      "Ask one focused clarifying question — which of the two profiles the customer means — before acting, since the outcomes are very different and hard to reverse",
+      "Proceed by closing both profiles at once without asking, since that approach covers every reasonable interpretation of what 'my account' could mean",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "This is a clear case for asking, since the two interpretations lead to substantially different outcomes and the action is hard to reverse — and a single focused question is the right shape for it, since the situation isn't so irreversible or regulated that a longer up-front intake is required. Closing both profiles to 'cover all bases' risks doing an unwanted, hard-to-reverse action (option A), guessing and proceeding ignores the stated ambiguity and irreversibility (option C), and a four-question barrage is more than this single ambiguity actually calls for (option D).",
     eli10:
@@ -253,11 +253,11 @@ export const questions: QuestionSeed[] = [
       "A customer tells a support assistant: 'I want the fastest possible shipping option, and I also want the cheapest possible shipping option.' These two goals genuinely trade off against each other for this order. What is the best response?",
     options: [
       "Silently pick a mid-tier shipping option that isn't the cheapest or the fastest, since it's a reasonable-looking compromise between the two stated goals",
-      "Point out that the two goals are in tension for this order and ask the customer which one should take priority",
       "Pick the cheapest option only, since cost is mentioned second and therefore takes precedence",
+      "Point out that the two goals are in tension for this order and ask the customer which one should take priority",
       "Refuse to proceed with the order until the customer resolves the contradiction on their own without any input from the assistant",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "When two requested goals genuinely conflict, the correct move is to name the tension explicitly and ask which one should govern, rather than quietly averaging them into an unstated compromise that may satisfy neither goal well. Picking a vague middle option without saying anything about the trade-off (option A) hides the conflict instead of resolving it, prioritizing one goal arbitrarily based on mention order has no real justification (option C), and refusing to help at all is unnecessarily unhelpful when a single clarifying question would resolve it (option D).",
     eli10:
@@ -272,8 +272,8 @@ export const questions: QuestionSeed[] = [
       "An invoice-extraction pipeline forces a tool call via tool_choice and validates every response's fields in application code even though the response already passed schema validation. On one invoice, the extraction comes back schema-valid but the application-level check flags 'due_date' as not being a real calendar date. Which action best follows the recommended correction pattern for this failure?",
     options: [
       "Send a new request with the original invoice text, the invalid extraction, and the specific 'due_date' validation error, asking the model to correct it",
-      "Immediately re-send the exact same original request completely unchanged and simply hope the model happens to produce a different, valid date this time around",
       "Disable application-level validation for this invoice going forward entirely, since the extraction already passed schema validation successfully once",
+      "Immediately re-send the exact same original request completely unchanged and simply hope the model happens to produce a different, valid date this time around",
       "Silently substitute today's date in place of the invalid 'due_date' value, without telling the model anything or re-checking the result afterward",
     ],
     correctIndexes: [0],
@@ -289,12 +289,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team keeps noticing that their assistant's replies all start with the same repetitive opening phrase, and they want a durable fix. Which approach is described as genuinely effective for controlling response format like this?",
     options: [
-      "Give a concrete system-prompt instruction to skip any introductory phrase and lead directly with substance",
-      "Maintain a continuously growing blacklist of specific banned opening words and phrases as the main mechanism for controlling this",
       "Rely on writing the instruction in all capital letters with the word 'NEVER,' since capitalization alone reliably guarantees compliance",
       "Increase the maximum output token limit, since repetitive openers are caused by the response length being capped too low",
+      "Give a concrete system-prompt instruction to skip any introductory phrase and lead directly with substance",
+      "Maintain a continuously growing blacklist of specific banned opening words and phrases as the main mechanism for controlling this",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "A concrete instruction to skip preamble and lead with substance is the durable and effective fix here (pairing it with a couple of positive style examples strengthens it further, but the instruction itself is the core mechanism). A long blacklist of banned phrases is described as less durable than a positive instruction plus examples, capitalized emphasis words help with salience but don't by themselves guarantee the instruction is always followed, and there's no described connection between output token limits and repetitive openers — that's an unrelated, fabricated cause.",
     eli10:
@@ -307,12 +307,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer is reviewing best practices for how a long-lived assistant's system prompt should be maintained across a very long conversation. Which statement is accurate?",
     options: [
-      "Structuring a system prompt into clearly labeled sections — role, style, safety — helps the model attend to each part correctly",
-      "Once the system prompt has been included on the very first API call of a conversation, it's safe to omit it from later calls in that same conversation, since the model retains it from that point on",
       "Prompt dilution happens because the API automatically and silently deletes the oldest portion of the system prompt once a conversation crosses some certain length threshold",
+      "Once the system prompt has been included on the very first API call of a conversation, it's safe to omit it from later calls in that same conversation, since the model retains it from that point on",
+      "Structuring a system prompt into clearly labeled sections — role, style, safety — helps the model attend to each part correctly",
       "Translating every conceivable behavioral nuance into its own explicit conditional rule is the most reliable way to prevent instructions from weakening over a long conversation",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "Labeled sections improve attention and reduce ambiguity between similarly-worded instructions in different parts of the prompt (briefly reinforcing a key instruction at a natural breakpoint is a separate, also-recommended way to counter weakening adherence over a long conversation). Omitting the system prompt after the first call misunderstands statelessness — nothing is retained between calls. Prompt dilution isn't caused by automatic deletion of prompt content; the full system prompt is still sent every time. And turning every nuance into its own explicit conditional is described as a bloating anti-pattern that can hurt adherence rather than protect it.",
     eli10:
@@ -325,10 +325,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer inspects the exact JSON payload the Messages API sends for a turn where the assistant previously requested a tool call and the application already ran the tool and now has the result ready to send back. Which structural description of that payload is accurate?",
     options: [
-      "The tool result must instead be sent as a brand-new top-level request parameter called 'tool_result', kept entirely separate from both the 'system' and 'messages' parameters.",
-      "The prior tool call appears as a tool_use block in the assistant message, and the output returns as a tool_result block in the next user message — the system prompt stays its own top-level parameter.",
       "The system prompt must instead be embedded as its own separate message with role 'system' inside the messages array, positioned directly ahead of the tool_result content block.",
+      "The prior tool call appears as a tool_use block in the assistant message, and the output returns as a tool_result block in the next user message — the system prompt stays its own top-level parameter.",
       "Sending a tool_result block removes the need to resend the top-level 'system' parameter for that particular turn only, since the tool call itself already establishes sufficient context all on its own.",
+      "The tool result must instead be sent as a brand-new top-level request parameter called 'tool_result', kept entirely separate from both the 'system' and 'messages' parameters.",
     ],
     correctIndexes: [1],
     explanation:
@@ -344,10 +344,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A support assistant's system prompt includes a labeled 'Order State' section noting that a customer's order is currently 'Processing.' Mid-conversation, the warehouse marks the order as 'Shipped.' What is the best way to make sure the assistant's next reply reflects the new status?",
     options: [
-      "Do nothing extra, since the model will naturally infer the updated status from the flow of conversation without being told directly.",
-      "Update the labeled state section in the next request so it reflects 'Shipped' — state changes must be explicitly represented each call, not assumed to carry over.",
       "Insert a new message with role 'system' into the messages array announcing the change, since the top-level system parameter can't be modified between turns.",
+      "Update the labeled state section in the next request so it reflects 'Shipped' — state changes must be explicitly represented each call, not assumed to carry over.",
       "Wait until the customer explicitly asks about shipping before mentioning the update, since proactively changing the prompt could confuse the model.",
+      "Do nothing extra, since the model will naturally infer the updated status from the flow of conversation without being told directly.",
     ],
     correctIndexes: [1],
     explanation:
@@ -362,12 +362,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team wants their extraction assistant to correctly flag a field as missing when a source document genuinely doesn't contain that information, rather than inventing a plausible-sounding value to fill the gap. Several rewrites of a prose instruction describing this distinction haven't reliably fixed the behavior. What is most likely to work better?",
     options: [
-      "Provide two worked examples: one where the field is present and extracted, and one where it's genuinely absent and flagged as missing rather than fabricated.",
       "Repeat the exact same prose instruction three or four separate times in a row within the system prompt, purely for additional emphasis and weight.",
-      "Remove the instruction from the system prompt entirely, since additional wording rarely changes model behavior on subtle edge cases like this one.",
+      "Provide two worked examples: one where the field is present and extracted, and one where it's genuinely absent and flagged as missing rather than fabricated.",
       "Lower the max_tokens value instead, so there's simply less room left in the response for the model to ever write out a fabricated value in the first place.",
+      "Remove the instruction from the system prompt entirely, since additional wording rarely changes model behavior on subtle edge cases like this one.",
     ],
-    correctIndexes: [0],
+    correctIndexes: [1],
     explanation:
       "Concrete worked examples are often more effective than prose at teaching a subtle distinction like 'missing vs. present,' since they show the exact desired behavior in both cases rather than describing it abstractly. Repeating the same prose wording isn't the same technique as providing examples and isn't described as an effective fix (option B), removing the instruction entirely would only make the problem worse (option C), and shortening the allowed output length doesn't address a fabrication tendency and could just as easily truncate a legitimate value (option D).",
     eli10:
@@ -380,12 +380,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A classification task sorts each incoming ticket into exactly one of five fixed categories. The team previously tried to reduce inconsistent free-text answers by supplying a partial, unfinished assistant message at the end of the request so the reply would start with an opening JSON brace — and on current-generation models this now returns a validation error. What is a better modern approach for this specific classification task?",
     options: [
+      "Retry the same partial trailing assistant message but shorten it, since shorter prefill strings are still accepted on current models.",
       "Define the output schema with a field constrained to an enum of the five valid category values, so the response can only ever be one of those five options.",
       "Instruct the model in the system prompt to 'always answer in exactly one word' and simply hope the wording stays consistent across every incoming ticket.",
-      "Retry the same partial trailing assistant message but shorten it, since shorter prefill strings are still accepted on current models.",
       "Post-process every response afterward with a regular expression that strips out any text that isn't one of the five category names.",
     ],
-    correctIndexes: [0],
+    correctIndexes: [1],
     explanation:
       "An enum-constrained field is one of the documented modern replacements for prefill specifically for classification tasks — it structurally restricts the output to the valid set rather than hoping for compliance. Prose wording alone is a weaker guarantee than schema enforcement (option B), prefill is deprecated regardless of how short the partial string is — there's no length-based exception (option C), and a regex cleanup step doesn't stop the model from choosing an invalid category in the first place, it only reacts to the problem after the fact (option D).",
     eli10:
@@ -398,12 +398,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer wants one specific conversational turn where the assistant must reply with plain text only and must not call any tool, even though several tools remain defined for the conversation as a whole. Which tool_choice setting fits this requirement?",
     options: [
+      "A named/specific tool setting, since naming one tool ensures the others are ignored",
+      "none, since it disables tool use for that turn, guaranteeing a plain-text reply",
       "auto, since the model is generally trusted to decide when a tool call isn't needed",
       "any, since it lets the model freely pick whichever available tool seems least disruptive",
-      "none, since it disables tool use for that turn, guaranteeing a plain-text reply",
-      "A named/specific tool setting, since naming one tool ensures the others are ignored",
     ],
-    correctIndexes: [2],
+    correctIndexes: [1],
     explanation:
       "none is the setting that disables tool use for a turn, which is the only option that guarantees a plain-text reply with no tool call possible. auto still leaves the door open for the model to call a tool if it judges one is needed, any explicitly mandates that some tool call happen, and a named/specific tool setting would force exactly that tool's call rather than preventing tool use altogether.",
     eli10:
@@ -436,12 +436,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An agent wired into a CI/CD pipeline receives a single message: 'deploy the update.' It's unclear which of two pending branches should ship, which environment (staging or production) is meant, and what the rollback plan is — and a production deploy is difficult to reverse once traffic has shifted. The team generally prefers one focused clarifying question over a long list. Is that general preference still the best approach here?",
     options: [
-      "Yes — always ask exactly one question at a time regardless of the stakes involved, since asking more than a single question is essentially never appropriate.",
-      "No — for a costly, hard-to-reverse action like a production deploy, asking several questions up front is safer, even though one focused question is usually preferred.",
       "No — the agent should just deploy to production using its best guess on all three unclear points, since stopping to ask questions slows down a CI/CD pipeline.",
       "Yes, and the one question worth asking should be about the rollback plan only, since the branch and target environment can both be safely assumed.",
+      "Yes — always ask exactly one question at a time regardless of the stakes involved, since asking more than a single question is essentially never appropriate.",
+      "No — for a costly, hard-to-reverse action like a production deploy, asking several questions up front is safer, even though one focused question is usually preferred.",
     ],
-    correctIndexes: [1],
+    correctIndexes: [3],
     explanation:
       "Irreversible, costly, or regulated actions are the specific exception where asking several clarifying questions up front, rather than one at a time, is the safer default — a production deploy with an unclear branch, environment, and rollback plan fits that profile exactly. Rigidly capping every situation at one question ignores that exception (option A), guessing on all three unclear points before an effectively irreversible action is exactly the risk the guidance warns against (option C), and picking only one of three equally unclear points to ask about leaves the other two just as risky (option D).",
     eli10:
@@ -454,12 +454,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A document-processing service always needs a structured extraction result whenever it calls the model for a given document — a plain-text reply would break the downstream pipeline — and exactly one extraction tool is defined for these calls. Which statement about tool_choice for this call is accurate?",
     options: [
-      "auto is the right choice here, since the model should always remain completely free to decide for itself whether structured extraction is really needed for this particular document.",
-      "Either any or naming the one extraction tool directly forces a tool call, and since only one tool is defined, both settings guarantee the same outcome.",
-      "none is sufficient here, since forcing a tool call is unnecessary as long as the prompt clearly and explicitly asks for JSON-formatted output in prose.",
       "any should be avoided here in favor of auto, because the any setting simply cannot be used when only a single tool is defined for a conversation.",
+      "auto is the right choice here, since the model should always remain completely free to decide for itself whether structured extraction is really needed for this particular document.",
+      "none is sufficient here, since forcing a tool call is unnecessary as long as the prompt clearly and explicitly asks for JSON-formatted output in prose.",
+      "Either any or naming the one extraction tool directly forces a tool call, and since only one tool is defined, both settings guarantee the same outcome.",
     ],
-    correctIndexes: [1],
+    correctIndexes: [3],
     explanation:
       "any mandates some tool call while leaving the choice of tool open, and naming the single available tool directly forces that same exact call — with only one tool defined, both settings converge on the identical guaranteed result. auto would leave tool use optional, which risks a plain-text reply that breaks the pipeline (option A), none disables tool use altogether and prose-only JSON requests are a weaker guarantee than enforced tool use (option C), and there's no restriction preventing any from being used with just one tool defined (option D is fabricated).",
     eli10:
@@ -472,12 +472,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is documenting guidance on when their assistant should ask a clarifying question versus proceed on its own judgment. Which statement accurately describes that guidance?",
     options: [
-      "Asking a clarifying question is warranted when the user's message has multiple plausible interpretations that would lead to substantially different actions",
+      "Missing information that's actually necessary to complete a request is never a valid reason to ask a clarifying question, since the assistant should always proceed on a best guess instead.",
       "A single ambiguous phrase always justifies asking three or four questions at once, so that nothing is ever missed.",
       "If the user's stated requirements genuinely conflict with each other, the assistant should silently pick whichever interpretation seems most common and proceed without mentioning the conflict.",
-      "Missing information that's actually necessary to complete a request is never a valid reason to ask a clarifying question, since the assistant should always proceed on a best guess instead.",
+      "Asking a clarifying question is warranted when the user's message has multiple plausible interpretations that would lead to substantially different actions",
     ],
-    correctIndexes: [0],
+    correctIndexes: [3],
     explanation:
       "Substantially different plausible interpretations is a documented trigger for asking (proceeding without asking is the complementary right call when the risk is low, context implies intent, and mistakes are easy to correct instead). Defaulting to a long list of three or four questions for any ambiguity overstates the guidance, which actually favors one focused question outside of high-stakes cases; silently resolving a genuine conflict between stated requirements instead of naming the tension is the opposite of the recommended handling; and missing necessary information is explicitly one of the valid reasons to ask, not a reason to skip asking.",
     eli10:
@@ -490,12 +490,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer is reviewing how the four tool_choice settings — auto, any, a named/specific tool, and none — actually behave. Which statement is accurate?",
     options: [
-      "auto is the default setting and leaves whether to call a tool at all up to the model",
-      "A named/specific tool setting still allows the model to reply with plain text instead, if it determines no tool is truly necessary for the user's message.",
       "auto and any are functionally identical in every situation, since both settings were designed to eventually result in a tool call.",
+      "auto is the default setting and leaves whether to call a tool at all up to the model",
       "Setting tool_choice to none disables tool use for that turn and also removes the tool schemas from that request's payload entirely, since they're considered unnecessary once tool use is disabled.",
+      "A named/specific tool setting still allows the model to reply with plain text instead, if it determines no tool is truly necessary for the user's message.",
     ],
-    correctIndexes: [0],
+    correctIndexes: [1],
     explanation:
       "auto is the default and leaves it up to the model whether to call a tool at all (it also leaves which tool to call open, a related but separate fact; any is the setting that narrows things to 'a tool call is mandatory' while still leaving the choice of tool open). A named/specific tool setting removes the plain-text option entirely rather than still permitting it. Treating auto and any as identical is exactly the common confusion the two settings are meant to be distinguished from, since auto makes tool use optional while any makes it mandatory. And none disabling tool use for a turn says nothing about the tool schemas being stripped from the payload — that's an unsupported extra claim.",
     eli10:
@@ -508,12 +508,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team rewords their system prompt because a teammate says it 'reads more clearly,' and ships it without further checks. What is missing from this process?",
     options: [
-      "Running the change against an evaluation set of representative test cases, including known edge cases, to confirm it actually performs as well or better rather than just reading well",
+      "The prompt should have been shortened further, since shorter prompts always perform better regardless of testing",
       "Nothing; a prompt that reads more clearly to a human is guaranteed to also perform better with the model",
       "The change should have been reviewed by a second teammate instead of being tested against any cases at all",
-      "The prompt should have been shortened further, since shorter prompts always perform better regardless of testing",
+      "Running the change against an evaluation set of representative test cases, including known edge cases",
     ],
-    correctIndexes: [0],
+    correctIndexes: [3],
     explanation:
       "A prompt reading more clearly to a human says nothing about whether it changed model behavior for better or worse — the way to actually know is running it against an eval set of representative cases, including known edge cases, and comparing results to the prior version. A second human's read is still just another subjective impression, not a check against real cases. And there's no rule that shorter is always better; that claim substitutes an assumption for actual evaluation.",
     eli10:
@@ -527,12 +527,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team needs to grade whether hundreds of open-ended customer-support replies are 'helpful and on-tone,' a judgment with no single exact correct string to match against. Which approach fits this?",
     options: [
-      "An LLM-as-judge grader following an explicit rubric, with periodic human spot-checks of the judge's own scores",
+      "Counting the number of words in each reply as a stand-in for its quality",
       "A plain string-equality check against one canonical 'ideal' reply for every ticket",
       "Skipping evaluation entirely for this category, since subjective quality can never be measured systematically",
-      "Counting the number of words in each reply as a stand-in for its quality",
+      "An LLM-as-judge grader following an explicit rubric, with periodic human spot-checks of the judge's own scores",
     ],
-    correctIndexes: [0],
+    correctIndexes: [3],
     explanation:
       "An LLM-as-judge grader, scoring against an explicit rubric, is built exactly for cases where output quality is subjective and there's no single correct string — periodic human review of the judge's own scores catches drift or miscalibration in the grader itself. Exact string matching only works when there's one right answer, which doesn't apply to open-ended tone-and-helpfulness judgments. Skipping evaluation gives up a real and commonly-used option. And word count has no established relationship to reply quality.",
     eli10:
@@ -545,12 +545,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An eval's grading rubric is so strict about exact wording that it marks several genuinely correct, just differently-phrased answers as failures. What does this illustrate?",
     options: [
-      "The grader is producing false negatives, marking genuinely correct output as wrong",
-      "The model itself is broken and needs to be replaced with a different one entirely",
-      "This is expected and requires no adjustment, since a stricter grader is always a better grader",
       "The eval set is too small and simply needs more test cases added to it",
+      "The model itself is broken and needs to be replaced with a different one entirely",
+      "The grader is producing false negatives, marking genuinely correct output as wrong",
+      "This is expected and requires no adjustment, since a stricter grader is always a better grader",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "A grader marking genuinely correct output as a failure is a false negative — and when it's happening systematically because the rubric is too rigid about exact phrasing, the fix is loosening the rubric, since the model's output was fine. Replacing the model addresses the wrong side of the problem entirely. Stricter isn't automatically better; a rubric that's too strict just produces noisy, unreliable grading. And the size of the eval set doesn't address a miscalibrated grading rule.",
     eli10:
@@ -564,12 +564,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An eval run reveals the model fabricates a plausible-sounding value whenever a source document genuinely doesn't contain a required field. The team reworks the wording of that one failing example until it passes, then ships. What's wrong with this fix?",
     options: [
-      "It targets a single example instead of the underlying cause",
       "Nothing is wrong; once one failing example passes, the underlying issue is necessarily fully resolved everywhere",
       "The fix should have lowered max_tokens instead, since fabrication is caused by too much room in the response",
+      "It targets a single example instead of the underlying cause",
       "The fix should have removed the field from the schema entirely, since optional fields are the actual root cause of fabrication",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "A proper feedback loop addresses the actual cause of a failure — here, likely a missing worked example of the 'genuinely absent' case — rather than just patching wording until one example passes (it should also re-run the full eval set afterward to confirm the fix generalizes, a related but separate step). Passing a single patched example says nothing about whether the underlying tendency was actually fixed elsewhere. Lowering max_tokens doesn't address a fabrication tendency and could just as easily truncate legitimate output. And removing the field entirely discards information rather than fixing the model's handling of genuine absence.",
     eli10:
@@ -582,12 +582,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team changes a prompt to fix one specific failing eval case and ships it, without checking how the new prompt performs against the rest of the eval set. What risk does this introduce?",
     options: [
+      "The only risk is increased API cost, since correctness itself is unaffected by skipping the rest of the suite",
       "It might silently regress other, previously-passing cases, since the rest of the suite was never re-run",
       "No risk at all; fixing any single failing case always improves overall performance uniformly",
-      "The only risk is increased API cost, since correctness itself is unaffected by skipping the rest of the suite",
       "This risk only applies to model upgrades, not to prompt wording changes",
     ],
-    correctIndexes: [0],
+    correctIndexes: [1],
     explanation:
       "Without re-running the full eval set, there's no way to know whether the change that fixed the targeted case also broke something that used to work — regression tracking exists specifically to catch this. Fixing one case doesn't guarantee uniform improvement elsewhere; the two can easily trade off against each other. The risk here is correctness, not just cost. And prompt wording changes can regress behavior just as easily as a model upgrade can — this isn't unique to switching models.",
     eli10:
@@ -601,12 +601,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team needs to run a 500-case evaluation suite overnight, with no one waiting on the results immediately. Which processing approach fits best, and why?",
     options: [
-      "Batch processing, since eval runs aren't time-sensitive and batch trades latency for meaningfully lower cost at this volume",
       "The real-time API, since only real-time processing produces valid evaluation results",
-      "Batch processing, but only if the eval suite has fewer than ten total cases",
+      "Batch processing, since eval runs aren't time-sensitive here",
       "Splitting the suite across ten different accounts to run all 500 cases concurrently in real time",
+      "Batch processing, but only if the eval suite has fewer than ten total cases",
     ],
-    correctIndexes: [0],
+    correctIndexes: [1],
     explanation:
       "Batch processing is exactly suited to large, non-urgent workloads like an overnight eval run, trading higher latency for meaningfully lower cost at volume. Real-time processing doesn't produce more 'valid' results — validity depends on the eval methodology, not the processing path. There's no minimum-size cutoff that makes batch unsuitable for larger suites; if anything, the cost benefit grows with volume. And splitting across multiple accounts to force real-time concurrency doesn't fit a use case that was never time-sensitive to begin with.",
     eli10:

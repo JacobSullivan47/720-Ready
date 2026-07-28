@@ -9,8 +9,8 @@ export const questions: QuestionSeed[] = [
     options: [
       "The context window must be full already, since forgetting only happens once the entire token budget gets exhausted",
       "Unused token capacity doesn't guarantee equal attention — early content can be deprioritized relative to what's recent",
-      "The model can only remember information contained in the single most recent message it received, nothing further back",
       "This indicates a bug in the API that requires switching over to a noticeably smaller context window size",
+      "The model can only remember information contained in the single most recent message it received, nothing further back",
     ],
     correctIndexes: [1],
     explanation:
@@ -27,11 +27,11 @@ export const questions: QuestionSeed[] = [
       "A support chatbot only ever sends the last 10 messages of a conversation to the model. Most sessions work fine, but one user says 'like I mentioned earlier, cancel the plan I upgraded to, not my original one' and the bot has no idea which plan that refers to because the upgrade discussion was 14 messages ago. What is the most accurate diagnosis?",
     options: [
       "The model itself has a hard-coded memory limit of exactly 10 messages, regardless of application design",
-      "This is a sliding window failure — a fixed recent-message window dropped a detail the user needed later",
-      "The bot should have used a noticeably larger token limit allotted per individual message instead of trimming history",
       "This kind of gap only happens when the user changes topics unusually quickly during the conversation",
+      "The bot should have used a noticeably larger token limit allotted per individual message instead of trimming history",
+      "This is a sliding window failure — a fixed recent-message window dropped a detail the user needed later",
     ],
-    correctIndexes: [1],
+    correctIndexes: [3],
     explanation:
       "Keeping only the last N messages is precisely the tradeoff a sliding window makes: cheap and simple, but it silently loses anything older that a later message ends up referencing. The 10-message cap is an application design choice, not an inherent model limit (ruling out A), enlarging per-message tokens wouldn't fix a windowing gap (ruling out C), and this failure isn't tied to how fast the user changes topics — it's about how far back the reference reaches (ruling out D).",
     eli10:
@@ -44,12 +44,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer compresses an older stretch of a long conversation into the summary 'the user discussed a few preferences about their trip.' Later, the assistant can no longer say whether the user wanted a window or aisle seat. What change would best fix this?",
     options: [
-      "Switch to keeping the entire raw conversation forever in context, with no summarization applied at all",
-      "Replace the vague summary with a structured summary that has explicit fields, like an exact seat-preference value",
-      "Shorten the existing summary even further than it already is, in order to save additional tokens",
       "Remove summarization entirely and rely purely on a sliding window over the most recent messages instead",
+      "Shorten the existing summary even further than it already is, in order to save additional tokens",
+      "Replace the vague summary with a structured summary that has explicit fields, like an exact seat-preference value",
+      "Switch to keeping the entire raw conversation forever in context, with no summarization applied at all",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "The problem is that the summary was vague and narrative, not that summarization itself was the wrong tool — a structured summary with explicit fields (like 'Seat preference: aisle') preserves the exact detail that a prose summary blurred away. Keeping everything forever (A) defeats the purpose of summarizing and doesn't scale; shortening further (C) would make the problem worse; and a sliding window (D) has its own separate failure mode and doesn't address why a compressed fact was lost.",
     eli10:
@@ -64,10 +64,10 @@ export const questions: QuestionSeed[] = [
     options: [
       "Quietly update the structured object to the newest value and continue without mentioning the change",
       "Ignore the new statement since the structured object already reflects the 'official' preference",
-      "Point out to the user that this appears to conflict with what they said earlier and ask which one should hold",
       "Delete the structured object and start inferring preferences fresh from the rest of the conversation",
+      "Point out to the user that this appears to conflict with what they said earlier and ask which one should hold",
     ],
-    correctIndexes: [2],
+    correctIndexes: [3],
     explanation:
       "A genuine contradiction between stated preferences should be surfaced to the user rather than silently resolved in either direction — silently overwriting (A) or silently ignoring the new statement (B) both risk acting on an assumption the user never confirmed, and discarding the whole object (D) throws away otherwise-valid tracked state. Asking which preference should take priority keeps the user in control of resolving the conflict.",
     eli10:
@@ -81,12 +81,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A single support chat thread covers three separate open tickets from the same customer, each with its own ticket number, dollar amount, and current resolution status. Which practice best keeps these from getting mixed up as the conversation continues?",
     options: [
+      "Summarize the entire thread into one paragraph and try to re-derive ticket details from that paragraph as needed",
+      "Merge all three tickets into a single combined status the moment any one of them changes",
       "Track each ticket as its own record with fields for ticket ID, amount, and status",
       "Rely on the order messages happen to appear in the transcript to infer which ticket is meant",
-      "Merge all three tickets into a single combined status the moment any one of them changes",
-      "Summarize the entire thread into one paragraph and try to re-derive ticket details from that paragraph as needed",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "Independently tracked records keyed by explicit IDs are exactly how multi-issue conversations stay reliable — each ticket's state is unambiguous no matter how the conversation flows. Relying on message order is fragile once the user jumps between tickets, merging separate tickets destroys the distinction that matters, and re-deriving specifics from a single prose summary reintroduces the precision loss that structured tracking is meant to avoid.",
     eli10:
@@ -99,10 +99,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "After calling a tool that returns a customer's full account record — including internal routing flags, duplicate metadata, and a long internal event log — an application keeps only the customer's name, plan tier, and current balance in context. What is this practice an example of?",
     options: [
-      "Progressive summarization of the conversation history",
-      "A sliding window strategy applied to tool calls",
-      "Tool result compression, keeping only the relevant fields",
       "System prompt versioning across different application requests",
+      "Progressive summarization of the conversation history",
+      "Tool result compression, keeping only the relevant fields",
+      "A sliding window strategy applied to tool calls",
     ],
     correctIndexes: [2],
     explanation:
@@ -117,12 +117,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A legal-review assistant has been summarizing a long document review conversation as it goes. When asked to quote the exact indemnification clause discussed 40 turns ago, it paraphrases instead of quoting it precisely. What is the best explanation and fix?",
     options: [
-      "Summaries are inherently lossy for exact wording, so the assistant should retrieve and quote directly from the source document",
-      "The summary should simply be made roughly twice as long so it can include more of the original words verbatim",
-      "This is expected behavior and there is simply no reliable fix for preserving exact quotes across a long conversation",
       "The assistant should switch entirely to a pure sliding window so that only the most recent turns stay exact",
+      "Summaries are inherently lossy for exact wording, so the assistant should retrieve and quote directly from the source document",
+      "This is expected behavior and there is simply no reliable fix for preserving exact quotes across a long conversation",
+      "The summary should simply be made roughly twice as long so it can include more of the original words verbatim",
     ],
-    correctIndexes: [0],
+    correctIndexes: [1],
     explanation:
       "Summarization is interpretive by nature, so exact facts and precise wording should be retrieved from the original source on demand rather than trusted to survive compression. Simply lengthening the summary (B) doesn't guarantee precision and wastes tokens; claiming there's no fix (C) ignores the well-established retrieval pattern; and a sliding window (D) doesn't help once the original clause has scrolled out of the window either.",
     eli10:
@@ -135,12 +135,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A platform feature automatically condenses the earlier portion of a long-running session into a summary once the conversation approaches its context-window limit, without the application writing any custom summarization logic. What is this feature best described as?",
     options: [
+      "A structured state object",
       "Context editing",
       "A sliding window",
       "Compaction",
-      "A structured state object",
     ],
-    correctIndexes: [2],
+    correctIndexes: [3],
     explanation:
       "Automatically summarizing earlier history into a compact block as the limit approaches is what compaction refers to. Context editing instead removes stale content under rules rather than summarizing it, so A is a different mechanism; a sliding window drops whole older messages by recency rather than condensing them, ruling out B; and a structured state object is an application-maintained data structure, not an automatic platform summarization feature, ruling out D.",
     eli10:
@@ -153,10 +153,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer wants old tool outputs and superseded reasoning removed from a long agentic session's context based on configurable rules, without those removed pieces being reduced to a summary anywhere. Which API-native mechanism matches this goal?",
     options: [
-      "Progressive summarization",
+      "A persistent reference section",
       "Context editing",
       "Compaction",
-      "A persistent reference section",
+      "Progressive summarization",
     ],
     correctIndexes: [1],
     explanation:
@@ -171,12 +171,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is deciding between building their own application-level structured state object versus leaning on an API-native context-management feature. Which of the following accurately describes the tradeoff?",
     options: [
+      "API-native mechanisms basically guarantee the application never needs to think about context limits again",
+      "Application-level approaches can essentially never be combined with API-native mechanisms in the same overall system",
       "Application-level structured state gives the developer more direct control and keeps exact facts intact verbatim",
       "API-native mechanisms are always strictly more accurate at preserving exact numeric facts than any application-level approach",
-      "Application-level approaches can essentially never be combined with API-native mechanisms in the same overall system",
-      "API-native mechanisms basically guarantee the application never needs to think about context limits again",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "The real tradeoff is control and exact-fact fidelity (favoring application-level state) versus reduced implementation burden with less visibility into internals (favoring API-native features). The claim that API-native mechanisms are always strictly more accurate overstates it as an absolute guarantee, which isn't supported; the claim that the two approaches can essentially never be combined is false since a robust design often composes both; and the claim that API-native mechanisms guarantee the application never needs to think about context limits again overstates what any automatic feature provides.",
     eli10:
@@ -191,8 +191,8 @@ export const questions: QuestionSeed[] = [
     options: [
       "Exceeding the context window is a transient network issue, so retrying with a short delay is actually the correct fix",
       "Hitting the context limit signals that the context needs to be trimmed, summarized, or compacted first, not blindly resent as-is",
-      "The request should instead be retried with only a smaller max_tokens value set, leaving the full conversation history completely untouched",
       "There is simply no reliable way to recover once the context window limit has already been exceeded in a request",
+      "The request should instead be retried with only a smaller max_tokens value set, leaving the full conversation history completely untouched",
     ],
     correctIndexes: [1],
     explanation:
@@ -208,12 +208,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A customer returns to an old support conversation two days after an order lookup tool reported their package was 'processing.' Without doing anything else, the assistant resumes the conversation and tells the customer their order is still processing, based on that earlier tool result. What is wrong with this approach?",
     options: [
-      "Nothing is wrong here; prior tool results remain perfectly valid indefinitely within the same ongoing conversation",
-      "The tool result may now be stale after two days, so the assistant should re-fetch current order status first",
-      "The assistant should instead have used a sliding window to forget the earlier tool result entirely",
       "The assistant should ask the customer to describe the current status themselves instead of using any tool",
+      "The assistant should instead have used a sliding window to forget the earlier tool result entirely",
+      "The tool result may now be stale after two days, so the assistant should re-fetch current order status first",
+      "Nothing is wrong here; prior tool results remain perfectly valid indefinitely within the same ongoing conversation",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "Time has passed, so a tool result fetched two days ago may no longer reflect reality — the correct move is a fresh, targeted re-fetch before asserting current status, not just replaying old data. Treating the old result as still valid (A) ignores exactly the risk that made it stale; a sliding window (C) addresses message recency, not tool-result freshness, and doesn't guarantee refetching; and asking the customer to self-report status (D) abandons a tool the assistant has direct access to.",
     eli10:
@@ -226,10 +226,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A returning conversation used five different tools earlier in the session (customer lookup, loyalty-tier check, address lookup, order lookup, and payment status). Only the order's shipping status is actually relevant to what the user is asking about now. What is the most appropriate way to refresh state before responding?",
     options: [
-      "Re-call all five tools from scratch to be thorough, regardless of what the user is currently asking about",
-      "Re-call only the order lookup tool, since that's the piece of state most likely to have changed",
       "Re-call none of the tools and rely entirely on the earlier results already in the transcript",
+      "Re-call only the order lookup tool, since that's the piece of state most likely to have changed",
       "Ask the user to manually provide their current shipping status instead of using any tool",
+      "Re-call all five tools from scratch to be thorough, regardless of what the user is currently asking about",
     ],
     correctIndexes: [1],
     explanation:
@@ -245,12 +245,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "While a customer support conversation is paused mid-session, a billing webhook fires indicating the customer's plan was just upgraded. The conversation resumes an hour later with the customer asking a question unrelated to billing. What is the correct way to handle the webhook event?",
     options: [
-      "Have the assistant proactively send the customer an unsolicited message announcing the plan change as soon as the webhook fires",
-      "Ignore the webhook entirely and take no action at all, since the customer didn't ask about billing right now",
       "Include the updated plan info as fresh, authoritative state in the next request, regardless of the current question",
       "Wait for the customer to explicitly bring up and ask about their plan before ever mentioning the recent update",
+      "Have the assistant proactively send the customer an unsolicited message announcing the plan change as soon as the webhook fires",
+      "Ignore the webhook entirely and take no action at all, since the customer didn't ask about billing right now",
     ],
-    correctIndexes: [2],
+    correctIndexes: [0],
     explanation:
       "The model only learns about external events if the application feeds them in, so folding the updated plan state into the next request as current, authoritative context is correct even if the immediate question is unrelated — that way the assistant won't act on stale plan info if it comes up later. Proactively messaging the customer out of turn (A) assumes a notification feature the product may not support; ignoring the update (B) risks the assistant referencing an outdated plan later in the same session; and waiting indefinitely (D) is really just a variant of ignoring it, since the state should already be current in context regardless of whether it's mentioned.",
     eli10:
@@ -265,11 +265,11 @@ export const questions: QuestionSeed[] = [
       "A long-running research assistant product updates its system prompt to adopt a notably different tone and policy. Several research conversations that began weeks ago under the old system prompt are still active. What is the recommended approach?",
     options: [
       "Apply the brand-new system prompt to every active conversation immediately, regardless of when each one originally started",
-      "Keep each ongoing conversation tied to the system prompt version it started under, with a deliberate migration plan for older ones",
       "Never update the system prompt again once even a single conversation has started using the current version of the product",
       "Let each individual user manually paste in the new system prompt themselves whenever they want to receive the update",
+      "Keep each ongoing conversation tied to the system prompt version it started under, with a deliberate migration plan for older ones",
     ],
-    correctIndexes: [1],
+    correctIndexes: [3],
     explanation:
       "Versioning system prompts and tying an ongoing conversation to the version it began under, with a considered migration path, avoids abruptly introducing a contradictory persona or policy mid-session. Swapping instantly for all conversations (A) risks exactly that contradiction; refusing to ever update (C) is impractical for a long-lived product; and pushing the burden onto users to self-manage prompt versions (D) isn't a realistic or intended pattern.",
     eli10:
@@ -283,12 +283,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A multi-agent research workflow has been running for hours, issuing dozens of web searches and accumulating retrieved passages, plus tracking a handful of exact figures (like specific statistics) it needs to cite precisely later. Which of the following practices best manages this session's context?",
     options: [
+      "Stop performing any new searches once the context window is more than half full",
+      "Fold the exact statistics into that same prose summary used for general conversational continuity",
       "Apply a sliding window to retrieved results, keeping only the most recent batches rather than every result ever fetched",
       "Keep every single retrieved passage from every search made during the entire session in context indefinitely, just in case",
-      "Fold the exact statistics into that same prose summary used for general conversational continuity",
-      "Stop performing any new searches once the context window is more than half full",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "Windowing retrieval results to the most recent, relevant batches keeps search-heavy context from ballooning with superseded results (a dedicated structured store for the exact figures, kept separate from that windowed summary, protects the precision a general summary would blur). Keeping every retrieval forever is exactly the accumulation problem windowing is meant to prevent; folding exact numbers into a prose summary risks losing precision; and arbitrarily halting new searches at a fixed fill threshold isn't a real context-management technique.",
     eli10:
@@ -302,9 +302,9 @@ export const questions: QuestionSeed[] = [
       "A creative-writing assistant maintains a short block listing established character ages, key locations, and world rules for an ongoing story, and this block is deliberately kept out of the rolling conversation summary. What best describes the purpose of this block?",
     options: [
       "It functions as a persistent reference section, protecting compact facts from being reworded during summarization",
-      "It is essentially a sliding window mechanism applied specifically to the story's ongoing details as they unfold",
       "It is an example of context editing rules actively removing stale content from the conversation entirely",
       "It effectively replaces the need for keeping any prior conversation history around in context at all",
+      "It is essentially a sliding window mechanism applied specifically to the story's ongoing details as they unfold",
     ],
     correctIndexes: [0],
     explanation:
@@ -319,12 +319,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team designing a long-lived assistant wants a context-management architecture that composes multiple strategies well. Which design choice reflects the recommended way to combine application-level and API-native approaches?",
     options: [
-      "Maintain an application-level structured object for facts that must remain exact, such as confirmed order details",
-      "Rely solely on an API-native compaction feature for every kind of information, including exact numeric facts, to minimize engineering effort",
       "Avoid API-native features entirely, since only application-level code can ever really be trusted",
+      "Maintain an application-level structured object for facts that must remain exact, such as confirmed order details",
       "Let the structured object be silently overwritten by whatever compaction produces, so there is only one source of truth",
+      "Rely solely on an API-native compaction feature for every kind of information, including exact numeric facts, to minimize engineering effort",
     ],
-    correctIndexes: [0],
+    correctIndexes: [1],
     explanation:
       "The well-supported pattern is to keep exact-fact-bearing state in an application-maintained structured object (while letting an API-native mechanism like compaction separately handle general conversational overflow). Relying on compaction alone for exact facts risks the precision loss summarization is prone to; refusing API-native features altogether discards a useful tool for reducing plumbing; and letting compaction overwrite the structured object undermines the entire point of keeping exact facts protected in their own store.",
     eli10:
@@ -338,12 +338,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A command-line coding assistant mostly gets questions like 'what does this command do' and 'what did I just run,' and users almost never refer back to something from dozens of commands earlier. Which context-management strategy is the best fit for this pattern, and why?",
     options: [
-      "Progressive summarization, since the top priority is long-term narrative continuity maintained across the whole session",
-      "A sliding window that keeps only the most recent exchanges, since follow-ups mostly depend on recent messages",
       "A structured state object that gets explicitly updated on every single command the user happens to run",
       "Context editing rules that immediately clear out every tool result the instant it is produced",
+      "A sliding window that keeps only the most recent exchanges, since follow-ups mostly depend on recent messages",
+      "Progressive summarization, since the top priority is long-term narrative continuity maintained across the whole session",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "Sliding windows are a good match precisely when most follow-ups only depend on the last few exchanges, which is the case here — it's simple and cheap and doesn't need to preserve anything from far earlier. Progressive summarization (A) is built for long-term narrative continuity, which this use case doesn't need; a structured state object (C) is meant for tracking specific current values, not general conversational flow; and clearing every tool result instantly (D) would remove information the user might still ask about within the next couple of messages.",
     eli10:
@@ -356,12 +356,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team says they've implemented 'progressive summarization,' but their version actually rewrites the entire transcript — including the last two exchanges — into a single compressed summary after every turn. Users often notice the assistant misses details they stated only moments earlier. What's the problem, and what should change?",
     options: [
-      "Nothing is wrong — summarizing the full transcript, including the most recent turns, every time is exactly what progressive summarization means",
       "The team should keep recent turns verbatim and only fold older, earlier blocks into the structured summary instead",
-      "The team should drop summarization altogether and switch to a sliding window over the last three messages",
       "The team should summarize only the very first message of the conversation and never touch anything after that",
+      "Nothing is wrong — summarizing the full transcript, including the most recent turns, every time is exactly what progressive summarization means",
+      "The team should drop summarization altogether and switch to a sliding window over the last three messages",
     ],
-    correctIndexes: [1],
+    correctIndexes: [0],
     explanation:
       "Progressive summarization is meant to replace older blocks with a structured summary while leaving recent turns verbatim — compressing the most recent exchanges defeats the purpose and is exactly why fresh details are getting lost. Option A describes the team's broken implementation, not the correct pattern; a sliding window (C) solves a different problem and would drop long-term narrative continuity entirely; and only ever summarizing the first message (D) doesn't address the recurring buildup of older turns over a long session.",
     eli10:
@@ -374,12 +374,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An IDE-integrated assistant needs to always know the developer's current formatting preferences — tabs vs. spaces, maximum line length, and preferred language — which occasionally change mid-session. What is the most reliable way to track this?",
     options: [
-      "Re-read the entire conversation transcript on every request and infer the current preferences from whatever was said most recently",
       "Maintain a small explicit structured preferences object included in every request and updated only when a preference changes",
-      "Summarize the last five messages into a short narrative paragraph and try to infer preferences from that paragraph",
       "Apply a sliding window and assume whichever preferences appear in the most recent ten messages are still current",
+      "Summarize the last five messages into a short narrative paragraph and try to infer preferences from that paragraph",
+      "Re-read the entire conversation transcript on every request and infer the current preferences from whatever was said most recently",
     ],
-    correctIndexes: [1],
+    correctIndexes: [0],
     explanation:
       "An explicit structured object that's included every request and updated precisely when a preference changes is the reliable way to track 'what's currently true,' since it doesn't depend on inference or on the preference having been mentioned recently. Re-inferring from the full transcript (A) or a recent narrative summary (C) risks misreading old versus new statements, and assuming the answer lives somewhere in the last ten messages (D) fails the moment a preference was set earlier and never repeated.",
     eli10:
@@ -393,12 +393,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "After a CI pipeline run finishes, a tool call returns a massive payload: full build logs, environment variable dumps, and a timestamped log line for every step. The application keeps only the overall build status and the names of any failing tests in context going forward. What does this practice illustrate?",
     options: [
-      "Progressive summarization of the entire conversation history accumulated so far",
-      "Tool result compression — extracting only the fields relevant to the ongoing task",
-      "A sliding window strategy applied specifically to recent CI pipeline runs",
       "System prompt versioning tracked separately across different CI pipeline configurations",
+      "A sliding window strategy applied specifically to recent CI pipeline runs",
+      "Tool result compression — extracting only the fields relevant to the ongoing task",
+      "Progressive summarization of the entire conversation history accumulated so far",
     ],
-    correctIndexes: [1],
+    correctIndexes: [2],
     explanation:
       "Pulling out just the build status and failing test names from a huge CI payload, and dropping full logs and environment dumps, is tool result compression — keeping what's relevant to the task and discarding the verbose rest. It isn't progressive summarization since no conversational history is being condensed (A); it isn't a sliding window since nothing is being dropped by message recency (C); and it has nothing to do with system prompt versions (D).",
     eli10:
@@ -411,12 +411,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "Which of the following correctly matches a kind of information to the context-management strategy best suited for it?",
     options: [
-      "Recent conversational flow, where follow-ups rarely look further back than a few exchanges, suits a sliding window",
-      "Exact recurring numeric facts that must stay precise suit folding them into a progressive narrative summary",
       "A persistent reference bible of world facts or safety-critical information suits a sliding window over the last few messages",
       "Long-term narrative continuity across a very long session suits deleting all older turns with no replacement",
+      "Recent conversational flow, where follow-ups rarely look further back than a few exchanges, suits a sliding window",
+      "Exact recurring numeric facts that must stay precise suit folding them into a progressive narrative summary",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "A sliding window is well suited to conversational flow that only depends on recent exchanges (an explicit structured state object, kept updated on change, is the separate right fit for current preferences that can shift over time). Exact numeric facts are precisely what gets blurred by narrative summarization, a persistent reference bible needs its own retained section rather than being subject to recency-based dropping, and long-term continuity calls for progressive summarization, not outright deletion with nothing kept.",
     eli10:
@@ -429,10 +429,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A team is deciding whether to build one comprehensive fact store upfront that tries to anticipate every fact a long-running assistant might ever need, versus fetching specific facts on demand only when a question actually requires them. Which approach is recommended as scaling better?",
     options: [
-      "Building one comprehensive fact store upfront that anticipates every possible future need",
+      "Applying a sliding window that keeps only the ten most recently discussed facts",
       "Fetching facts on demand, retrieving only what's actually needed as questions arise",
       "Folding all anticipated facts into a single narrative summary maintained from the start",
-      "Applying a sliding window that keeps only the ten most recently discussed facts",
+      "Building one comprehensive fact store upfront that anticipates every possible future need",
     ],
     correctIndexes: [1],
     explanation:
@@ -448,9 +448,9 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An assistant extracts totals and line items from dozens of uploaded invoices over a long session, and is later asked to recall the exact total from an invoice processed much earlier. Which design best preserves that accuracy?",
     options: [
-      "A running narrative summary describing which invoices were discussed so far and roughly what they contained",
-      "A small structured fact table mapping invoice number to exact total, referenced directly instead of any summary",
       "A sliding window that keeps only the three most recently processed invoices in context",
+      "A small structured fact table mapping invoice number to exact total, referenced directly instead of any summary",
+      "A running narrative summary describing which invoices were discussed so far and roughly what they contained",
       "Context editing rules that automatically clear out invoice details once a new invoice gets uploaded",
     ],
     correctIndexes: [1],
@@ -466,10 +466,10 @@ export const questions: QuestionSeed[] = [
     prompt:
       "During a multi-hour coding session, a developer asks the assistant to revisit and adjust a change that was made to a file roughly two hours and many turns earlier. The session uses progressive summarization. Which underlying design correctly supports the assistant still being able to help with this?",
     options: [
-      "The entire session, including even the very last exchange, gets rewritten into one short paragraph after every single turn",
-      "The older portion, including that two-hour-old edit, was folded into a structured summary while recent turns stayed verbatim",
       "Only the last ten messages are ever kept in context, and everything before that gets discarded outright",
+      "The older portion, including that two-hour-old edit, was folded into a structured summary while recent turns stayed verbatim",
       "All context older than thirty minutes gets permanently deleted, with absolutely nothing kept in its place afterward",
+      "The entire session, including even the very last exchange, gets rewritten into one short paragraph after every single turn",
     ],
     correctIndexes: [1],
     explanation:
@@ -484,9 +484,9 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A collaborative fiction app lets a user and the assistant co-write a novel across many months. What matters most to the user is the overall consistency of plot and character arcs, not recalling the exact phrasing of any single sentence from chapters ago. Which strategy is the best primary fit?",
     options: [
-      "A sliding window, since only the most recently written chapter should ever really matter to the unfolding story",
-      "Progressive summarization, replacing older chapters with a structured summary of characters and plot threads",
       "Tool result compression, since no external tools are ever really involved in a collaborative writing session",
+      "Progressive summarization, replacing older chapters with a structured summary of characters and plot threads",
+      "A sliding window, since only the most recently written chapter should ever really matter to the unfolding story",
       "Context editing that deletes older chapters outright, leaving absolutely nothing kept in their place afterward",
     ],
     correctIndexes: [1],
@@ -502,12 +502,12 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A due-diligence assistant reviewing many long documents over one extended session needs three things at once: a general sense of what's been covered so far, the ability to pull exact wording from any document when asked, and reliable recall of a handful of recurring numeric figures. Which design choice best satisfies all of this together?",
     options: [
-      "A narrative summary for continuity, direct retrieval from source documents for exact quotes, and a separate structured fact table for the numeric figures",
-      "A narrative summary for continuity, direct retrieval from source documents for exact quotes, and the numeric figures folded into that same narrative summary",
       "A narrative summary covering both continuity and exact quotes, plus a separate structured fact table for the numeric figures",
+      "A narrative summary for continuity, direct retrieval from source documents for exact quotes, and the numeric figures folded into that same narrative summary",
+      "A narrative summary for continuity, direct retrieval from source documents for exact quotes, and a separate structured fact table for the numeric figures",
       "A sliding window discarding older documents, plus a separate structured fact table for the numeric figures",
     ],
-    correctIndexes: [0],
+    correctIndexes: [2],
     explanation:
       "The recommended composition is a narrative summary for interpretive continuity, direct source retrieval for exact claims, and a dedicated structured fact table for recurring numbers — all three needs covered by the right tool for each. Folding the figures into the summary reintroduces the precision loss summarization is prone to for numbers specifically. Relying on the summary for exact quotes too loses precision there instead. And a sliding window would discard older documents the user might still need to pull an exact quote from, breaking both continuity and retrieval.",
     eli10:
