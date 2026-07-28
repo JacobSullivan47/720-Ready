@@ -43,7 +43,6 @@ const providers: Provider[] = [
         name: user.name,
         email: user.email,
         image: user.image,
-        emailVerified: user.emailVerified,
       };
     },
   }),
@@ -66,26 +65,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers,
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        token.emailVerified = user.emailVerified ?? null;
-      } else if (trigger === "update" && token.sub) {
-        // Re-read from the DB so a client-side `update()` call (e.g. after
-        // verifying email in another tab) reflects without a full re-login —
-        // the JWT otherwise only carries whatever was true at sign-in.
-        const fresh = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: { emailVerified: true },
-        });
-        if (fresh) token.emailVerified = fresh.emailVerified;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
-        session.user.emailVerified = token.emailVerified ?? null;
       }
       return session;
     },

@@ -1,9 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useReadiness } from "@/hooks/use-readiness";
 import { useProgress } from "@/hooks/use-progress";
 import { ProgressBar } from "@/components/progress-bar";
@@ -22,19 +20,10 @@ function readinessTone(pct: number): "danger" | "warning" | "success" {
 
 const TOTAL_OVERVIEWS = domains.length + scenarios.length;
 
-function DashboardPageInner() {
+export default function DashboardPage() {
   const { readiness, streak, mockExamHistory, attempts, loading, error } = useReadiness();
   const { client, status } = useProgress();
-  const { data: session } = useSession();
-  const searchParams = useSearchParams();
   const [viewedOverviews, setViewedOverviews] = useState<ViewedOverviews>({ domainKeys: [], scenarioKeys: [] });
-  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
-
-  const showWelcomeBanner =
-    searchParams.get("welcome") === "1" &&
-    status === "authenticated" &&
-    !session?.user?.emailVerified &&
-    !welcomeDismissed;
 
   useEffect(() => {
     client.getViewedOverviews().then(setViewedOverviews).catch(() => {});
@@ -68,26 +57,6 @@ function DashboardPageInner() {
           </Link>
         )}
       </div>
-
-      {showWelcomeBanner && (
-        <div className="mt-6 flex items-start justify-between gap-3 rounded-lg border border-brand-soft bg-brand-soft p-4 text-sm text-brand-strong">
-          <p>
-            Welcome! We&apos;ve sent a confirmation link to <strong>{session?.user?.email}</strong> — verify
-            your email to finish securing your account. (You can resend it anytime from your{" "}
-            <Link href="/account" className="underline">
-              Account page
-            </Link>
-            .)
-          </p>
-          <button
-            onClick={() => setWelcomeDismissed(true)}
-            aria-label="Dismiss"
-            className="shrink-0 text-brand-strong hover:opacity-70"
-          >
-            ×
-          </button>
-        </div>
-      )}
 
       {error && (
         <div className="mt-8 rounded-lg border border-danger-soft bg-danger-soft p-5 text-sm text-danger">
@@ -286,13 +255,5 @@ function DashboardPageInner() {
         </>
       )}
     </div>
-  );
-}
-
-export default function DashboardPage() {
-  return (
-    <Suspense>
-      <DashboardPageInner />
-    </Suspense>
   );
 }
