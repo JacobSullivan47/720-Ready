@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { TutorUnlimitedToggle } from "./TutorUnlimitedToggle";
+import { ReseedContentButton } from "./ReseedContentButton";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -40,6 +41,10 @@ export default async function AdminPage() {
       <p className="mt-1 text-sm text-foreground-muted">
         {users.length} registered account{users.length === 1 ? "" : "s"}.
       </p>
+
+      <div className="mt-6">
+        <ReseedContentButton />
+      </div>
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[640px] text-left text-sm">
