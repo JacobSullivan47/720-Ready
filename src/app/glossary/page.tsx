@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useContentBank } from "@/hooks/use-content-bank";
 import { domains } from "@/content/domains";
 import type { DomainKey } from "@/content/types";
 
-export default function GlossaryPage() {
+function GlossaryPageInner() {
+  const searchParams = useSearchParams();
   const { bank, loading } = useContentBank();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [domainFilter, setDomainFilter] = useState<DomainKey | "ALL">("ALL");
 
   const entries = useMemo(() => {
@@ -82,5 +84,13 @@ export default function GlossaryPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function GlossaryPage() {
+  return (
+    <Suspense>
+      <GlossaryPageInner />
+    </Suspense>
   );
 }
