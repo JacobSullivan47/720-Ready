@@ -536,6 +536,9 @@ export default function ExamPage() {
         <div className="mt-6">
           <ShareScoreCard scaledScore={result.scaledScore ?? 0} passed={!!result.passed} />
         </div>
+        <p className="mt-3 text-center text-sm text-foreground-muted">
+          {result.questions.filter((q) => q.isCorrect).length}/{result.questions.length} correct
+        </p>
 
         <div className="mt-8">
           <h2 className="text-lg font-semibold">Per-domain breakdown</h2>
