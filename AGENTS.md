@@ -38,8 +38,12 @@ hard way.
   editing option text and re-seeding never changes IDs — but editing the
   prompt text or domain does, which orphans any existing attempts/bookmarks
   tied to the old ID.
-- **Mastery blend** (`src/lib/mastery.ts`): `MASTERY_WEIGHTS = { cards: 0.3,
-  quiz: 0.5, exercises: 0.2 }`. Flashcards/questions need
+- **Mastery blend** (`src/lib/mastery.ts`): `MASTERY_WEIGHTS = { cards: 0.25,
+  quiz: 0.35, exercises: 0.15, exam: 0.25 }`. Quiz accuracy only counts
+  `PRACTICE`-mode question attempts — `MOCK`-mode attempts are excluded and
+  instead feed the `exam` pillar, which aggregates `correct`/`total` across
+  every completed mock exam's `domainBreakdown`, per domain (summed across
+  all exams taken, not just the latest). Flashcards/questions need
   `MASTERY_MIN_REPETITIONS = 2` correct reps to count as mastered; exercises
   need just 1. Flashcard "mastered" also requires
   `CARD_MASTERY_RETENTION_CUTOFF = 0.75` retention.

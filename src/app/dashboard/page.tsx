@@ -169,7 +169,7 @@ export default function DashboardPage() {
                     value={d.masteryPct}
                     tone={readinessTone(d.masteryPct)}
                   />
-                  <div className="mt-2 grid grid-cols-1 gap-3 text-xs text-foreground-muted sm:grid-cols-3">
+                  <div className="mt-2 grid grid-cols-1 gap-3 text-xs text-foreground-muted sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                       Flashcard retention: {d.cardRetentionPct}% ({d.cardsMastered}/{d.cardsTotal} mastered,{" "}
                       {d.cardsReviewed} reviewed)
@@ -182,15 +182,20 @@ export default function DashboardPage() {
                       Exercises mastered: {d.exerciseMasteryPct}% ({d.exercisesMastered} mastered /{" "}
                       {d.exercisesTotal} total)
                     </div>
+                    <div>
+                      Mock exam accuracy: {d.examAccuracyPct}% ({d.examCorrect}/{d.examTotal} correct)
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
             <p className="mt-2 text-xs text-foreground-muted">
-              A question only counts toward mastery once you&apos;ve gotten it right at least twice; an exercise
-              counts after one correct attempt; a flashcard counts once its spaced-repetition retention score
-              crosses 75%. Domain mastery weighs questions 50%, flashcards 30%, and exercises 20% — full mastery
-              requires engaging with all three.
+              A practice question only counts toward mastery once you&apos;ve gotten it right at least twice
+              (mock-exam questions are scored separately, via mock exam accuracy, not here); an exercise counts
+              after one correct attempt; a flashcard counts once its spaced-repetition retention score crosses
+              75%; mock exam accuracy is your combined correct/total across every mock exam you&apos;ve
+              completed. Domain mastery weighs questions 35%, flashcards 25%, mock exams 25%, and exercises 15%
+              — full mastery requires engaging with all four.
             </p>
           </div>
 

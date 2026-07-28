@@ -37,7 +37,7 @@ export function useReadiness() {
           (cardsByDomain[card.domainKey] ??= []).push(card.id);
         }
 
-        setReadiness(computeReadiness(cardsByDomain, cardStates, fetchedAttempts, exerciseAttempts));
+        setReadiness(computeReadiness(cardsByDomain, cardStates, fetchedAttempts, exerciseAttempts, history));
         setStreak(computeCurrentStreak(studyDates));
         setMockExamHistory(history);
         setAttempts(fetchedAttempts);
