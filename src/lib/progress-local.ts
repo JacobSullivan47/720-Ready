@@ -127,6 +127,39 @@ export const localProgressClient: ProgressClient = {
     return readJson<MockExamSummary[]>(KEYS.mockExams, []);
   },
 
+  async getMockExamResult(examId) {
+    const summary = readJson<MockExamSummary[]>(KEYS.mockExams, []).find((h) => h.id === examId);
+    if (!summary || !summary.completedAt) return null;
+
+    const bank = await fetchContentBank();
+    const byId = new Map(bank.questions.map((q) => [q.id, q]));
+    const attempts = readJson<AttemptRecord[]>(KEYS.attempts, []).filter(
+      (a) => a.mockExamId === examId,
+    );
+
+    const questions: GradedMockExamQuestion[] = attempts.flatMap((a) => {
+      const q = byId.get(a.questionId);
+      if (!q) return [];
+      return [
+        {
+          id: q.id,
+          domainKey: q.domainKey,
+          scenarioKey: q.scenarioKey ?? undefined,
+          type: q.type,
+          prompt: q.prompt,
+          options: q.options,
+          correctIndexes: q.correctIndexes,
+          explanation: q.explanation,
+          eli10: q.eli10,
+          selectedIndexes: a.selectedIndexes,
+          isCorrect: a.isCorrect,
+        },
+      ];
+    });
+
+    return { ...summary, questions };
+  },
+
   async startMockExam() {
     const bank = await fetchContentBank();
     const normalized = bank.questions.map((q) => ({ ...q, scenarioKey: q.scenarioKey ?? undefined }));

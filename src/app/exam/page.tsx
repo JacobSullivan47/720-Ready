@@ -41,6 +41,9 @@ export default function ExamPage() {
   const [result, setResult] = useState<MockExamResult | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [viewingPastResult, setViewingPastResult] = useState(false);
+  const [loadingHistoryId, setLoadingHistoryId] = useState<string | null>(null);
+  const [exiting, setExiting] = useState(false);
   const submittedRef = useRef(false);
   const remainingSecRef = useRef(0);
 
@@ -54,10 +57,21 @@ export default function ExamPage() {
       submittedRef.current = true;
       const res = await client.submitMockExam(examId, finalAnswers);
       setResult(res);
+      setViewingPastResult(false);
       setPhase("results");
     },
     [client],
   );
+
+  async function viewPastExam(examId: string) {
+    setLoadingHistoryId(examId);
+    const res = await client.getMockExamResult(examId).finally(() => setLoadingHistoryId(null));
+    if (!res) return;
+    setResult(res);
+    setReviewing(false);
+    setViewingPastResult(true);
+    setPhase("results");
+  }
 
   useEffect(() => {
     Promise.all([client.getMockExamHistory(), client.getActiveMockExam()]).then(([h, active]) => {
@@ -130,6 +144,7 @@ export default function ExamPage() {
     setRemainingSec(newExam.timeLimitSec);
     setResult(null);
     setReviewing(false);
+    setViewingPastResult(false);
     setPhase("in-progress");
     setStarting(false);
   }
@@ -143,7 +158,21 @@ export default function ExamPage() {
     setRemainingSec(activeExam.remainingSec);
     setResult(null);
     setReviewing(false);
+    setViewingPastResult(false);
     setPhase("in-progress");
+  }
+
+  async function saveAndExit() {
+    if (!exam || exiting) return;
+    setExiting(true);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    await client
+      .saveMockExamProgress(exam.id, answers, current, remainingSecRef.current)
+      .catch(() => {});
+    setActiveExam({ ...exam, answers, currentIndex: current, remainingSec: remainingSecRef.current });
+    setExam(null);
+    setExiting(false);
+    setPhase("start");
   }
 
   async function deleteExam(examId: string) {
@@ -246,7 +275,11 @@ export default function ExamPage() {
               {history.map((h) => (
                 <div
                   key={h.id}
-                  className="flex items-center justify-between rounded-lg border border-border bg-surface p-4 text-sm"
+                  onClick={() => h.completedAt && viewPastExam(h.id)}
+                  className={clsx(
+                    "flex items-center justify-between rounded-lg border border-border bg-surface p-4 text-sm",
+                    h.completedAt && "cursor-pointer transition-colors hover:bg-surface-muted",
+                  )}
                 >
                   <div>
                     <p className="font-medium">
@@ -255,6 +288,11 @@ export default function ExamPage() {
                     <p className="text-foreground-muted">
                       {h.scenarioKeys.map(scenarioName).join(", ")}
                     </p>
+                    {h.completedAt && (
+                      <p className="mt-1 text-xs text-brand">
+                        {loadingHistoryId === h.id ? "Loading…" : "View full results →"}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-4">
                     {h.scaledScore != null && (
@@ -266,7 +304,10 @@ export default function ExamPage() {
                       </div>
                     )}
                     <button
-                      onClick={() => deleteExam(h.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteExam(h.id);
+                      }}
                       aria-label="Delete this exam"
                       className="rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground-muted hover:border-danger hover:text-danger"
                     >
@@ -289,6 +330,13 @@ export default function ExamPage() {
 
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <button
+          onClick={saveAndExit}
+          disabled={exiting}
+          className="mb-3 inline-flex items-center gap-1 text-sm text-foreground-muted hover:text-foreground disabled:opacity-60"
+        >
+          {exiting ? "Saving…" : "← Save & exit"}
+        </button>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4">
           <div className="text-sm">
             <span className="font-semibold">
@@ -319,7 +367,7 @@ export default function ExamPage() {
                   i === current
                     ? "bg-brand text-white"
                     : answered
-                      ? "bg-success-soft text-success"
+                      ? "bg-brand-soft text-brand-strong"
                       : "bg-surface-muted text-foreground-muted hover:bg-border",
                 )}
                 aria-label={`Question ${i + 1}${answered ? ", answered" : ", unanswered"}`}
@@ -458,7 +506,21 @@ export default function ExamPage() {
 
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Your results</h1>
+        {viewingPastResult && (
+          <button
+            onClick={() => {
+              setViewingPastResult(false);
+              setResult(null);
+              setPhase("start");
+            }}
+            className="text-sm text-brand hover:underline"
+          >
+            ← Back to history
+          </button>
+        )}
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight">
+          {viewingPastResult ? "Exam results" : "Your results"}
+        </h1>
         <div className="mt-6">
           <ShareScoreCard scaledScore={result.scaledScore ?? 0} passed={!!result.passed} />
         </div>

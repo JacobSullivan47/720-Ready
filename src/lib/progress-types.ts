@@ -94,6 +94,7 @@ export interface ProgressClient {
   toggleBookmark(itemType: BookmarkItemType, id: string): Promise<boolean>;
 
   getMockExamHistory(): Promise<MockExamSummary[]>;
+  getMockExamResult(examId: string): Promise<MockExamResult | null>;
   getActiveMockExam(): Promise<MockExamInProgress | null>;
   startMockExam(): Promise<MockExamInProgress>;
   saveMockExamProgress(

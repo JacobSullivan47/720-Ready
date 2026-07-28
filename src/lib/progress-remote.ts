@@ -1,7 +1,12 @@
 "use client";
 
 import type { SrsState } from "./srs";
-import type { ActivePracticeSession, MockExamInProgress, ProgressClient } from "./progress-types";
+import type {
+  ActivePracticeSession,
+  MockExamInProgress,
+  MockExamResult,
+  ProgressClient,
+} from "./progress-types";
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -51,6 +56,16 @@ export const remoteProgressClient: ProgressClient = {
 
   async getMockExamHistory() {
     return jsonFetch("/api/exam/history");
+  },
+
+  async getMockExamResult(examId) {
+    const res = await fetch(`/api/exam/${examId}`);
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? `Request to /api/exam/${examId} failed (${res.status})`);
+    }
+    return res.json() as Promise<MockExamResult>;
   },
 
   async getActiveMockExam() {
