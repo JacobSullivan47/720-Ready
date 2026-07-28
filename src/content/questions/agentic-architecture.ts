@@ -288,13 +288,13 @@ export const questions: QuestionSeed[] = [
       "A coordinator is designing the output format that each research subagent must return for every claim it finds, so that a later synthesis step can merge results while preserving provenance. Which of the following best describes the fields most important to include alongside the claim itself?",
     options: [
       "An identifier or location pointing to the specific source, plus the date the claim was originally reported",
-      "The full raw HTML or PDF text of every page the subagent visited",
-      "A running token count of how much context the subagent consumed",
-      "The subagent's complete internal reasoning trace for every intermediate step it took",
+      "The full raw HTML or PDF text of every page the subagent visited, plus a running token count of context consumed",
+      "A running token count of how much context the subagent consumed, plus the subagent's complete internal reasoning trace",
+      "The subagent's complete internal reasoning trace for every step, plus the full raw HTML or PDF text of every page visited",
     ],
     correctIndexes: [0],
     explanation:
-      "A source identifier/location and a date are exactly what preserve provenance and let a synthesis step cite claims and correctly frame older versus newer findings. Raw HTML or full page text is far more than the next step needs and reintroduces the raw-dump problem instead of a structured summary. A token-count tally doesn't help establish where a claim came from or how current it is. A full internal reasoning trace is unnecessary detail for synthesis and, again, works against passing a compact structured record forward.",
+      "A source identifier/location and a date are exactly what preserve provenance and let a synthesis step cite claims and correctly frame older versus newer findings. Raw HTML or full page text is far more than the next step needs and reintroduces the raw-dump problem instead of a structured summary. A token-count tally doesn't help establish where a claim came from or how current it is. A full internal reasoning trace is unnecessary detail for synthesis and, again, works against passing a compact structured record forward — none of these three pairings include either field that actually matters.",
     eli10:
       "If you're collecting facts for a school report, the two most useful things to jot down next to each fact are 'where did this come from' and 'when was this true' — not the entire website you read it on or a diary of everything you were thinking while reading it.",
     difficulty: "MEDIUM",
@@ -305,14 +305,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A platform team is choosing control-flow patterns for two different jobs: (1) generating a weekly sales digest that always follows the same five fixed steps, and (2) triaging a newly reported production incident whose cause is unknown and where each finding changes what to check next. Which of the following correctly pairs each job to its best-fitting pattern?",
     options: [
-      "The digest fits prompt chaining, since its steps are always the same; the triage fits dynamic decomposition, since each finding drives the next check",
-      "The weekly sales digest fits dynamic decomposition, since digests benefit from being re-evaluated fresh every week",
-      "The incident triage fits prompt chaining, since incidents should always be checked in the same fixed order for consistency",
-      "Both jobs fit routing equally well, since routing can substitute for either chaining or decomposition",
+      "The digest fits prompt chaining, and the triage fits dynamic decomposition",
+      "The digest fits dynamic decomposition, and the triage fits prompt chaining",
+      "The digest fits prompt chaining, and the triage also fits prompt chaining",
+      "The digest fits dynamic decomposition, and the triage also fits dynamic decomposition",
     ],
     correctIndexes: [0],
     explanation:
-      "The sales digest's fixed, always-identical sequence is the definition of a good prompt-chaining fit, and the incident triage's findings-drive-next-step nature is the definition of dynamic decomposition. Claiming the digest needs dynamic decomposition ignores that its steps never actually change. Forcing a fixed order onto incident triage is the classic anti-pattern of applying a rigid script to a problem whose real cause a checklist would likely miss. Routing solves a classification-and-dispatch problem, not either of these two shapes, so it isn't a substitute for both.",
+      "The sales digest's fixed, always-identical sequence is the definition of a good prompt-chaining fit, and the incident triage's findings-drive-next-step nature is the definition of dynamic decomposition — the pairing is reversed for each job in the second option, and the third and fourth options force the same pattern onto both jobs despite one having fixed steps and the other not. Forcing a fixed order onto incident triage is the classic anti-pattern of applying a rigid script to a problem whose real cause a checklist would likely miss, and treating the digest as needing case-by-case decomposition ignores that its steps never actually change.",
     eli10:
       "Baking the same recipe every week is best done the same way every time, but solving a mystery means following each new clue wherever it leads — you wouldn't want to swap those two approaches around.",
     difficulty: "MEDIUM",

@@ -271,13 +271,13 @@ export const questions: QuestionSeed[] = [
       "Which of the following is an accurate distinction between the built-in tools Grep and Glob in Claude Code?",
     options: [
       "Grep searches for patterns inside file contents, while Glob matches files by name or path pattern",
-      "Glob can be used to search for a specific error string buried inside a JSON config value's contents",
-      "Grep and Glob are simply two different names for the exact same underlying search behavior internally",
-      "Glob is only ever usable on whole directories, never on individual files by themselves",
+      "Glob searches for patterns inside file contents, while Grep matches files by name or path pattern",
+      "Grep and Glob both search for patterns inside file contents, in exactly the same way",
+      "Grep and Glob both only match files by name or path pattern, and neither one looks at file contents",
     ],
     correctIndexes: [0],
     explanation:
-      "Grep vs. Glob is precisely a contents-search vs. filename/path-search distinction — mistaking one for the other, especially reaching for Glob when the target text lives inside a file, is a well-known pitfall. Glob cannot see inside a JSON value, so it can't find an error string buried in file content — that's a Grep job. The two tools are not interchangeable or identical. Glob's scope is about matching filename/path patterns, not a restriction to directories only.",
+      "Grep vs. Glob is precisely a contents-search vs. filename/path-search distinction — mistaking one for the other, especially reaching for Glob when the target text lives inside a file, is a well-known pitfall. The second option has the two tools' roles reversed. The third and fourth options collapse the distinction entirely, claiming they both work the same way — one claiming both search contents, the other claiming neither does — when in fact each tool covers exactly one of those two jobs.",
     eli10:
       "Grep reads what's written inside books; Glob just looks at the titles on the spines. Mixing them up — like checking spines to find a sentence hidden inside a book — is a common mistake, and they are not the same tool doing the same thing.",
     difficulty: "MEDIUM",

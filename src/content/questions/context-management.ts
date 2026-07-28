@@ -502,14 +502,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A due-diligence assistant reviewing many long documents over one extended session needs three things at once: a general sense of what's been covered so far, the ability to pull exact wording from any document when asked, and reliable recall of a handful of recurring numeric figures. Which design choice best satisfies all of this together?",
     options: [
-      "Maintain a narrative summary for continuity, retrieve exact quotes from source documents, and keep a separate structured fact table for the numeric figures",
-      "Fold the recurring numeric figures into the same narrative summary so there is only one artifact to maintain",
-      "Rely on the narrative summary alone for exact quotes as well as general continuity, since it is the single most complete record",
-      "Apply a sliding window to the document set, discarding any document older than the last three ever reviewed",
+      "A narrative summary for continuity, direct retrieval from source documents for exact quotes, and a separate structured fact table for the numeric figures",
+      "A narrative summary for continuity, direct retrieval from source documents for exact quotes, and the numeric figures folded into that same narrative summary",
+      "A narrative summary covering both continuity and exact quotes, plus a separate structured fact table for the numeric figures",
+      "A sliding window discarding older documents, plus a separate structured fact table for the numeric figures",
     ],
     correctIndexes: [0],
     explanation:
-      "The recommended composition is a narrative summary for interpretive continuity, direct source retrieval for exact claims, and a dedicated structured fact table for recurring numbers. Folding the figures into the summary, or relying on the summary for exact quotes too, reintroduces the precision loss summarization is prone to, and windowing out older documents would remove documents the user might still need to reference.",
+      "The recommended composition is a narrative summary for interpretive continuity, direct source retrieval for exact claims, and a dedicated structured fact table for recurring numbers — all three needs covered by the right tool for each. Folding the figures into the summary reintroduces the precision loss summarization is prone to for numbers specifically. Relying on the summary for exact quotes too loses precision there instead. And a sliding window would discard older documents the user might still need to pull an exact quote from, breaking both continuity and retrieval.",
     eli10:
       "For a big review job, it helps to keep one big-picture recap for the general story, go back to the original pages whenever you need an exact quote, and keep a separate small list just for the important numbers — squishing everything into one fuzzy recap, or throwing away older documents, loses exactly the stuff you still need.",
     difficulty: "HARD",

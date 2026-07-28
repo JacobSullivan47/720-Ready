@@ -490,14 +490,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "A developer is reviewing how the four tool_choice settings — auto, any, a named/specific tool, and none — actually behave. Which statement is accurate?",
     options: [
-      "auto is the default setting and leaves both whether to call a tool at all, and which tool to call, up to the model",
+      "auto is the default setting and leaves whether to call a tool at all up to the model",
       "A named/specific tool setting still allows the model to reply with plain text instead, if it determines no tool is truly necessary for the user's message.",
       "auto and any are functionally identical in every situation, since both settings were designed to eventually result in a tool call.",
       "Setting tool_choice to none disables tool use for that turn and also removes the tool schemas from that request's payload entirely, since they're considered unnecessary once tool use is disabled.",
     ],
     correctIndexes: [0],
     explanation:
-      "auto is the default and leaves both decisions — whether to call a tool, and which one — open to the model (any is the related setting that narrows this to 'a tool call is mandatory' while still leaving the choice of tool open). A named/specific tool setting removes the plain-text option entirely rather than still permitting it. Treating auto and any as identical is exactly the common confusion the two settings are meant to be distinguished from, since auto makes tool use optional while any makes it mandatory. And none disabling tool use for a turn says nothing about the tool schemas being stripped from the payload — that's an unsupported extra claim.",
+      "auto is the default and leaves it up to the model whether to call a tool at all (it also leaves which tool to call open, a related but separate fact; any is the setting that narrows things to 'a tool call is mandatory' while still leaving the choice of tool open). A named/specific tool setting removes the plain-text option entirely rather than still permitting it. Treating auto and any as identical is exactly the common confusion the two settings are meant to be distinguished from, since auto makes tool use optional while any makes it mandatory. And none disabling tool use for a turn says nothing about the tool schemas being stripped from the payload — that's an unsupported extra claim.",
     eli10:
       "Two true facts: 'use your judgment, tools optional' is the default setting, and a different setting means 'you must use some tool, but you still get to pick which one.' It's wrong to think those two settings are the same thing, wrong to think naming one exact tool still lets someone just talk instead, and wrong to assume turning tools off for a turn also erases the tool descriptions from what gets sent.",
     difficulty: "HARD",
@@ -543,16 +543,16 @@ export const questions: QuestionSeed[] = [
     domainKey: "PROMPT_ENGINEERING",
     type: "SINGLE",
     prompt:
-      "An eval's grading rubric is so strict about exact wording that it marks several genuinely correct, just differently-phrased answers as failures. What does this illustrate, and what's the fix?",
+      "An eval's grading rubric is so strict about exact wording that it marks several genuinely correct, just differently-phrased answers as failures. What does this illustrate?",
     options: [
-      "The grader is producing false negatives, marking genuinely correct output as wrong, and the rubric needs loosening",
+      "The grader is producing false negatives, marking genuinely correct output as wrong",
       "The model itself is broken and needs to be replaced with a different one entirely",
       "This is expected and requires no adjustment, since a stricter grader is always a better grader",
       "The eval set is too small and simply needs more test cases added to it",
     ],
     correctIndexes: [0],
     explanation:
-      "A grader marking genuinely correct output as a failure is a false negative, and when it's happening systematically because the rubric is too rigid about exact phrasing, the fix is loosening the rubric — the model's output was fine. Replacing the model addresses the wrong side of the problem entirely. Stricter isn't automatically better; a rubric that's too strict just produces noisy, unreliable grading. And the size of the eval set doesn't address a miscalibrated grading rule.",
+      "A grader marking genuinely correct output as a failure is a false negative — and when it's happening systematically because the rubric is too rigid about exact phrasing, the fix is loosening the rubric, since the model's output was fine. Replacing the model addresses the wrong side of the problem entirely. Stricter isn't automatically better; a rubric that's too strict just produces noisy, unreliable grading. And the size of the eval set doesn't address a miscalibrated grading rule.",
     eli10:
       "If a teacher marks a correct answer wrong just because it wasn't phrased in the exact words from the textbook, the answer key needs fixing, not the student.",
     difficulty: "HARD",
@@ -564,14 +564,14 @@ export const questions: QuestionSeed[] = [
     prompt:
       "An eval run reveals the model fabricates a plausible-sounding value whenever a source document genuinely doesn't contain a required field. The team reworks the wording of that one failing example until it passes, then ships. What's wrong with this fix?",
     options: [
-      "It targets a single example instead of the underlying cause, and skips re-running the full eval set to confirm the fix generalizes without introducing new regressions",
+      "It targets a single example instead of the underlying cause",
       "Nothing is wrong; once one failing example passes, the underlying issue is necessarily fully resolved everywhere",
       "The fix should have lowered max_tokens instead, since fabrication is caused by too much room in the response",
       "The fix should have removed the field from the schema entirely, since optional fields are the actual root cause of fabrication",
     ],
     correctIndexes: [0],
     explanation:
-      "A proper feedback loop addresses the actual cause of a failure — here, likely a missing worked example of the 'genuinely absent' case — and then re-runs the entire eval set to confirm the fix generalizes and hasn't broken anything else, not just that the one example now passes. Passing a single patched example says nothing about whether the underlying tendency was actually fixed elsewhere. Lowering max_tokens doesn't address a fabrication tendency and could just as easily truncate legitimate output. And removing the field entirely discards information rather than fixing the model's handling of genuine absence.",
+      "A proper feedback loop addresses the actual cause of a failure — here, likely a missing worked example of the 'genuinely absent' case — rather than just patching wording until one example passes (it should also re-run the full eval set afterward to confirm the fix generalizes, a related but separate step). Passing a single patched example says nothing about whether the underlying tendency was actually fixed elsewhere. Lowering max_tokens doesn't address a fabrication tendency and could just as easily truncate legitimate output. And removing the field entirely discards information rather than fixing the model's handling of genuine absence.",
     eli10:
       "If a kid keeps making up an answer instead of saying 'I don't know,' getting them to say the right thing about one specific question doesn't mean they've learned the general lesson — you have to check them on a bunch of similar questions to be sure.",
     difficulty: "MEDIUM",
