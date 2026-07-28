@@ -10,6 +10,7 @@ const GAP = 2;
 const PADDING_TOP = 16;
 const PADDING_BOTTOM = 28;
 const PADDING_X = 4;
+const PADDING_LEFT = 30; // room for the y-axis score labels, so bars don't overlap them
 
 export function ScoreTrendChart({ history }: { history: MockExamSummary[] }) {
   const gradientId = useId();
@@ -33,7 +34,7 @@ export function ScoreTrendChart({ history }: { history: MockExamSummary[] }) {
   const passingY = yFor(PASSING_SCALED_SCORE);
 
   const barSlot = Math.min(BAR_MAX_WIDTH + GAP, 48);
-  const chartWidth = Math.max(240, completed.length * barSlot + PADDING_X * 2);
+  const chartWidth = Math.max(240, completed.length * barSlot + PADDING_LEFT + PADDING_X);
 
   return (
     <div className="rounded-lg border border-border bg-surface p-5">
@@ -61,7 +62,7 @@ export function ScoreTrendChart({ history }: { history: MockExamSummary[] }) {
           {[100, 400, 700, 1000].map((tick) => (
             <g key={tick}>
               <line
-                x1={PADDING_X}
+                x1={PADDING_LEFT}
                 x2={chartWidth - PADDING_X}
                 y1={yFor(tick)}
                 y2={yFor(tick)}
@@ -76,7 +77,7 @@ export function ScoreTrendChart({ history }: { history: MockExamSummary[] }) {
 
           {/* passing threshold reference line */}
           <line
-            x1={PADDING_X}
+            x1={PADDING_LEFT}
             x2={chartWidth - PADDING_X}
             y1={passingY}
             y2={passingY}
@@ -87,7 +88,7 @@ export function ScoreTrendChart({ history }: { history: MockExamSummary[] }) {
 
           {completed.map((exam, i) => {
             const score = exam.scaledScore!;
-            const x = PADDING_X + i * barSlot;
+            const x = PADDING_LEFT + i * barSlot;
             const barWidth = Math.min(BAR_MAX_WIDTH, barSlot - GAP);
             const top = yFor(score);
             const barHeight = CHART_HEIGHT - PADDING_BOTTOM - top;
