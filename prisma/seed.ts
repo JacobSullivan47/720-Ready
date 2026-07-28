@@ -71,9 +71,13 @@ async function main() {
     });
   }
 
+  const validCardIds = new Set<string>();
+  const validQuestionIds = new Set<string>();
+
   let cardIndex = 0;
   for (const c of allFlashcards) {
     const id = stableId("card", [c.domainKey, c.term]);
+    validCardIds.add(id);
     await prisma.flashcard.upsert({
       where: { id },
       create: {
@@ -98,6 +102,7 @@ async function main() {
   let questionIndex = 0;
   for (const q of allQuestions) {
     const id = stableId("question", [q.domainKey, q.prompt.slice(0, 80)]);
+    validQuestionIds.add(id);
     await prisma.question.upsert({
       where: { id },
       create: {
@@ -123,6 +128,25 @@ async function main() {
         difficulty: q.difficulty ?? "MEDIUM",
       },
     });
+  }
+
+  // A prompt/domain edit changes a question's stable ID (see stableId above),
+  // which upserts a new row rather than updating the old one in place —
+  // otherwise the old row would linger forever and still get served. Same
+  // idea for a flashcard whose term changed. Deleting a stale row cascades
+  // to any QuestionAttempt/Bookmark/MockExamQuestion tied to that exact old
+  // ID (schema-level onDelete: Cascade), which is the intended cleanup here,
+  // not a bug — see AGENTS.md's note on prompt edits orphaning attempts.
+  const staleQuestions = await prisma.question.deleteMany({
+    where: { id: { notIn: [...validQuestionIds] } },
+  });
+  const staleCards = await prisma.flashcard.deleteMany({
+    where: { id: { notIn: [...validCardIds] } },
+  });
+  if (staleQuestions.count > 0 || staleCards.count > 0) {
+    console.log(
+      `Pruned ${staleQuestions.count} stale question(s) and ${staleCards.count} stale flashcard(s) no longer in content.`,
+    );
   }
 
   console.log("Seed complete.");
