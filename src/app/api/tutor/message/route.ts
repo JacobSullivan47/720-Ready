@@ -9,6 +9,7 @@ import {
   TUTOR_MAX_MESSAGES_PER_DAY,
 } from "@/lib/anthropic";
 import { buildLearnerContextBlock, resolveFocusContext } from "@/lib/tutor-context";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   message: z.string().min(1).max(2000),
@@ -18,6 +19,17 @@ const bodySchema = z.object({
 export async function POST(request: Request) {
   const auth = await requireUserId();
   if ("error" in auth) return auth.error;
+
+  const { allowed } = await checkRateLimit(`tutor:${auth.userId}`, {
+    max: 6,
+    windowMs: 5 * 60 * 1000,
+  });
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "You're sending messages too quickly. Please slow down and try again shortly." },
+      { status: 429 },
+    );
+  }
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {

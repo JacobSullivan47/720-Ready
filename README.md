@@ -30,11 +30,13 @@ Content (flashcards, questions, domain/scenario overviews, interactive exercises
    npm install
    ```
 
-3. **Set required environment variables** in `.env.local` (already scaffolded — fill in the blanks):
+3. **Set required environment variables** in `.env.local` (copy `.env.example` to `.env.local` and fill in the blanks):
    - `DATABASE_URL` — Postgres connection string
    - `AUTH_SECRET` — random secret for session signing (`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`)
    - `ANTHROPIC_API_KEY` — only needed for the AI Study Tutor feature; everything else works without it
    - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (optional) — enables "Continue with Google"; also set `NEXT_PUBLIC_GOOGLE_ENABLED="true"` if you configure these
+   - `ADMIN_EMAILS` — comma-separated email(s) allowed to access `/admin`; unset means no one can access it
+   - `NEXT_PUBLIC_SITE_URL` (optional) — your public URL, used for Open Graph tags, the sitemap, and robots.txt; defaults to `http://localhost:3000`
 
 4. **Run migrations and seed content**:
    ```bash
@@ -57,6 +59,13 @@ npm run lint          # ESLint
 npm run db:studio     # Prisma Studio (browse the database)
 npm run build         # production build
 ```
+
+## Deploying
+
+Set the same environment variables as local dev (see `.env.example`) on your host, plus a real
+`NEXT_PUBLIC_SITE_URL`. Run migrations non-interactively as part of your build/deploy step —
+`npx prisma migrate deploy`, not `prisma migrate dev` (which is interactive and dev-only) — then
+`npm run db:seed` once to load study content, and `npm run build && npm run start`.
 
 ## How guest mode vs. accounts work
 

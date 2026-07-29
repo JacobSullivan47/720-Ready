@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { isAdminEmail } from "@/lib/admin";
 
 const schema = z.object({
   name: z.string().min(1).max(80),
@@ -32,7 +33,11 @@ export async function POST(request: Request) {
   const { name, email, password, marketingOptIn } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  // Admin-reserved emails can't be claimed via public signup, even if no
+  // account exists for them yet — they must be provisioned out-of-band.
+  // Same response as the "already taken" case so this doesn't leak which
+  // emails are admin-reserved.
+  if (existing || isAdminEmail(email)) {
     return NextResponse.json(
       { error: "An account with that email already exists." },
       { status: 409 },

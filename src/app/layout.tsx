@@ -16,13 +16,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const title = {
+  default: "720 Ready — CCA-Foundations Prep",
+  template: "%s · 720 Ready",
+};
+const description =
+  "Flashcards, practice questions, and mock exams for studying the Claude Certified Architect – Foundations exam.";
+
 export const metadata: Metadata = {
-  title: {
-    default: "720 Ready — CCA-Foundations Prep",
-    template: "%s · 720 Ready",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    type: "website",
   },
-  description:
-    "Flashcards, practice questions, and mock exams for studying the Claude Certified Architect – Foundations exam.",
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({
