@@ -204,8 +204,7 @@ export default function DashboardPage() {
               <div>
                 <h2 className="text-lg font-semibold">Concept overviews read</h2>
                 <p className="mt-1 text-sm text-foreground-muted">
-                  {overviewsReadCount} of {TOTAL_OVERVIEWS} domain &amp; scenario overviews opened. Reading isn&apos;t
-                  scored toward mastery, just tracked so you can see what&apos;s left.
+                  {`${overviewsReadCount} of ${TOTAL_OVERVIEWS} domain & scenario overviews opened. Reading isn't scored toward mastery, just tracked so you can see what's left.`}
                 </p>
               </div>
               <Link
