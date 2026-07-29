@@ -26,7 +26,10 @@ export default function StudyOverviewPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Concept Overviews</h1>
+      <Link href="/study" className="text-sm text-brand hover:underline">
+        ← Back to Study
+      </Link>
+      <h1 className="mt-3 text-2xl font-semibold tracking-tight">Concept Overviews</h1>
       <p className="mt-2 max-w-2xl text-foreground-muted">
         Browse domain and scenario overviews covering key knowledge, key skills, and anti-patterns.
       </p>
@@ -74,12 +77,6 @@ export default function StudyOverviewPage() {
             </Link>
           );
         })}
-      </div>
-
-      <div className="mt-10">
-        <Link href="/study" className="text-sm text-brand hover:underline">
-          ← Back to Study
-        </Link>
       </div>
     </div>
   );
