@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useContentBank } from "@/hooks/use-content-bank";
 import { useProgress } from "@/hooks/use-progress";
@@ -65,7 +66,10 @@ function FlashcardsPageInner() {
   if (!selection) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Flashcards</h1>
+        <Link href="/study" className="text-sm text-brand hover:underline">
+          ← Back to Study
+        </Link>
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight">Flashcards</h1>
         <p className="mt-2 text-foreground-muted">Choose a deck to study.</p>
 
         <button
