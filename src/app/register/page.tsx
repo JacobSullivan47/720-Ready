@@ -10,7 +10,6 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +26,7 @@ export default function RegisterPage() {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, marketingOptIn }),
+      body: JSON.stringify({ name, email, password }),
     });
 
     if (!res.ok) {
@@ -99,18 +98,6 @@ export default function RegisterPage() {
           />
           <p className="mt-1 text-xs text-foreground-muted">At least 8 characters.</p>
         </div>
-
-        <label className="flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={marketingOptIn}
-            onChange={(e) => setMarketingOptIn(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-border"
-          />
-          <span className="text-foreground-muted">
-            Send me occasional notifications and ways to support the project.
-          </span>
-        </label>
 
         {error && (
           <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">

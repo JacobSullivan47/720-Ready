@@ -9,7 +9,6 @@ const schema = z.object({
   name: z.string().min(1).max(80),
   email: z.string().email(),
   password: z.string().min(8).max(200),
-  marketingOptIn: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -30,7 +29,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input." }, { status: 400 });
   }
-  const { name, email, password, marketingOptIn } = parsed.data;
+  const { name, email, password } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   // Admin-reserved emails can't be claimed via public signup, even if no
@@ -46,7 +45,7 @@ export async function POST(request: Request) {
 
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
-    data: { name, email, passwordHash, marketingOptIn: marketingOptIn ?? false },
+    data: { name, email, passwordHash },
     select: { id: true, email: true, name: true },
   });
 

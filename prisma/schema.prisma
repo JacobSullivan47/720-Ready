@@ -18,7 +18,6 @@ model User {
   image         String?
   passwordHash  String? // set for credentials-based accounts; null for OAuth-only
   createdAt     DateTime  @default(now())
-  marketingOptIn Boolean  @default(false) // consent to be emailed updates/donation asks — off unless explicitly checked at signup
   tutorUnlimited Boolean  @default(false) // admin-granted exemption from TUTOR_MAX_MESSAGES_PER_DAY
 
   accounts Account[]
