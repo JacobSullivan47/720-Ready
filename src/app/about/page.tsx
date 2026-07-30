@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "About & Licensing" };
+export const metadata: Metadata = {
+  title: "About & Licensing",
+  description:
+    "What 720 Ready is, its content licensing and attribution, and its disclaimer of non-affiliation with Anthropic.",
+};
 
 export default function AboutPage() {
   return (

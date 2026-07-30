@@ -19,7 +19,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const key = scenarioKeyFromSlug(slug);
   const scenario = scenarios.find((s) => s.key === key);
-  return { title: scenario?.name ?? "Scenario" };
+  return { title: scenario?.name ?? "Scenario", description: scenario?.summary };
 }
 
 export default async function ScenarioPage({ params }: { params: Promise<{ slug: string }> }) {

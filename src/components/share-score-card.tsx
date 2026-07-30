@@ -8,17 +8,19 @@ export function ShareScoreCard({ scaledScore, passed }: { scaledScore: number; p
   const shareText = `I scored ${scaledScore}/${SCALED_SCORE_MAX} on my 720 Ready mock exam for the Claude Certified Architect – Foundations exam${
     passed ? " — passing!" : `. (Passing is ${PASSING_SCALED_SCORE}+)`
   } 🎯`;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const shareUrl = `${siteUrl}/?utm_source=share&utm_medium=score-card`;
 
   async function share() {
     if (typeof navigator !== "undefined" && "share" in navigator) {
       try {
-        await navigator.share({ text: shareText });
+        await navigator.share({ text: shareText, url: shareUrl });
         return;
       } catch {
         // fall through to clipboard
       }
     }
-    await navigator.clipboard.writeText(shareText);
+    await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

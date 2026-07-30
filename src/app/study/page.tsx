@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Study" };
+export const metadata: Metadata = {
+  title: "Study",
+  description:
+    "Study for the Claude Certified Architect – Foundations exam with concept overviews, spaced-repetition flashcards, and interactive exercises.",
+};
 
 const STUDY_MODES = [
   {

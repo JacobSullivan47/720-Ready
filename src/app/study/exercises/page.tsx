@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ExercisesList } from "./ExercisesList";
 
-export const metadata: Metadata = { title: "Interactive Exercises" };
+export const metadata: Metadata = {
+  title: "Interactive Exercises",
+  description:
+    "Hands-on CCA-F practice beyond multiple choice: a CLAUDE.md config builder, an anti-pattern spotter, and a sequencing exercise.",
+};
 
 export default function ExercisesIndexPage() {
   return (

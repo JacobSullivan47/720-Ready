@@ -19,7 +19,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const key = domainKeyFromSlug(slug);
   const domain = domains.find((d) => d.key === key);
-  return { title: domain?.name ?? "Domain" };
+  return { title: domain?.name ?? "Domain", description: domain?.summary };
 }
 
 export default async function DomainPage({ params }: { params: Promise<{ slug: string }> }) {
